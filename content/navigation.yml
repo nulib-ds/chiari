@@ -1,5 +1,7 @@
 navigation:
   - href: /search
     label: Works
+  - href: /la-strada
+    label: La Strada
   - href: /about
     label: About
