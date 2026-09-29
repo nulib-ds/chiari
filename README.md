@@ -3,6 +3,8 @@
 A project of [Northwestern University Libraries](https://www.library.northwestern.edu/).
 
 This repository offers a trimmed down starting point for new Canopy IIIF projects. When you need deeper documentation, examples, or release notes, vist the main project at https://nulib-ds.github.io/canopy/.
+## Tasks
+View status of tasks at `./TASKS.md` [here](./TASKS.md).
 
 ## Getting Started
 
