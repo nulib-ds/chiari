@@ -11,11 +11,21 @@
   env.GREET = "devenv";
 
   # https://devenv.sh/packages/
-  packages = [ pkgs.git ];
+  packages = [
+    pkgs.git
+    pkgs.tsx
+  ];
 
   # https://devenv.sh/languages/
   # languages.rust.enable = true;
-  languages.typescript.enable = true;
+  languages = {
+    typescript.enable = true;
+    javascript = {
+      enable = true;
+      nodejs.enable = true;
+      npm.enable = true;
+    };
+  };
 
   # https://devenv.sh/processes/
   # processes.dev.exec = "${lib.getExe pkgs.watchexec} -n -- ls -la";
