@@ -6,7 +6,6 @@ locales:
   - lang: it
     label: Italiano
 collection:
-  - https://d123ntlzh9s7ny.cloudfront.net/published/presentation/collection/chiari/collection.json
   - https://iiif-understory.dc.library.northwestern.edu/published/presentation/collection/chiari/collection.json
 metadata:
   - Subject
