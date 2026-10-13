@@ -1,8 +1,20 @@
-# Canopy Template
+# Chiari · Canopy IIIF
 
 A project of [Northwestern University Libraries](https://www.library.northwestern.edu/).
 
-This repository offers a trimmed down starting point for new Canopy IIIF projects. When you need deeper documentation, examples, or release notes, vist the main project at https://nulib-ds.github.io/canopy/.
+This project uses the [Northwestern Canopy template](https://github.com/nulib-ds/canopy-template-northwestern) while retaining Chiari’s content, English and Italian navigation, assets, and IIIF collection configuration.
+
+The Northwestern brand layer is in `app/styles/northwestern.css`, imported by `app/styles/index.css`. The shared header, footer, and font preloads are in `content/_app.mdx`. Keep project-specific style overrides in `app/styles/custom.css`; see `DESIGN.md` for the upstream design notes. Fonts and wordmarks load from Northwestern’s central CDN.
+
+Template source: commit `be437611c9639dcc37e505bf57841aedbb04d56a` (integrated October 13, 2026). The template’s demo pages and postcard collection were not imported. Chiari’s `canopy.yml` remains the source for the title, locales, collection, metadata, and search settings.
+
+## Run locally
+
+Use Node 24 (`nvm use`), run `npm install`, then `npm run dev`. Open http://localhost:5001. Run `npm run build` to generate the production site in `site/`; do not edit that generated directory. Development and production builds need network access to fetch IIIF resources. This project does not currently define automated test or lint scripts.
+
+The existing homepages use a featured hero, but `canopy.yml` has no `featured` list, so the hero currently renders no content. Add selected Chiari manifest IDs under `featured` to enable it. The original homepage text and configuration have been preserved.
+
+For documentation, examples, and release notes, visit https://nulib-ds.github.io/canopy/.
 ## Tasks
 View status of tasks at `./TASKS.md` [here](./TASKS.md).
 
