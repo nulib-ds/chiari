@@ -11,6 +11,7 @@ export const components = {
 // Map browser-only components to their source files; the builder bundles
 // them separately and hydrates placeholders at runtime.
 export const clientComponents = {
+  SearchFilterLabel: './SearchFilterLabel.client.tsx',
   ExampleClient: './Example.client.tsx',
   StoryMapJS: './StoryMapJS.client.tsx',
 };
