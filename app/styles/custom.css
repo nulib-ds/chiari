@@ -11,3 +11,50 @@
     --color-accent-default: var(--color-northwestern-purple);
   }
 } */
+
+/* Keep the Northwestern gray image surface, with captions on white. */
+.canopy-card figcaption {
+  background: var(--nu-white);
+}
+
+/* Reserve a square image surface when a search card has no thumbnail. */
+.canopy-search-results .canopy-card figure:has(> figcaption:first-child)::before {
+  content: "";
+  display: block;
+  aspect-ratio: 1;
+  background: var(--nu-offwhite);
+}
+
+/* Search extends slightly beyond the header's 1120px content column. */
+.canopy-search-results {
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+.canopy-search-results [data-canopy-search-tabs],
+.canopy-search-results [data-canopy-search-summary] {
+  max-width: 1120px;
+  margin-inline: auto;
+}
+
+.canopy-search-results [data-canopy-search-summary] {
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.canopy-search-results [data-canopy-search-summary] > div {
+  font-size: inherit;
+  color: var(--nu-rich-black-60);
+}
+
+/* The header search sits on solid white, without a frosted backdrop. */
+.canopy-header .canopy-search-form-shell {
+  background: var(--nu-white);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Remove the language-select border peeking around the header search. */
+.canopy-header__language-toggle--desktop .canopy-language-toggle__select-input {
+  border: none;
+}
