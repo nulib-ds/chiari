@@ -22,7 +22,6 @@
     typescript.enable = true;
     javascript = {
       enable = true;
-      nodejs.enable = true;
       npm.enable = true;
     };
   };
@@ -34,9 +33,11 @@
   # services.postgres.enable = true;
 
   # https://devenv.sh/scripts/
-  scripts.hello.exec = ''
-    echo hello from $GREET
-  '';
+  scripts = {
+    build.exec = "npm run build";
+    run.exec = "npm run dev";
+    update.exec = "npm install && npm install-scripts approve --all";
+  };
 
   # https://devenv.sh/basics/
   enterShell = ''
