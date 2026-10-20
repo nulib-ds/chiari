@@ -1,13 +1,13 @@
 navigation:
-  - href: /about
+  - href: /it/about
     label: Chi Siamo
-  - href: /watch
+  - href: /it/watch
     label: Guardi
-  - href: /play
+  - href: /it/play
     label: Giocate
-  - href: /write
+  - href: /it/write
     label: Scivere
-  - href: /collaborate
+  - href: /it/collaborate
     label: Collaborare
-  - href: /search
+  - href: /it/search
     label: Works (but italian)
