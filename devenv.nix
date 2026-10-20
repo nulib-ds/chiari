@@ -37,13 +37,43 @@
     build.exec = "npm run build";
     run.exec = "npm run dev";
     update.exec = "npm install && npm install-scripts approve --all";
+    new.exec = ''
+      newdir="$DEVENV_ROOT/content/$1"
+      newitdir="$DEVENV_ROOT/content/it/$1"
+      layoutblank="<div>{props.children}</div>"
+      indexblank="---
+      title: Blank Title
+      description: Blank description
+      ---
+      <Container>
+      # Not yet implemented.
+      <RelatedItems />
+      </Container>"
+
+
+      if [[ -d "$newdir" ]]; then
+        echo "Error: directory '$newdir' already exists." >&2
+        exit 1
+      fi
+
+      if [[ -d "$newitdir" ]]; then
+        echo "Error: directory '$newitdir' already exists." >&2
+        exit 1
+      fi
+
+      mkdir -p "$newdir"
+      mkdir -p "$newitdir"
+
+      echo "$layoutblank" > "$newdir/_layout.mdx"
+      echo "$indexblank" > "$newdir/index.mdx"
+
+      cp -r "$newdir/." "$newitdir"
+    '';
   };
 
   # https://devenv.sh/basics/
-  enterShell = ''
-    hello         # Run scripts directly
-    git --version # Use packages
-  '';
+  # enterShell = ''
+  # '';
 
   # https://devenv.sh/tasks/
   # tasks = {
@@ -52,10 +82,8 @@
   # };
 
   # https://devenv.sh/tests/
-  enterTest = ''
-    echo "Running tests"
-    git --version | grep --color=auto "${pkgs.git.version}"
-  '';
+  # enterTest = ''
+  # '';
 
   # https://devenv.sh/git-hooks/
   # git-hooks.hooks.shellcheck.enable = true;
