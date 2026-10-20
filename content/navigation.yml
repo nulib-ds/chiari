@@ -1,7 +1,13 @@
 navigation:
-  - href: /search
-    label: Works
-  - href: /la-strada
-    label: La Strada
   - href: /about
     label: About
+  - href: /watch
+    label: Watch
+  - href: /play
+    label: Play
+  - href: /write
+    label: Write
+  - href: /collaborate
+    label: Collaborate
+  - href: /search
+    label: Works

@@ -1,7 +1,13 @@
 navigation:
-  - href: /it/opere
-    label: Opere
-  - href: /it/la-strada
-    label: La Strada
-  - href: /it/chi-siamo
-    label: Chi siamo
+  - href: /about
+    label: Chi Siamo
+  - href: /watch
+    label: Guardi
+  - href: /play
+    label: Giocate
+  - href: /write
+    label: Scivere
+  - href: /collaborate
+    label: Collaborare
+  - href: /search
+    label: Works (but italian)
