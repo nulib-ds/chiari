@@ -53,6 +53,24 @@ export const IIIF_SIZE_FALLBACK =
   }, true);
 })();`;
 
+export const SEARCH_LABEL_TAGS =
+  // Canopy's search script builds the results panel in the browser, so the
+  // group labels ("Works", "Pages") can't be set with <Hand> at build time.
+  // Tag each label with its word as it appears; custom.css swaps in the
+  // drawn version (assets/images/glyphs/label-<word>.svg) for known words
+  // and leaves any other label in plain type.
+  `(function () {
+  var drawn = {works: 1, pages: 1, opere: 1, pagine: 1};
+  function tag() {
+    var labels = document.querySelectorAll(".canopy-search-teaser__label:not([data-fx-label])");
+    for (var i = 0; i < labels.length; i++) {
+      var word = labels[i].textContent.trim().toLowerCase();
+      labels[i].setAttribute("data-fx-label", drawn[word] ? word : "");
+    }
+  }
+  new MutationObserver(tag).observe(document.documentElement, {childList: true, subtree: true});
+})();`;
+
 export function Head() {
   return (
     <>
@@ -67,6 +85,7 @@ export function Head() {
       />
       <Stylesheet />
       <script dangerouslySetInnerHTML={{__html: IIIF_SIZE_FALLBACK}} />
+      <script dangerouslySetInnerHTML={{__html: SEARCH_LABEL_TAGS}} />
     </>
   );
 }
@@ -134,6 +153,43 @@ export function LanguageToggle({page, site}) {
   );
 }
 
+export const MENU_PAINT =
+  // Paint color for each main section, in navigation.yml order.
+  ["red", "blue", "green", "yellow"];
+
+export function paintShape(color) {
+  // The stroke's filled outline, read from its SVG so the file stays the
+  // single source for each color.
+  const svg = fs.readFileSync(`assets/images/marker/paint-${color}.svg`, "utf8");
+  return {fill: svg.match(/<g fill="([^"]+)"/)[1], paths: svg.match(/<g[^>]*>([\s\S]*)<\/g>/)[1]};
+}
+
+export function PaintStroke({color, id}) {
+  // A menu stroke that is written rather than revealed: a round-capped line
+  // along the stroke's centreline (the brush tip) masks the paint shape, so
+  // paint appears only where the tip has passed. CSS animates the tip with
+  // stroke-dashoffset; the bristle fibres at the tail arrive last.
+  const {fill, paths} = paintShape(color);
+  return (
+    <svg className="fx-paint" viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <defs>
+        <mask id={id} maskUnits="userSpaceOnUse" x="-12" y="-2" width="224" height="28">
+          <path
+            className="fx-paint__tip"
+            d="M3 12.5C50 10 110 11 160 10.5S190 11 198 11"
+            fill="none"
+            stroke="#fff"
+            strokeWidth="22"
+            strokeLinecap="round"
+            pathLength="1"
+          />
+        </mask>
+      </defs>
+      <g fill={fill} mask={`url(#${id})`} dangerouslySetInnerHTML={{__html: paths}} />
+    </svg>
+  );
+}
+
 export function ChiariHeader() {
   // Canopy's header with navigation.yml split in two: Watch, Play, Write and
   // Collaborate stay in the main nav row; About and Works move to a plain
@@ -153,13 +209,25 @@ export function ChiariHeader() {
   }));
   const isSecondary = (link) => SECONDARY_SECTIONS.includes(navSection(link.href));
   const secondary = links.filter(isSecondary);
+  // Each main label carries its own paint stroke; Canopy renders the label
+  // as given inside its link.
+  const main = links.filter((link) => !isSecondary(link)).map((link, i) => ({
+    ...link,
+    label: (
+      <>
+        {link.label || link.href}
+        <PaintStroke color={MENU_PAINT[i % MENU_PAINT.length]} id={`fx-paint-${navSection(link.href)}`} />
+      </>
+    ),
+  }));
   return (
     <div className="fx-masthead">
       {/* The header brand shows ART IS EASY (an image, via CSS) over this
           line of text; the page <title> keeps canopy.yml's "Chiari". */}
       <CanopyHeader
         title={HEADER_TAGLINE}
-        navigation={links.filter((link) => !isSecondary(link))}
+        navigation={main}
+        searchPlaceholder=""
         languageToggle={false}
       />
       <div className="fx-subbar">

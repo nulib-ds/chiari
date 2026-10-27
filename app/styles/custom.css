@@ -21,12 +21,18 @@
 @layer properties {
   :root,
   :host {
-    /* Secondary palette — Brights, used only as marker ink. */
-    --fx-yellow: #ede93b;
-    --fx-green: #58b947;
-    --fx-blue: #5091cd;
-    --fx-red: #ef553f;
-    --fx-teal: #7fcecd;
+    /* Paint: sampled from the markers on Chiari's marked-up scores, then
+     * nudged to midtones that read on both white and black (each ≥ 4:1 on
+     * both, except yellow, which is light by nature). Decorative only. */
+    --fx-red: #ea0138;
+    --fx-blue: #2463e6;
+    --fx-green: #00885a;
+    --fx-yellow: #fad000;
+    --fx-pink: #e5199a;
+    /* Paper: a cool off-white, the darkest point of the page. The sheen in
+     * body's background only ever lightens it, so Rich Black 50% captions
+     * stay at 4.6:1 or better everywhere. */
+    --fx-paper: #f1f1ee;
 
     /* Print: Rich Black, with Rich Black 80% / 50% for muted copy. */
     --fx-ink: #000000;
@@ -117,7 +123,8 @@
 .fx-mark--underline.fx-mark--red { --fx-mark-img: url("../images/marker/paint-red.svg"); }
 .fx-mark--underline.fx-mark--blue { --fx-mark-img: url("../images/marker/paint-blue.svg"); }
 .fx-mark--underline.fx-mark--green { --fx-mark-img: url("../images/marker/paint-green.svg"); }
-.fx-mark--underline.fx-mark--gold { --fx-mark-img: url("../images/marker/paint-gold.svg"); }
+.fx-mark--underline.fx-mark--yellow { --fx-mark-img: url("../images/marker/paint-yellow.svg"); }
+.fx-mark--underline.fx-mark--pink { --fx-mark-img: url("../images/marker/paint-pink.svg"); }
 
 /* Loops wrap a word or short phrase; padding makes room for the brush, the
  * negative margin keeps the line spacing as it was. */
@@ -134,8 +141,21 @@
  * Base: the printed page
  * ---------------------------------------------------------------------- */
 
+/* The page is light gray film rather than white: a flat off-white lit by
+ * a soft bloom at the upper left and one faint diagonal sheen, fixed to the
+ * viewport like light on a satin sheet. Gradients only, no texture image. */
 body {
   color: var(--fx-ink);
+  background-color: var(--fx-paper);
+  background-image:
+    radial-gradient(120% 85% at 15% 0%, rgb(255 255 255 / 0.7), rgb(255 255 255 / 0) 58%),
+    linear-gradient(112deg, rgb(255 255 255 / 0) 34%, rgb(255 255 255 / 0.3) 48%, rgb(255 255 255 / 0) 63%);
+  background-attachment: fixed;
+}
+
+/* Let the paper run through the header. */
+.canopy-header {
+  background: transparent;
 }
 
 h1,
@@ -292,9 +312,21 @@ main blockquote a:hover {
   text-decoration: none;
 }
 
-.fx-secondary-nav a:hover,
-.fx-secondary-nav a[aria-current="page"] {
+.fx-secondary-nav a:hover {
   color: var(--fx-ink);
+}
+
+/* Current pages stay black and are underlined in pink paint. The sidebar
+ * selector matches Canopy's own `.canopy-sub-navigation__tree …is-active`
+ * rule. */
+.fx-secondary-nav a[aria-current="page"],
+.canopy-sub-navigation__tree .canopy-nav-tree__link[aria-current="page"],
+.canopy-sub-navigation__tree .canopy-nav-tree__link.is-active {
+  color: var(--fx-ink);
+  padding-bottom: 0.3em;
+  background: url("../images/marker/paint-pink.svg") left bottom / 100% 0.45em no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 /* Weight, not a mark, shows the current page here. */
@@ -403,13 +435,13 @@ main blockquote a:hover {
 }
 
 /* The four main sections are the loudest type in the header. Each owns a
- * paint-marker color. Hovering draws a thick opaque stroke under the word,
- * point to point from the left: the stroke stays full size and a clip
- * uncovers it, so its weight never stretches and the stray bristle fibers
- * at the tail arrive last. The current section keeps its stroke. Colors
- * hold 3:1 against white so that mark stays perceivable (WCAG 1.4.11). */
+ * paint-marker color (red, blue, green, yellow). Hovering writes a thick
+ * opaque stroke under the word: <PaintStroke> in _app.mdx masks the paint
+ * with a round-capped line along its centreline, and moving that line's
+ * dash makes the brush tip travel point to point. Leaving removes the
+ * stroke at once, with no fade and no un-writing. The current section
+ * keeps its stroke. */
 .canopy-header .canopy-nav-links a {
-  --fx-paint: url("../images/marker/paint-red.svg");
   --fx-nav-inset: 1.4rem;
   position: relative;
   padding: 0.4rem var(--fx-nav-inset) 0.75rem;
@@ -420,29 +452,24 @@ main blockquote a:hover {
   background: none;
 }
 
-.canopy-header .canopy-nav-links a::after {
-  content: "";
-  position: absolute;
-  left: calc(var(--fx-nav-inset) - 0.15em);
-  right: calc(var(--fx-nav-inset) - 0.15em);
-  bottom: 0.2rem;
-  height: 0.42em;
-  background: var(--fx-paint) center / 100% 100% no-repeat;
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 420ms cubic-bezier(0.3, 0.55, 0.35, 1);
-  pointer-events: none;
-}
-
-/* Pull the row left by the first link's inset so "Watch" sits flush with
- * the site name. Both are in rem so they resolve to the same length. */
 .canopy-nav-links.canopy-header__desktop-nav {
   margin-left: -1.4rem;
 }
 
-.canopy-header .canopy-nav-links a:nth-child(4n + 1) { --fx-paint: url("../images/marker/paint-red.svg"); }
-.canopy-header .canopy-nav-links a:nth-child(4n + 2) { --fx-paint: url("../images/marker/paint-blue.svg"); }
-.canopy-header .canopy-nav-links a:nth-child(4n + 3) { --fx-paint: url("../images/marker/paint-green.svg"); }
-.canopy-header .canopy-nav-links a:nth-child(4n + 4) { --fx-paint: url("../images/marker/paint-gold.svg"); }
+.fx-paint {
+  position: absolute;
+  left: calc(var(--fx-nav-inset) - 0.15em);
+  bottom: 0.2rem;
+  width: calc(100% - 2 * (var(--fx-nav-inset) - 0.15em));
+  height: 0.42em;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.fx-paint__tip {
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1.05;
+}
 
 .canopy-header .canopy-nav-links a:hover,
 .canopy-header .canopy-nav-links a[aria-current="page"] {
@@ -450,13 +477,20 @@ main blockquote a:hover {
   background: none;
 }
 
-.canopy-header .canopy-nav-links a:hover::after,
-.canopy-header .canopy-nav-links a[aria-current="page"]::after {
-  clip-path: inset(0 0 0 0);
+/* The tip lands slowly, sweeps through the middle and slows to lift off. */
+.canopy-header .canopy-nav-links a:hover .fx-paint__tip,
+.canopy-header .canopy-nav-links a[aria-current="page"] .fx-paint__tip {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 620ms cubic-bezier(0.55, 0.05, 0.3, 1);
+}
+
+/* The menu modal lists the same labels; strokes are for the desktop row. */
+.canopy-modal .fx-paint {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .canopy-header .canopy-nav-links a::after {
+  .canopy-header .canopy-nav-links a:hover .fx-paint__tip {
     transition: none;
   }
 }
@@ -481,21 +515,159 @@ main blockquote a:hover {
   background: url("../images/marker/paint-black.svg") left bottom / 100% 0.5rem no-repeat;
 }
 
+/* Canopy's icon gives way to a magnifying glass written with the same black
+ * brush as the field's underline (paint_circle.py → paint-magnifier.svg). */
 .canopy-header .canopy-search-form__label svg {
-  color: var(--fx-ink);
+  display: none;
+}
+
+.canopy-header .canopy-search-form__label::after {
+  content: "";
+  order: 2;
+  flex: none;
+  width: 1.45rem;
+  height: 1.45rem;
+  background: url("../images/marker/paint-magnifier.svg") center / contain no-repeat;
 }
 
 .canopy-header .canopy-search-form__input {
   color: var(--fx-ink);
 }
 
+/* The browser's clear button (Chromium and Safari; Firefox draws none)
+ * becomes a pink brush × to match the magnifier. Pink holds 3.8:1 on the
+ * paper, above the 3:1 needed for a control. */
+/* Search results dropdown: no border, and the group labels drawn in
+ * Chiari's hand (see SEARCH_LABEL_TAGS in _app.mdx). The text stays for
+ * screen readers, painted transparent over the drawing. */
+/* Wider than the field and anchored to its right edge, with room to
+ * breathe: generous padding, larger thumbnails, space between items and a
+ * clear pause before each section. */
+.canopy-header .canopy-search-teaser {
+  left: auto;
+  right: 0;
+  top: calc(100% + 0.9rem);
+  width: min(31rem, calc(100vw - 2 * var(--fx-inset)));
+  max-height: min(72vh, 44rem);
+  padding: 1.25rem 1.5rem 1.5rem;
+  /* A sheet of the same paper, boxed in marker. paint-frame.svg draws the
+   * line as a 9-slice border image, so corners stay put and the line keeps
+   * its weight at any size. paint-frame-mask.svg masks the panel to the
+   * same outline, so the paper stops at the drawn line instead of a
+   * rectangle (Chromium and Safari; Firefox shows the plain box). */
+  border: 10px solid transparent;
+  border-image: url("../images/marker/paint-frame.svg") 24 / 10px stretch;
+  -webkit-mask-box-image: url("../images/marker/paint-frame-mask.svg") 24 / 10px stretch;
+  mask-border: url("../images/marker/paint-frame-mask.svg") 24 / 10px stretch;
+  background:
+    linear-gradient(160deg, rgb(255 255 255 / 0.65), rgb(255 255 255 / 0) 55%),
+    var(--fx-paper);
+}
+
+/* A soft shadow under the sheet. The mask above would clip a shadow on the
+ * panel itself, so it goes on the wrapper while results are open; a
+ * drop-shadow follows the painted shape, so it traces the cut outline. */
+.canopy-header [data-canopy-search-form-auto]:has(> [data-canopy-search-form-panel]:not([hidden])) {
+  filter: drop-shadow(0 14px 18px rgb(0 0 0 / 0.14)) drop-shadow(0 2px 3px rgb(0 0 0 / 0.06));
+}
+
+.canopy-header .canopy-search-teaser__list {
+  gap: 0.6rem;
+  padding: 0;
+}
+
+.canopy-header .canopy-search-teaser__label {
+  padding: 0;
+  margin-top: 1.75rem;
+}
+
+.canopy-header .canopy-search-teaser__label:first-child {
+  margin-top: 0;
+}
+
+.canopy-header .canopy-search-teaser__item:hover,
+.canopy-header .canopy-search-teaser__item:focus-visible {
+  background: rgb(0 0 0 / 0.045);
+}
+
+.canopy-header .canopy-search-teaser__item {
+  --canopy-radius-none: var(--fx-radius);
+  gap: 1.1rem;
+  padding: 0.6rem 0.75rem;
+  margin-inline: -0.75rem;
+}
+
+.canopy-header .canopy-search-teaser__thumb {
+  --canopy-radius-none: var(--fx-radius);
+  flex-basis: 64px;
+  height: 64px;
+  /* Shows when a work has no image, or its image fails to load. */
+  background: rgb(0 0 0 / 0.05);
+}
+
+/* Every result gets a square, even pages and works with no thumbnail, so
+ * the rows line up. Same tint as image-less works on the search page. */
+.canopy-header .canopy-search-teaser__item:not(:has(.canopy-search-teaser__thumb))::before {
+  --canopy-radius-none: var(--fx-radius);
+  content: "";
+  flex: 0 0 64px;
+  height: 64px;
+  background: rgb(0 0 0 / 0.05);
+}
+
+.canopy-header .canopy-search-teaser__text {
+  gap: 0.3rem;
+}
+
+.canopy-header .canopy-search-teaser__title {
+  font-size: 1rem;
+}
+
+.canopy-header .canopy-search-teaser__meta {
+  font-size: 0.8rem;
+}
+
+.canopy-search-teaser__label[data-fx-label="works"],
+.canopy-search-teaser__label[data-fx-label="pages"],
+.canopy-search-teaser__label[data-fx-label="opere"],
+.canopy-search-teaser__label[data-fx-label="pagine"] {
+  height: 1.15rem;
+  margin-bottom: 0.6rem;
+  color: transparent;
+  background: left center / auto 100% no-repeat;
+}
+
+.canopy-search-teaser__label[data-fx-label="works"] { background-image: url("../images/glyphs/label-works.svg"); }
+.canopy-search-teaser__label[data-fx-label="pages"] { background-image: url("../images/glyphs/label-pages.svg"); }
+.canopy-search-teaser__label[data-fx-label="opere"] { background-image: url("../images/glyphs/label-opere.svg"); }
+.canopy-search-teaser__label[data-fx-label="pagine"] { background-image: url("../images/glyphs/label-pagine.svg"); }
+
+.canopy-header .canopy-search-form__input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-left: 0.4rem;
+  background: url("../images/marker/paint-close-pink.svg") center / contain no-repeat;
+  cursor: pointer;
+}
+
 .canopy-header .canopy-search-form__input::placeholder {
   color: var(--fx-ink-50);
 }
 
-/* The header search sits on solid white, without a frosted backdrop. */
+/* While search is in use, the header comes forward so its results panel
+ * opens above the secondary menu and language toggle (z-index 2). The rest
+ * of the time it stays at Canopy's z-index 1, so its transparent box never
+ * covers those links. */
+.fx-masthead .canopy-header:focus-within,
+.fx-masthead .canopy-header:has([data-canopy-search-form-panel]:not([hidden])) {
+  z-index: 3;
+}
+
+/* The header search sits straight on the paper, without a frosted backdrop. */
 .canopy-header .canopy-search-form-shell {
-  background-color: var(--nu-white);
+  background-color: transparent;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -533,11 +705,12 @@ main blockquote a:hover {
 /* Each language has its own loop (paint_circle.py), so the two circles are
  * drawn differently. */
 .fx-lang a[aria-current="true"] {
-  background: url("../images/marker/paint-circle-a.svg") center / 100% 100% no-repeat;
+  color: var(--fx-ink);
+  background: url("../images/marker/paint-circle-pink-a.svg") center / 100% 100% no-repeat;
 }
 
 .fx-lang a[aria-current="true"]:lang(it) {
-  background-image: url("../images/marker/paint-circle-b.svg");
+  background-image: url("../images/marker/paint-circle-pink-b.svg");
 }
 
 .fx-lang .fx-hand {
@@ -759,7 +932,7 @@ main .fx-specimen--caption { font-size: 0.9rem; color: var(--fx-ink-50); }
 
 .canopy-button--primary:hover,
 .canopy-button--primary:focus-visible {
-  background-color: var(--nu-white);
+  background-color: transparent;
   border-color: var(--fx-ink);
   color: var(--fx-ink);
   text-decoration: none;
@@ -774,7 +947,7 @@ main .fx-specimen--caption { font-size: 0.9rem; color: var(--fx-ink-50); }
 }
 
 .canopy-button--secondary {
-  background-color: var(--nu-white);
+  background-color: transparent;
   border-color: var(--fx-ink);
   color: var(--fx-ink);
 }
@@ -785,11 +958,11 @@ main .fx-specimen--caption { font-size: 0.9rem; color: var(--fx-ink-50); }
 
 .canopy-card {
   border: none;
-  background: var(--nu-white);
+  background: transparent;
 }
 
 .canopy-card figcaption {
-  background: var(--nu-white);
+  background: transparent;
   color: var(--fx-ink);
 }
 
@@ -799,7 +972,7 @@ main .fx-specimen--caption { font-size: 0.9rem; color: var(--fx-ink-50); }
   content: "";
   display: block;
   aspect-ratio: 1;
-  background: var(--nu-offwhite);
+  background: rgb(0 0 0 / 0.05);
 }
 
 /* -------------------------------------------------------------------------
@@ -838,11 +1011,11 @@ main {
 }
 
 /* -------------------------------------------------------------------------
- * Footer: white, closed by the black Northwestern wordmark.
+ * Footer: on the paper, closed by the black Northwestern wordmark.
  * ---------------------------------------------------------------------- */
 
 .canopy-footer {
-  background: var(--nu-white);
+  background: transparent;
   color: var(--fx-ink-80);
   border-top: 1px solid var(--nu-rich-black-10);
   margin-top: var(--fx-section-space);
@@ -873,7 +1046,7 @@ main {
   align-items: center;
   justify-content: center;
   padding-block: 0 4rem;
-  background: var(--nu-white);
+  background: transparent;
 }
 
 /* The CDN wordmark is white; brightness(0) renders it solid black. */

@@ -3,29 +3,29 @@ import {withBasePath} from "@canopy-iiif/app/base-path";
 
 /**
  * The site's color palette as swatches, for the lookbook. Values mirror the
- * tokens in app/styles/custom.css; contrast is against white (WCAG 2).
+ * tokens in app/styles/custom.css; contrast is against the paper (WCAG 2).
  *
  * <Palette group="print" />
  * <Palette group="paint" />
  */
 
-type Swatch = {name: string; hex: string; token: string; use: string; contrast: string; paint?: string};
+type Swatch = {name: string; hex: string; token: string; use: string; contrast: string; onBlack?: string; paint?: string};
 
 const PRINT: Swatch[] = [
-  {name: "Rich Black", hex: "#000000", token: "--fx-ink", use: "Text, headings, the main menu", contrast: "21:1"},
-  {name: "Rich Black 80%", hex: "#342F2E", token: "--fx-ink-80", use: "Secondary copy, hero descriptions, quotations", contrast: "13.2:1"},
-  {name: "Rich Black 50%", hex: "#716C6B", token: "--fx-ink-50", use: "Captions, metadata, About and Works, the inactive language", contrast: "5.2:1"},
-  {name: "Rich Black 20%", hex: "#BBB8B8", token: "--nu-rich-black-20", use: "Quiet rules, such as the blockquote margin", contrast: "2.0:1"},
-  {name: "Off-White", hex: "#F0F0F0", token: "--nu-offwhite", use: "Placeholders for works without an image", contrast: "1.1:1"},
-  {name: "White", hex: "#FFFFFF", token: "--nu-white", use: "The page", contrast: "n/a"},
+  {name: "Paper", hex: "#F1F1EE", token: "--fx-paper", use: "The page: off-white film with a soft sheen (gradients, no image)", contrast: "n/a"},
+  {name: "Rich Black", hex: "#000000", token: "--fx-ink", use: "Text, headings, the main menu", contrast: "18.6:1"},
+  {name: "Rich Black 80%", hex: "#342F2E", token: "--fx-ink-80", use: "Secondary copy, hero descriptions, quotations", contrast: "11.7:1"},
+  {name: "Rich Black 50%", hex: "#716C6B", token: "--fx-ink-50", use: "Captions, metadata, About and Works, the inactive language", contrast: "4.6:1"},
+  {name: "Rich Black 20%", hex: "#BBB8B8", token: "--nu-rich-black-20", use: "Quiet rules, such as the blockquote margin", contrast: "1.7:1"},
 ];
 
 const PAINT: Swatch[] = [
-  {name: "Red", hex: "#EF553F", token: "paint-red", use: "Watch", contrast: "3.5:1", paint: "paint-red.svg"},
-  {name: "Blue", hex: "#5091CD", token: "paint-blue", use: "Play", contrast: "3.4:1", paint: "paint-blue.svg"},
-  {name: "Green", hex: "#008656", token: "paint-green", use: "Write", contrast: "4.6:1", paint: "paint-green.svg"},
-  {name: "Gold", hex: "#FFC520", token: "paint-gold", use: "Collaborate", contrast: "1.6:1", paint: "paint-gold.svg"},
-  {name: "Black paint", hex: "#000000", token: "paint-black", use: "Search field, language circles, black <Mark>", contrast: "21:1", paint: "paint-black.svg"},
+  {name: "Red", hex: "#EA0138", token: "paint-red", use: "Watch", contrast: "4.1:1", onBlack: "4.6:1", paint: "paint-red.svg"},
+  {name: "Blue", hex: "#2463E6", token: "paint-blue", use: "Play", contrast: "4.6:1", onBlack: "4.0:1", paint: "paint-blue.svg"},
+  {name: "Green", hex: "#00885A", token: "paint-green", use: "Write", contrast: "4.0:1", onBlack: "4.7:1", paint: "paint-green.svg"},
+  {name: "Yellow", hex: "#FAD000", token: "paint-yellow", use: "Collaborate", contrast: "1.3:1", onBlack: "14.1:1", paint: "paint-yellow.svg"},
+  {name: "Pink", hex: "#E5199A", token: "paint-pink", use: "Current page underline, circle around the current language, <Mark>", contrast: "3.8:1", onBlack: "4.9:1", paint: "paint-pink.svg"},
+  {name: "Black paint", hex: "#000000", token: "paint-black", use: "Search field, black <Mark>", contrast: "18.6:1", paint: "paint-black.svg"},
 ];
 
 export default function Palette({group = "print"}: {group?: "print" | "paint"}) {
@@ -44,7 +44,10 @@ export default function Palette({group = "print"}: {group?: "print" | "paint"}) 
             <code>{s.hex}</code> · <code>{s.token}</code>
           </span>
           <span className="fx-swatch__use">{s.use}</span>
-          <span className="fx-swatch__meta">{s.contrast === "n/a" ? "Background" : `${s.contrast} on white`}</span>
+          <span className="fx-swatch__meta">
+            {s.contrast === "n/a" ? "Background" : `${s.contrast} on paper`}
+            {s.onBlack ? ` · ${s.onBlack} on black` : ""}
+          </span>
         </li>
       ))}
     </ul>

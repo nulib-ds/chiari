@@ -1,7 +1,7 @@
 import React from "react";
 
 type MarkType = "underline" | "circle";
-type MarkColor = "red" | "blue" | "green" | "gold" | "black";
+type MarkColor = "red" | "blue" | "green" | "yellow" | "pink" | "black";
 
 /**
  * A paint-marker annotation over text, using the same marks as the site
@@ -21,7 +21,7 @@ export default function Mark({
   children,
 }: {
   type?: MarkType;
-  /** Underline color. The colors are the main menu's. */
+  /** Underline color: the main menu's four, plus pink and black. */
   color?: MarkColor;
   /** Which of the two loops to circle with. */
   variant?: "a" | "b";
