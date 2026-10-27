@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 520" fill="none">
+  <!-- Abstract hero accents: loose circles, a scribbled stroke and scattered dots. -->
+  <circle cx="512" cy="92" r="64" fill="#FFC520"/>
+  <circle cx="548" cy="140" r="26" fill="none" stroke="#EF553F" stroke-width="6"/>
+  <path d="M40 470c40-60 90 10 130-40s80 20 120-30 70 30 110-10" stroke="#5091CD" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="70" cy="80" r="10" fill="#58B947"/>
+  <circle cx="98" cy="62" r="6" fill="#EF553F"/>
+  <circle cx="110" cy="96" r="4" fill="#5091CD"/>
+  <circle cx="470" cy="430" r="40" fill="#7FCECD"/>
+  <circle cx="530" cy="470" r="12" fill="#58B947"/>
+</svg>

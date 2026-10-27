@@ -7,6 +7,11 @@ locales:
     label: Italiano
 collection:
   - https://iiif-understory.dc.library.northwestern.edu/published/presentation/collection/chiari/collection.json
+featured:
+  - https://iiif-understory.dc.library.northwestern.edu/published/presentation/manifest/fe93e84d-8d79-4f01-9bd4-2c5892b70bd1/manifest.json
+  - https://iiif-understory.dc.library.northwestern.edu/published/presentation/manifest/5d574442-d2bc-445e-a4ac-f22eb155c414/manifest.json
+  - https://iiif-understory.dc.library.northwestern.edu/published/presentation/manifest/82e959c7-24de-41fc-8a5c-7285eeca21f0/manifest.json
+  - https://iiif-understory.dc.library.northwestern.edu/published/presentation/manifest/16bf31c6-0505-4d5f-acf0-f790b2dd2c0d/manifest.json
 metadata:
   - Subject
   - Date
@@ -37,5 +42,5 @@ search:
 webmcp: true
 theme:
   appearance: light
-  accentColor: purple
-  grayColor: mauve
+  accentColor: blue
+  grayColor: gray

@@ -3,6 +3,52 @@ import {CanopyHeader, CanopyFooter} from "@canopy-iiif/app/ui";
 
 export const NU_CDN = "https://common.northwestern.edu/v8/css";
 
+export const IIIF_SIZE_FALLBACK =
+  // Canopy builds IIIF srcsets as `!w,w` at fixed widths (360–1600). The
+  // Understory image server rejects `!w,h` whenever w or h exceeds the
+  // image's own size, even though the result would be a downscale, so wide
+  // or short images 400 on large screens. When one fails, read its info.json
+  // once and clamp each candidate to the image's dimensions. Remove once
+  // Canopy clamps srcsets upstream.
+  `(function () {
+  var tried = new WeakSet();
+  function clamp(url, width, height) {
+    var parts = url.split("/full/!");
+    if (parts.length !== 2) return null;
+    var rest = parts[1].split("/");
+    var box = rest[0].split(",").map(Number);
+    var w = Math.min(box[0], width);
+    var h = Math.min(box[1], height);
+    var scale = Math.min(w / width, h / height);
+    rest[0] = w + "," + h;
+    return {url: parts[0] + "/full/!" + rest.join("/"), width: Math.round(width * scale)};
+  }
+  document.addEventListener("error", function (event) {
+    var img = event.target;
+    if (!(img instanceof HTMLImageElement) || tried.has(img)) return;
+    var failed = img.currentSrc || img.src;
+    var at = failed.indexOf("/full/!");
+    if (at < 0) return;
+    tried.add(img);
+    fetch(failed.slice(0, at) + "/info.json")
+      .then(function (response) { return response.json(); })
+      .then(function (info) {
+        var src = clamp(img.getAttribute("src") || "", info.width, info.height);
+        var seen = {};
+        // IIIF sizes contain commas ("!360,360"), so split on ", " only.
+        var candidates = (img.getAttribute("srcset") || "").split(", ").map(function (entry) {
+          var fit = clamp(entry.trim().split(" ")[0], info.width, info.height);
+          if (!fit || seen[fit.width]) return "";
+          seen[fit.width] = true;
+          return fit.url + " " + fit.width + "w";
+        }).filter(Boolean);
+        if (candidates.length) img.setAttribute("srcset", candidates.join(", "));
+        if (src) img.setAttribute("src", src.url);
+      })
+      .catch(function () { img.removeAttribute("srcset"); });
+  }, true);
+})();`;
+
 export function Head() {
   return (
     <>
@@ -30,6 +76,7 @@ export function Head() {
         crossOrigin="anonymous"
       />
       <Stylesheet />
+      <script dangerouslySetInnerHTML={{__html: IIIF_SIZE_FALLBACK}} />
     </>
   );
 }
@@ -37,19 +84,12 @@ export function Head() {
 export function App({children}) {
   return (
     <>
-      {/* v4-style top bar: the white wordmark links to northwestern.edu. The
-          header below carries the site name from canopy.yml `title`. */}
-      <div className="nu-top-bar">
-        <a href="https://www.northwestern.edu/">
-          <img className="nu-wordmark" src={`${NU_CDN}/images/northwestern.svg`} alt="Northwestern University" />
-        </a>
-      </div>
+      {/* Fluxus "score" strip in the Northwestern secondary brights. The
+          white wordmark needs a purple ground, so it lives in the footer. */}
+      <div className="fx-score" aria-hidden="true" />
       <CanopyHeader />
       <main>{children}</main>
       <CanopyFooter>
-        <a href="https://www.northwestern.edu/" aria-label="Northwestern University">
-          <img className="nu-wordmark" src={`${NU_CDN}/images/northwestern.svg`} alt="" />
-        </a>
         <p>
           <a href="https://www.library.northwestern.edu/">Northwestern University Libraries</a>
         </p>
@@ -58,6 +98,12 @@ export function App({children}) {
           <a href="https://nulib-ds.github.io/canopy/">Canopy IIIF</a>.
         </p>
       </CanopyFooter>
+      {/* The site's only purple: a slim Purple 120 sliver for the wordmark. */}
+      <div className="fx-footer-sliver">
+        <a href="https://www.northwestern.edu/">
+          <img className="nu-wordmark" src={`${NU_CDN}/images/northwestern.svg`} alt="Northwestern University" />
+        </a>
+      </div>
     </>
   );
 }

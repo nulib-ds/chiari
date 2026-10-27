@@ -82,7 +82,23 @@ All faces load from Northwestern's central CDN (`common.northwestern.edu/v8/css/
 - **Buttons:** primary = Purple 100 fill, Purple 120 on hover; secondary = white with Purple 100 outline/text, Purple 10 on hover. Akkurat Pro Bold, `0.75rem 1.5rem` padding.
 - **Footer:** Purple 120 band, white wordmark linking to northwestern.edu, Libraries link, copyright + Canopy credit.
 
+## Chiari Project Layer (supersedes Purple-led color above)
+
+`app/styles/custom.css` moves this site onto Northwestern's [secondary palette](https://www.northwestern.edu/brand/visual-identity/color-palettes/secondary-palette/) for a Fluxus music/art project. `northwestern.css` is untouched and still provides fonts and structure.
+
+- **Surface:** white, with generous section spacing (`--fx-section-space`). No hairlines between header, nav and content.
+- **Type:** Rich Black `#000000` for text and headings; Rich Black 80% for secondary copy (hero description, blockquotes, footer), Rich Black 50% for captions and meta. This replaces the earlier "never pure black" rule at the project's request.
+- **Brights** (`--fx-green`, `--fx-teal`, `--fx-blue`, `--fx-yellow`, `--fx-gold`, `--fx-red`) are used only as fills, dots, squiggles and rules. None reaches 4.5:1 as text on white, so text never uses them. Rich Black on any bright does.
+- **Darks** (`--fx-blue-dark` `#007FA4`, `--fx-navy` `#0D2D6C`, …) handle colored text and icons. Canopy's accent ramp maps to blue, with `#007FA4` as the default.
+- **Purple:** only in a slim Purple 120 strip under the footer, which holds the white wordmark (the wordmark still has to sit on purple). The v4 Purple top bar is gone, replaced by a `.fx-score` strip of rounded dashes and dots.
+- **Motifs** (`assets/images/fluxus/`): `score.svg` (header strip), `squiggle-*.svg` (h1 underline, nav hover and current state), `hero-shapes.svg` (circles and a scribble behind the hero image). Everything is round and loose, never blocky.
+- **Accents:** h1 has a red squiggle underline, h2 a gold dot, h3 a green underline. Links are Rich Black with a blue underline that turns red on hover. Each nav item gets its own bright; card hover rings cycle red, gold, green and blue.
+- **Shape (deviation):** buttons, the search field, nav marks and hero arrows are pills; cards and hero images have a 1.25rem radius. Canopy forces `border-radius: var(--canopy-radius-none) !important` on `*`, so rounded elements redefine `--canopy-radius-none` rather than setting `border-radius`. Box shadows are forced off the same way, so card hovers use `outline`.
+- **Buttons:** primary is a gold fill with Rich Black text (red on hover); secondary is a Rich Black outline (teal on hover).
+
 ## Technical Notes
+
+- IIIF size workaround: Canopy (1.14.1) builds hero srcsets as `!w,w` at fixed widths (360–1600). The Understory image server rejects `!w,h` whenever `w` or `h` is larger than the image itself, even when the result would be a downscale, and it refuses all upscaling despite advertising `sizeUpscaling`. Short or narrow images therefore 400 on large or high-DPI screens. `IIIF_SIZE_FALLBACK` in `content/_app.mdx` catches the failed load, reads that image's `info.json` once, and rewrites `src`/`srcset` clamped to the real dimensions. Remove it once Canopy clamps srcsets upstream.
 
 - `canopy.yml`'s `featured:` list **must** be present and non-empty — the homepage's `<RelatedItems top={3} />` (and, transitively, the `<Interstitials.Hero />` on the same page) fails to render if it's missing, with no build error surfaced.
 - The monorepo's template staging (`packages/helpers/template/prepare-template.js`) overlays this variant's `app/` directory after copying the monorepo's `app/styles/`, so files here win.

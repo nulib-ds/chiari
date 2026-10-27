@@ -1,20 +1,493 @@
-/** 
- * Example custom color variables
- * @see https://nulib-ds.github.io/canopy/docs/theming/tailwind#custom
+/**
+ * Chiari project layer.
+ *
+ * Moves the site off the Purple-led Northwestern palette and onto the
+ * University's secondary "Brights" — green, teal, blue, yellow, gold, red —
+ * on a white page with Rich Black type. Purple survives only as a sliver in
+ * the footer behind the wordmark. Shapes are round and loose (dots, dashes,
+ * squiggles) rather than blocky, in keeping with Fluxus scores.
+ *
+ * `northwestern.css` is left as the upstream brand layer; everything here
+ * overrides it. Decisions and rationale live in DESIGN.md.
+ *
+ * @see https://www.northwestern.edu/brand/visual-identity/color-palettes/secondary-palette/
  */
 
-/* @layer properties {
+/* -------------------------------------------------------------------------
+ * Tokens
+ * ---------------------------------------------------------------------- */
+
+@layer properties {
   :root,
   :host {
-    --color-northwestern-purple: #4e2a84;
-    --color-accent-700: var(--color-northwestern-purple);
-    --color-accent-default: var(--color-northwestern-purple);
-  }
-} */
+    /* Secondary palette — Brights. Fills, shapes and rules only: none of
+     * these reach 4.5:1 as text on white. Rich Black on any of them does. */
+    --fx-green: #58b947;
+    --fx-teal: #7fcecd;
+    --fx-blue: #5091cd;
+    --fx-yellow: #ede93b;
+    --fx-gold: #ffc520;
+    --fx-red: #ef553f;
 
-/* Keep the Northwestern gray image surface, with captions on white. */
+    /* Secondary palette — Darks, for colored text and icons. */
+    --fx-green-dark: #008656;
+    --fx-blue-dark: #007fa4;
+    --fx-navy: #0d2d6c;
+    --fx-gold-dark: #ca7c1b;
+    --fx-red-dark: #d85820;
+
+    /* Type: Rich Black, with Rich Black 80% / 50% for muted copy. */
+    --fx-ink: #000000;
+    --fx-ink-80: var(--nu-rich-black-80);
+    --fx-ink-50: var(--nu-rich-black-50);
+
+    /* Soft tints of the brights for hover/current-state washes. */
+    --fx-green-wash: color-mix(in srgb, var(--fx-green) 18%, white);
+    --fx-blue-wash: color-mix(in srgb, var(--fx-blue) 16%, white);
+    --fx-gold-wash: color-mix(in srgb, var(--fx-gold) 22%, white);
+    --fx-red-wash: color-mix(in srgb, var(--fx-red) 14%, white);
+    --fx-teal-wash: color-mix(in srgb, var(--fx-teal) 24%, white);
+
+    --fx-radius: 1.25rem;
+    --fx-pill: 999px;
+    --fx-section-space: clamp(3rem, 8vw, 6rem);
+
+    /* Canopy accent ramp → Blue. Default is the dark Secondary blue so
+     * Canopy's accent-colored links and labels keep 4.5:1 on white. */
+    --color-accent-50: var(--nu-white);
+    --color-accent-100: var(--fx-blue-wash);
+    --color-accent-200: color-mix(in srgb, var(--fx-blue) 30%, white);
+    --color-accent-300: color-mix(in srgb, var(--fx-blue) 50%, white);
+    --color-accent-400: color-mix(in srgb, var(--fx-blue) 75%, white);
+    --color-accent-500: var(--fx-blue);
+    --color-accent-600: var(--fx-blue-dark);
+    --color-accent-700: var(--fx-blue-dark);
+    --color-accent-800: var(--fx-navy);
+    --color-accent-900: var(--fx-navy);
+    --color-accent-default: var(--fx-blue-dark);
+
+    --color-gray-900: var(--fx-ink);
+    --color-gray-default: var(--fx-ink);
+    --color-gray-muted: var(--fx-ink-50);
+  }
+}
+
+:root {
+  --clover-color-accent-alt: var(--fx-navy);
+}
+
+::selection {
+  background: var(--fx-yellow);
+  color: var(--fx-ink);
+}
+
+/* Canopy squares every corner with `border-radius:
+ * var(--canopy-radius-none) !important` on `*`. Rather than fight the
+ * !important, rounded elements redefine that variable for themselves (their
+ * children inherit it, which is what we want for card images). */
+.canopy-button,
+.canopy-header .canopy-search-form,
+.canopy-header .canopy-nav-links a,
+.canopy-header .canopy-nav-links a::after,
+.canopy-interstitial__nav-btn,
+.canopy-interstitial__pagination button,
+.canopy-interstitial__pagination [role="tab"] {
+  --canopy-radius-none: var(--fx-pill);
+}
+
+.canopy-card,
+.canopy-interstitial--hero .canopy-interstitial__media-group img {
+  --canopy-radius-none: var(--fx-radius);
+}
+
+/* -------------------------------------------------------------------------
+ * Base: Rich Black type, roomy rhythm, playful links
+ * ---------------------------------------------------------------------- */
+
+body {
+  color: var(--fx-ink);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--fx-ink);
+}
+
+/* Each heading level carries one bright mark, so color arrives in small
+ * splashes rather than large fields. */
+main h1 {
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.9rem;
+  background: url("../images/fluxus/squiggle-red.svg") left bottom / 24px 8px repeat-x;
+  /* Fit to the text so the squiggle underlines the heading, not the column. */
+  width: fit-content;
+  max-width: 100%;
+}
+
+main h2 {
+  position: relative;
+  margin-top: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+main h2::before {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-right: 0.45em;
+  --canopy-radius-none: 50%;
+  background: var(--fx-gold);
+  vertical-align: 0.08em;
+}
+
+main h3 {
+  margin-top: 2.5rem;
+  text-decoration: underline;
+  text-decoration-color: var(--fx-green);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 0.3em;
+}
+
+main p,
+main li {
+  color: var(--fx-ink);
+}
+
+main p + p {
+  margin-top: 1.25em;
+}
+
+main small,
+main figcaption,
+main .canopy-muted {
+  color: var(--fx-ink-50);
+}
+
+main blockquote {
+  border-left: none;
+  padding: 0.25rem 0 0.25rem 1.5rem;
+  color: var(--fx-ink-80);
+  background: linear-gradient(var(--fx-teal), var(--fx-teal)) left / 4px 100% no-repeat;
+  --canopy-radius-none: 2px;
+}
+
+/* Links: Rich Black text with a bright underline that warms on hover.
+ * The underline (not color) carries the link affordance — WCAG 1.4.1. */
+main p a,
+main li a,
+main dd a,
+main blockquote a {
+  color: var(--fx-ink);
+  text-decoration-color: var(--fx-blue);
+  text-decoration-thickness: 2px;
+}
+
+main p a:hover,
+main li a:hover,
+main dd a:hover,
+main blockquote a:hover {
+  text-decoration-color: var(--fx-red);
+  text-decoration-thickness: 3px;
+  background: var(--fx-gold-wash);
+}
+
+:focus-visible {
+  outline: 3px solid var(--fx-blue);
+  outline-offset: 3px;
+}
+
+/* -------------------------------------------------------------------------
+ * Header
+ * ---------------------------------------------------------------------- */
+
+/* A thin Fluxus "score" — rounded dashes and dots — replaces the Purple
+ * top bar as the first thing on the page. */
+.fx-score {
+  display: block;
+  height: 12px;
+  margin: 0;
+  background: url("../images/fluxus/score.svg") left center / 600px 12px repeat-x;
+}
+
+.canopy-header {
+  border-bottom: none;
+}
+
+.canopy-header__brand {
+  padding: 2.5rem 0 1.5rem;
+}
+
+/* Upstream sets this color with !important inside @layer components; an
+ * important declaration only loses to a later one in the same layer. */
+@layer components {
+  .canopy-header .canopy-logo,
+  .canopy-modal .canopy-logo {
+    color: var(--fx-ink) !important;
+    letter-spacing: 0.04em;
+  }
+}
+
+/* Confetti after the site name: four dots, one of each primary-ish bright. */
+.canopy-header .canopy-logo span::after {
+  content: "";
+  display: inline-block;
+  width: 3.2rem;
+  height: 0.9rem;
+  margin-left: 0.6rem;
+  vertical-align: 0.1em;
+  background:
+    radial-gradient(circle, var(--fx-red) 0 0.3rem, transparent 0.32rem) 0 50% / 0.8rem 0.8rem no-repeat,
+    radial-gradient(circle, var(--fx-gold) 0 0.22rem, transparent 0.24rem) 0.85rem 15% / 0.6rem 0.6rem no-repeat,
+    radial-gradient(circle, var(--fx-blue) 0 0.3rem, transparent 0.32rem) 1.55rem 70% / 0.8rem 0.8rem no-repeat,
+    radial-gradient(circle, var(--fx-green) 0 0.18rem, transparent 0.2rem) 2.5rem 30% / 0.5rem 0.5rem no-repeat;
+}
+
+.canopy-modal .canopy-logo span::after {
+  display: none;
+}
+
+/* On small screens the language toggle sits right after the site name. */
+@media (max-width: 56.25em) {
+  .canopy-header .canopy-logo span::after {
+    display: none;
+  }
+}
+
+.canopy-nav-links.canopy-header__desktop-nav {
+  border-top: none;
+  gap: 0.25rem;
+  padding-bottom: 1rem;
+}
+
+.canopy-header .canopy-nav-links a {
+  --fx-nav: var(--fx-blue);
+  --fx-nav-squiggle: url("../images/fluxus/squiggle-blue.svg");
+  position: relative;
+  padding: 0.6rem 1rem 0.9rem;
+  color: var(--fx-ink);
+  --canopy-radius-none: 999px;
+  background: none;
+}
+
+/* Each nav item owns one bright, cycling through the palette. */
+.canopy-header .canopy-nav-links a:nth-child(5n + 1) {
+  --fx-nav: var(--fx-red);
+  --fx-nav-squiggle: url("../images/fluxus/squiggle-red.svg");
+}
+.canopy-header .canopy-nav-links a:nth-child(5n + 2) {
+  --fx-nav: var(--fx-gold);
+  --fx-nav-squiggle: url("../images/fluxus/squiggle-gold.svg");
+}
+.canopy-header .canopy-nav-links a:nth-child(5n + 3) {
+  --fx-nav: var(--fx-green);
+  --fx-nav-squiggle: url("../images/fluxus/squiggle-green.svg");
+}
+.canopy-header .canopy-nav-links a:nth-child(5n + 4) {
+  --fx-nav: var(--fx-blue);
+  --fx-nav-squiggle: url("../images/fluxus/squiggle-blue.svg");
+}
+.canopy-header .canopy-nav-links a:nth-child(5n + 5) {
+  --fx-nav: var(--fx-teal);
+  --fx-nav-squiggle: url("../images/fluxus/squiggle-teal.svg");
+}
+
+/* A small dot under every link; hover draws it out into a squiggle. */
+.canopy-header .canopy-nav-links a::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0.2rem;
+  width: 0.4rem;
+  height: 0.4rem;
+  --canopy-radius-none: 999px;
+  background: var(--fx-nav);
+  transform: translateX(-50%);
+  transition: width 200ms ease, height 200ms ease, border-radius 200ms ease;
+}
+
+.canopy-header .canopy-nav-links a:hover {
+  background: none;
+  color: var(--fx-ink);
+}
+
+.canopy-header .canopy-nav-links a:hover::after,
+.canopy-header .canopy-nav-links a[aria-current="page"]::after {
+  width: calc(100% - 2rem);
+  height: 8px;
+  --canopy-radius-none: 0;
+  background: var(--fx-nav-squiggle) left center / 24px 8px repeat-x;
+}
+
+.canopy-header .canopy-nav-links a[aria-current="page"] {
+  background: none;
+  color: var(--fx-ink);
+}
+
+.canopy-header .canopy-nav-links a:focus-visible {
+  background: var(--fx-ink);
+  color: var(--nu-white);
+  outline: none;
+}
+
+.canopy-header .canopy-header__icon-button,
+.canopy-header .canopy-header__menu,
+.canopy-modal--nav .canopy-nav-links a {
+  color: var(--fx-ink);
+}
+
+/* Search: a soft pill instead of the purple underline. */
+.canopy-header .canopy-search-form {
+  border-bottom: none;
+  --canopy-radius-none: 999px;
+  background: var(--fx-teal-wash);
+  padding: 0 0.9rem;
+}
+
+.canopy-header .canopy-search-form__label svg {
+  color: var(--fx-blue-dark);
+}
+
+.canopy-header .canopy-search-form__input {
+  color: var(--fx-ink);
+}
+
+.canopy-header .canopy-search-form__input::placeholder {
+  color: var(--fx-ink-50);
+}
+
+/* The header search sits on its pill, without a frosted backdrop. */
+.canopy-header .canopy-search-form-shell {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Remove the language-select border peeking around the header search. */
+.canopy-header__language-toggle--desktop .canopy-language-toggle__select-input {
+  border: none;
+}
+
+/* -------------------------------------------------------------------------
+ * Hero
+ * ---------------------------------------------------------------------- */
+
+.canopy-interstitial--hero {
+  --hero-bg-start: var(--nu-white);
+  --hero-bg-mid: var(--nu-white);
+  --hero-bg-end: var(--nu-white);
+  --hero-dot-bg: var(--nu-rich-black-10);
+  --hero-dot-active-bg: var(--fx-red);
+  border-bottom: none;
+  padding-block: 2rem var(--fx-section-space);
+}
+
+.canopy-interstitial--hero .canopy-interstitial__nav-btn {
+  background-color: var(--nu-white) !important;
+  color: var(--fx-ink) !important;
+  border: 2px solid var(--fx-ink);
+}
+
+.canopy-interstitial--hero .canopy-interstitial__nav-btn svg {
+  stroke: var(--fx-ink);
+}
+
+.canopy-interstitial--hero .canopy-interstitial__nav-btn:hover {
+  background-color: var(--fx-gold) !important;
+  border-color: var(--fx-gold);
+}
+
+.canopy-interstitial--hero .canopy-interstitial__headline {
+  color: var(--fx-ink);
+}
+
+.canopy-interstitial--hero .canopy-interstitial__description {
+  color: var(--fx-ink-80);
+}
+
+/* Loose circles and a scribbled stroke float behind the featured image. */
+.canopy-interstitial--hero .canopy-interstitial__media-group {
+  background: url("../images/fluxus/hero-shapes.svg") center / contain no-repeat;
+}
+
+.canopy-interstitial--hero .canopy-interstitial__media-group img {
+  --canopy-radius-none: var(--fx-radius);
+}
+
+/* -------------------------------------------------------------------------
+ * Buttons: bright pills with Rich Black text (every bright clears 4.5:1
+ * against Rich Black).
+ * ---------------------------------------------------------------------- */
+
+.canopy-button {
+  border-width: 2px;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.canopy-button--primary {
+  background-color: var(--fx-gold);
+  border-color: var(--fx-gold);
+  color: var(--fx-ink);
+}
+
+.canopy-button--primary:hover,
+.canopy-button--primary:focus-visible {
+  background-color: var(--fx-red);
+  border-color: var(--fx-red);
+  color: var(--fx-ink);
+  transform: rotate(-1.5deg);
+}
+
+.canopy-button--secondary {
+  background-color: var(--nu-white);
+  border-color: var(--fx-ink);
+  color: var(--fx-ink);
+}
+
+.canopy-button--secondary:hover,
+.canopy-button--secondary:focus-visible {
+  background-color: var(--fx-teal);
+  border-color: var(--fx-teal);
+  color: var(--fx-ink);
+  transform: rotate(1.5deg);
+}
+
+/* -------------------------------------------------------------------------
+ * Cards: white space around rounded images; a bright ring on hover.
+ * ---------------------------------------------------------------------- */
+
+.canopy-card {
+  border: none;
+  background: var(--nu-white);
+  --canopy-radius-none: var(--fx-radius);
+  outline: 4px solid transparent;
+  outline-offset: 4px;
+  transition: outline-color 200ms ease, transform 200ms ease;
+}
+
+.canopy-card img,
+.canopy-card figure > :first-child {
+  --canopy-radius-none: var(--fx-radius);
+}
+
 .canopy-card figcaption {
   background: var(--nu-white);
+  color: var(--fx-ink);
+}
+
+/* Cards sit one per wrapper, so the color cycles on the wrapper. */
+:nth-child(4n + 1) > .canopy-card { --fx-card: var(--fx-red); }
+:nth-child(4n + 2) > .canopy-card { --fx-card: var(--fx-gold); }
+:nth-child(4n + 3) > .canopy-card { --fx-card: var(--fx-green); }
+:nth-child(4n + 4) > .canopy-card { --fx-card: var(--fx-blue); }
+
+/* Outline, not box-shadow: Canopy also zeroes shadows with !important. */
+.canopy-card:hover {
+  outline-color: var(--fx-card, var(--fx-blue));
+  transform: translateY(-2px);
 }
 
 /* Reserve a square image surface when a search card has no thumbnail. */
@@ -22,8 +495,13 @@
   content: "";
   display: block;
   aspect-ratio: 1;
-  background: var(--nu-offwhite);
+  --canopy-radius-none: var(--fx-radius);
+  background: var(--fx-teal-wash);
 }
+
+/* -------------------------------------------------------------------------
+ * Search results
+ * ---------------------------------------------------------------------- */
 
 /* Search extends slightly beyond the header's 1120px content column. */
 .canopy-search-results {
@@ -44,17 +522,64 @@
 
 .canopy-search-results [data-canopy-search-summary] > div {
   font-size: inherit;
-  color: var(--nu-rich-black-60);
+  color: var(--fx-ink-50);
 }
 
-/* The header search sits on solid white, without a frosted backdrop. */
-.canopy-header .canopy-search-form-shell {
+/* -------------------------------------------------------------------------
+ * Page whitespace
+ * ---------------------------------------------------------------------- */
+
+main {
+  padding-bottom: var(--fx-section-space);
+}
+
+.canopy-layout {
+  padding-top: clamp(1.5rem, 4vw, 3rem);
+}
+
+/* -------------------------------------------------------------------------
+ * Footer: white, with the score repeated, and the only purple on the site —
+ * a slim Purple 120 sliver that carries the white wordmark.
+ * ---------------------------------------------------------------------- */
+
+.canopy-footer {
   background: var(--nu-white);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  color: var(--fx-ink-80);
+  margin-top: var(--fx-section-space);
 }
 
-/* Remove the language-select border peeking around the header search. */
-.canopy-header__language-toggle--desktop .canopy-language-toggle__select-input {
-  border: none;
+.canopy-footer a {
+  color: var(--fx-ink);
+  text-decoration-color: var(--fx-green);
+  text-decoration-thickness: 2px;
+}
+
+.canopy-footer a:hover {
+  text-decoration-color: var(--fx-red);
+}
+
+.canopy-footer :focus-visible {
+  outline-color: var(--fx-blue);
+}
+
+.canopy-footer__inner {
+  padding-block: 3rem;
+}
+
+.fx-footer-sliver {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  background: var(--nu-purple-120);
+}
+
+.fx-footer-sliver .nu-wordmark {
+  display: block;
+  height: 18px;
+  width: auto;
+}
+
+.fx-footer-sliver a:focus-visible {
+  outline-color: var(--nu-white);
 }

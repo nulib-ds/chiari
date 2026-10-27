@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="12" viewBox="0 0 600 12" fill="none" stroke-linecap="round" stroke-width="6">
+  <!-- A Fluxus-style "score": rounded dashes and dots in the NU secondary brights. Tiles horizontally. -->
+  <path d="M6 6h58" stroke="#58B947"/>
+  <circle cx="84" cy="6" r="4" fill="#FFC520" stroke="none"/>
+  <path d="M104 6h22" stroke="#5091CD"/>
+  <path d="M146 6h92" stroke="#EF553F"/>
+  <circle cx="258" cy="6" r="4" fill="#7FCECD" stroke="none"/>
+  <circle cx="274" cy="6" r="4" fill="#58B947" stroke="none"/>
+  <path d="M294 6h40" stroke="#FFC520"/>
+  <path d="M354 6h12" stroke="#EF553F"/>
+  <path d="M386 6h76" stroke="#5091CD"/>
+  <circle cx="482" cy="6" r="4" fill="#EF553F" stroke="none"/>
+  <path d="M502 6h34" stroke="#7FCECD"/>
+  <path d="M556 6h38" stroke="#FFC520"/>
+</svg>
