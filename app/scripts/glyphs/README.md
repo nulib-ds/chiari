@@ -67,7 +67,7 @@ extract.py flyer.jpg 80 300 2740 680 assets/images/glyphs/art-is-easy.svg --labe
 
 ```bash
 python app/scripts/glyphs/paint_circle.py   # loops, magnifier, clear ×, panel frame + mask
-python app/scripts/glyphs/annotations.py    # 30 hover annotations + app/styles/annotations.css
+python app/scripts/glyphs/annotations.py    # 20 hover annotations + app/styles/annotations.css
 ```
 
-Both use `brush()` in `paint_circle.py`. Run them with a plain `python`, not `python -I`, so `annotations.py` can import its neighbor. To change an annotation family, edit its function in `annotations.py`; to change the mix, edit `FAMILIES`. Each mark's seed is `1000 + index`, so reruns are stable.
+Both use `brush()` in `paint_circle.py`. Run them with a plain `python`, not `python -I`, so `annotations.py` can import its neighbor. Each annotation is one function in `annotations.py`; `GESTURES` sets the order (and so the numbers). Each mark's seed is `2000 + its number`, so reruns are stable. If you add or remove gestures, also update `ANNOTATIONS` in the head script in `content/_app.mdx`.

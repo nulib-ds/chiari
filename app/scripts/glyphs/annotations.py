@@ -1,21 +1,20 @@
 """Draw the library of hover annotations: annotations.py
 
-Thirty marks in ten families, after the colored marker and brush gestures
-Chiari laid over printed scores: dense scribble blocks, coils, hatching,
-long arcs, underlines, spring zigzags, tangles, ticks, broad dry brush
-swipes and dabs. Three variants of each, from different seeds.
+Twenty distinct marks after the colored marker and brush gestures Chiari
+laid over printed scores. Each is its own gesture, not a variant of
+another: scribble fill, coil, hatching, arc, underline, spring, tangle,
+ticks, brush swipes, dabs, cross-hatch, open oval, strike, verticals,
+spiral, wave, hook, crossing diagonals, taps and lasso.
 
 Every mark is black on transparent and used as a CSS mask, so any palette
-color can paint it. The viewBox is 280 × 50, about the shape of a search
-result row, and masks stretch to the row.
+color can paint it (see [data-fx-ann-color] in app/styles/custom.css). The
+viewBox is 280 × 50, and every use keeps that shape: marks are never
+turned or squeezed, so they read as drawn.
 
-Each mark is also written turned on its side (annotate-v-NN.svg, 50 × 280),
-for marks that run down the edge of a card.
-
-Writes assets/images/marks/annotate-01.svg … -30.svg, the -v- versions,
-and app/styles/annotations.css (one mask rule per mark and direction).
+Writes assets/images/marks/annotate-01.svg … -20.svg and
+app/styles/annotations.css (one mask rule per mark).
 """
-import math, os, random, re
+import glob, math, os, random
 
 from paint_circle import brush, wobble
 
@@ -37,130 +36,17 @@ def stroke(rng, pts, width, taper=True, worn=True, dry=0.9, jag=0.4):
     return brush(rng, pts, widths, width, "#000", jag=jag, dry=dry, worn=worn)
 
 
-def scribble_block(rng):
-    """A tight zigzag scribble worked back and forth over a patch, like the
-    red clusters: visible strokes with paper between them, not a solid bar."""
-    x0, x1 = rng.uniform(10, 70), rng.uniform(130, 240)
-    top, bot = rng.uniform(3, 9), rng.uniform(41, 47)
-    passes = rng.randint(2, 3)
-    pts = []
-    for p in range(passes):
-        teeth = rng.randint(9, 15)
-        a, b = (x0, x1) if p % 2 == 0 else (x1, x0)
-        for i in range(teeth * 2 + 1):
-            u = i / (teeth * 2)
-            y = (top if i % 2 else bot) + rng.uniform(-3, 3)
-            pts.append((a + (b - a) * u + rng.uniform(-3, 3), y))
+def line(a, b, n=20):
+    """Points from a to b."""
+    return [(a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n) for i in range(n + 1)]
+
+
+def subdivide(pts, k=5):
+    """Add points between corners so the brush bends at each one."""
     fine = []
     for (ax, ay), (bx, by) in zip(pts, pts[1:]):
-        for k in range(5):
-            fine.append((ax + (bx - ax) * k / 5, ay + (by - ay) * k / 5))
-    fine.append(pts[-1])
-    return [stroke(rng, fine, rng.uniform(3.6, 4.6), dry=0.95, jag=0.3)]
-
-
-def coil(rng):
-    """A chain of overlapping loops pulled along the row."""
-    x0 = rng.uniform(10, 50)
-    span = rng.uniform(150, 230)
-    r = rng.uniform(9, 14)
-    turns = rng.uniform(5, 8)
-    pts = []
-    for i in range(240):
-        t = i / 239 * turns * 2 * math.pi
-        pts.append((x0 + span * i / 239 + r * 0.9 * math.cos(t), 25 + r * math.sin(t) + rng.uniform(-0.4, 0.4)))
-    return [stroke(rng, pts, rng.uniform(4, 5.5))]
-
-
-def hatching(rng):
-    """A run of short diagonal strokes across the row."""
-    out = []
-    n = rng.randint(6, 11)
-    lean = rng.uniform(0.5, 1.1) * rng.choice([1, -1])
-    x = rng.uniform(10, 30)
-    for _ in range(n):
-        h = rng.uniform(26, 40)
-        y0 = rng.uniform(4, 50 - h - 2)
-        pts = [(x + lean * h * u + rng.uniform(-0.6, 0.6), y0 + h * u) for u in [i / 14 for i in range(15)]]
-        out.append(stroke(rng, pts[::rng.choice([1, -1])], rng.uniform(6, 9)))
-        x += rng.uniform(16, 26)
-        if x > W - 20:
-            break
-    return out
-
-
-def arc(rng):
-    """One long thin sweep across the row."""
-    up = rng.choice([1, -1])
-    a, b = (rng.uniform(4, 20), 25 + up * rng.uniform(10, 18)), (rng.uniform(250, 276), 25 - up * rng.uniform(10, 20))
-    sag = rng.uniform(12, 20) * up
-    pts = []
-    for i in range(80):
-        u = i / 79
-        pts.append((a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u + sag * math.sin(math.pi * u)))
-    return [stroke(rng, pts, rng.uniform(3.5, 5))]
-
-
-def underline(rng):
-    """A long underline with a slight wave, sitting low in the row."""
-    y = rng.uniform(37, 44)
-    x0, x1 = rng.uniform(4, 30), rng.uniform(220, 276)
-    wave = wobble(rng, n=2, amp=1.6)
-    pts = [(x0 + (x1 - x0) * i / 59, y + wave(i / 59 * 6)) for i in range(60)]
-    out = [stroke(rng, pts, rng.uniform(6, 8))]
-    if rng.random() < 0.5:  # sometimes gone over twice
-        pts2 = [(x + rng.uniform(-1, 1), yy + rng.uniform(2.5, 4)) for x, yy in pts[rng.randint(5, 20):rng.randint(40, 58)]]
-        out.append(stroke(rng, pts2, rng.uniform(4, 5.5)))
-    return out
-
-
-def spring(rng):
-    """A sharp zigzag spring, tall and quick."""
-    x0, x1 = rng.uniform(10, 60), rng.uniform(170, 260)
-    teeth = rng.randint(7, 12)
-    top, bot = rng.uniform(4, 10), rng.uniform(40, 46)
-    pts = []
-    for i in range(teeth * 2 + 1):
-        u = i / (teeth * 2)
-        pts.append((x0 + (x1 - x0) * u + rng.uniform(-2, 2), (top if i % 2 else bot) + rng.uniform(-2, 2)))
-    # Subdivide so the brush bends at each tooth.
-    fine = []
-    for (ax, ay), (bx, by) in zip(pts, pts[1:]):
-        for k in range(6):
-            fine.append((ax + (bx - ax) * k / 6, ay + (by - ay) * k / 6))
-    fine.append(pts[-1])
-    return [stroke(rng, fine, rng.uniform(4.5, 6))]
-
-
-def tangle(rng):
-    """A knotted scribble around one spot, overlapping lines."""
-    cx, cy = rng.uniform(70, 210), 25
-    pts = []
-    t = 0.0
-    for i in range(320):
-        t += 0.11 + rng.uniform(-0.02, 0.02)
-        rx = 40 + 30 * math.sin(i / 37)
-        ry = 14 + 6 * math.sin(i / 23)
-        pts.append((cx + rx * math.cos(t * 1.3), cy + ry * math.sin(t * 2.1)))
-    return [stroke(rng, pts, rng.uniform(2.6, 3.4), dry=0.96, jag=0.25)]
-
-
-def ticks(rng):
-    """A few quick check-mark flicks."""
-    out = []
-    x = rng.uniform(16, 50)
-    for _ in range(rng.randint(3, 5)):
-        s = rng.uniform(0.8, 1.2)
-        a = (x, 26 * s)
-        b = (x + 8 * s, 40)
-        c = (x + 30 * s, rng.uniform(4, 10))
-        pts = [(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u) for u in [i / 8 for i in range(9)]]
-        pts += [(b[0] + (c[0] - b[0]) * u, b[1] + (c[1] - b[1]) * u) for u in [i / 14 for i in range(1, 15)]]
-        out.append(stroke(rng, pts, rng.uniform(5, 7)))
-        x += rng.uniform(48, 70)
-        if x > W - 40:
-            break
-    return out
+        fine += [(ax + (bx - ax) * j / k, ay + (by - ay) * j / k) for j in range(k)]
+    return fine + [pts[-1]]
 
 
 def bristles(rng, x0, y0, length, angle, width, lanes):
@@ -173,80 +59,216 @@ def bristles(rng, x0, y0, length, angle, width, lanes):
     wave = wobble(rng, n=2, amp=1.8)
     for k in range(lanes):
         off = (k / max(1, lanes - 1) - 0.5) * width + rng.uniform(-0.8, 0.8)
-        # Middle lanes carry more paint and run further.
-        core = 1 - abs(off) / (width * 0.6)
+        core = 1 - abs(off) / (width * 0.6)  # middle lanes carry more paint
         start = rng.uniform(0, 0.12) + (1 - core) * 0.08
         end = rng.uniform(0.7, 1.0) * (0.75 + 0.25 * core)
         pts = []
         for i in range(36):
             u = start + (end - start) * i / 35
             d = length * u
-            x = x0 + ca * d + nx * (off + wave(u * 5) * 0.5)
-            y = y0 + sa * d + ny * (off + wave(u * 5) * 0.5)
-            pts.append((x, y))
-        lw = width / lanes * rng.uniform(1.3, 1.9)
-        out.append(stroke(rng, pts, lw, dry=rng.uniform(0.6, 0.85), jag=0.25))
+            pts.append((x0 + ca * d + nx * (off + wave(u * 5) * 0.5), y0 + sa * d + ny * (off + wave(u * 5) * 0.5)))
+        out.append(stroke(rng, pts, width / lanes * rng.uniform(1.3, 1.9), dry=rng.uniform(0.6, 0.85), jag=0.25))
+    return out
+
+
+# --- The twenty gestures --------------------------------------------------
+
+
+def scribble_fill(rng):
+    """Horizontal back-and-forth over a patch, lines apart, like a quick fill."""
+    x0, x1, rows = rng.uniform(16, 40), rng.uniform(190, 240), 6
+    pts = []
+    for r in range(rows):
+        y = 6 + r * 7.4 + rng.uniform(-0.8, 0.8)
+        a, b = (x0 + rng.uniform(-6, 6), x1 + rng.uniform(-8, 6))
+        if r % 2:
+            a, b = b, a
+        pts += [(a + (b - a) * j / 9, y + math.sin(j / 9 * 3) * 0.9) for j in range(10)]
+    return [stroke(rng, pts, 3.4, dry=0.95, jag=0.25)]
+
+
+def coil(rng):
+    """A chain of overlapping loops pulled along the row."""
+    x0, span, r, turns = 18, 200, 12, 6.5
+    pts = [(x0 + span * i / 239 + r * 0.9 * math.cos(i / 239 * turns * 2 * math.pi),
+            25 + r * math.sin(i / 239 * turns * 2 * math.pi)) for i in range(240)]
+    return [stroke(rng, pts, 4.8)]
+
+
+def hatching(rng):
+    """A run of short parallel diagonal dashes."""
+    out, x = [], 20
+    for _ in range(9):
+        y0 = rng.uniform(8, 14)
+        out.append(stroke(rng, line((x, y0 + 26), (x + 14, y0), 12), rng.uniform(6.5, 8)))
+        x += rng.uniform(22, 27)
+    return out
+
+
+def arc(rng):
+    """One long thin sweep rising across the row."""
+    pts = [(8 + 264 * u, 40 - 26 * u - 14 * math.sin(math.pi * u)) for u in [i / 79 for i in range(80)]]
+    return [stroke(rng, pts, 4.2)]
+
+
+def underline(rng):
+    """A low underline, gone over twice for part of its length."""
+    wave = wobble(rng, n=2, amp=1.2)
+    pts = [(10 + 250 * i / 59, 41 + wave(i / 59 * 6)) for i in range(60)]
+    again = [(x + rng.uniform(-0.6, 0.6), y - 4) for x, y in pts[12:46]]
+    return [stroke(rng, pts, 7), stroke(rng, again, 4.6)]
+
+
+def spring(rng):
+    """A tall, sharp zigzag."""
+    pts = [(24 + 210 * i / 20 + rng.uniform(-1.5, 1.5), (6 if i % 2 else 44) + rng.uniform(-2, 2)) for i in range(21)]
+    return [stroke(rng, subdivide(pts, 6), 5.2)]
+
+
+def tangle(rng):
+    """A knotted scribble around one spot."""
+    pts, t = [], 0.0
+    for i in range(320):
+        t += 0.11 + rng.uniform(-0.02, 0.02)
+        pts.append((140 + (40 + 30 * math.sin(i / 37)) * math.cos(t * 1.3), 25 + (14 + 6 * math.sin(i / 23)) * math.sin(t * 2.1)))
+    return [stroke(rng, pts, 3.0, dry=0.96, jag=0.25)]
+
+
+def ticks(rng):
+    """Quick check-mark flicks."""
+    out = []
+    for x in (30, 95, 160, 225):
+        pts = line((x, 26), (x + 8, 40), 8) + line((x + 8, 40), (x + 30, 6), 14)[1:]
+        out.append(stroke(rng, pts, rng.uniform(5.5, 6.5)))
     return out
 
 
 def brush_swipes(rng):
-    """Two or three broad, streaky swipes on a diagonal, like the brushwork
-    over a score: loaded at the start, dragging dry toward the end."""
-    out = []
-    for _ in range(rng.randint(2, 3)):
-        length = rng.uniform(90, 170)
-        angle = rng.uniform(-18, 6)
-        x0 = rng.uniform(0, W - length * 0.9)
-        y0 = rng.uniform(18, 34)
-        out += bristles(rng, x0, y0, length, angle, rng.uniform(14, 22), rng.randint(6, 9))
-    return out
+    """Two broad, streaky swipes on a diagonal, dragging dry toward the end."""
+    return bristles(rng, 14, 30, 150, -9, 20, 8) + bristles(rng, 130, 26, 140, -4, 18, 7)
 
 
 def dabs(rng):
-    """Short broad dabs of paint, set down at an angle and lifted."""
-    out = []
-    x = rng.uniform(6, 40)
-    for _ in range(rng.randint(3, 5)):
-        length = rng.uniform(26, 46)
-        out += bristles(rng, x, rng.uniform(16, 34), length, rng.uniform(-30, 10), rng.uniform(12, 18), rng.randint(5, 7))
-        x += length + rng.uniform(12, 30)
-        if x > W - 30:
-            break
+    """Short broad dabs set down at an angle and lifted."""
+    out, x = [], 18
+    for _ in range(4):
+        length = rng.uniform(30, 42)
+        out += bristles(rng, x, rng.uniform(18, 32), length, rng.uniform(-28, 6), 15, 6)
+        x += length + rng.uniform(22, 32)
     return out
 
 
-FAMILIES = [scribble_block, coil, hatching, arc, underline, spring, tangle, ticks, brush_swipes, dabs]
+def cross_hatch(rng):
+    """An X-hatched patch: one set of diagonals, then the other across it."""
+    out = []
+    for i in range(7):
+        x = 70 + i * 20
+        out.append(stroke(rng, line((x, 44), (x + 24, 6), 10), 3.6, dry=0.95))
+    for i in range(7):
+        x = 74 + i * 20
+        out.append(stroke(rng, line((x, 6), (x + 24, 44), 10), 3.6, dry=0.95))
+    return out
 
 
-def svg(parts, vertical=False):
+def oval(rng):
+    """A single loose ring, open where the pen lifts, as when circling."""
+    start, span = 2.6, 2 * math.pi - 0.5
+    pts = [(140 + 112 * math.cos(start + span * u), 25 + 18 * math.sin(start + span * u) * (1 + 0.05 * u))
+           for u in [i / 119 for i in range(120)]]
+    return [stroke(rng, pts, 4.4)]
+
+
+def strike(rng):
+    """One fast slash through the middle, hooking back at the end."""
+    pts = line((16, 30), (238, 20), 40)
+    pts += [(238 + 14 * math.sin(u * math.pi / 2), 20 + 12 * (1 - math.cos(u * math.pi / 2))) for u in [i / 10 for i in range(1, 11)]]
+    return [stroke(rng, pts, 5.8)]
+
+
+def verticals(rng):
+    """A tight cluster of tall strokes leaning together, like marks over notes."""
+    out = []
+    for i in range(8):
+        x = 100 + i * 9 + rng.uniform(-2, 2)
+        lean = rng.uniform(4, 9)
+        out.append(stroke(rng, line((x + lean, 4 + rng.uniform(0, 4)), (x, 46 - rng.uniform(0, 4)), 14), rng.uniform(5, 6.5)))
+    return out
+
+
+def spiral(rng):
+    """A spiral wound inward on one spot, like a coil seen end on."""
+    pts = []
+    for i in range(220):
+        u = i / 219
+        t = u * 5.5 * 2 * math.pi
+        r = 1 - 0.85 * u
+        pts.append((140 + 60 * r * math.cos(t), 25 + 19 * r * math.sin(t)))
+    return [stroke(rng, pts, 3.2, dry=0.97, jag=0.25)]
+
+
+def wave(rng):
+    """A long, even wave across the row."""
+    pts = [(10 + 260 * u, 25 + 14 * math.sin(u * 4.5 * 2 * math.pi)) for u in [i / 159 for i in range(160)]]
+    return [stroke(rng, pts, 4.4)]
+
+
+def hook(rng):
+    """A long stroke that curls back on itself at the tail."""
+    pts = [(12 + 200 * u, 38 - 10 * u) for u in [i / 39 for i in range(40)]]
+    for i in range(1, 31):
+        t = i / 30 * 1.6 * math.pi
+        pts.append((212 + 22 * math.sin(t), 28 - 22 * (1 - math.cos(t)) / 2))
+    return [stroke(rng, pts, 5.2)]
+
+
+def crossing_diagonals(rng):
+    """Two long lines crossing steeply over the row."""
+    return [stroke(rng, line((30, 46), (250, 4), 40), 4.2), stroke(rng, line((60, 4), (230, 46), 40), 4.2)]
+
+
+def taps(rng):
+    """Scattered taps of the marker tip."""
+    out = []
+    for _ in range(14):
+        x, y = rng.uniform(16, 264), rng.uniform(8, 42)
+        a = rng.uniform(0, math.pi)
+        out.append(stroke(rng, line((x, y), (x + 3 * math.cos(a), y + 3 * math.sin(a)), 4), rng.uniform(7, 9.5), dry=1))
+    return out
+
+
+def lasso(rng):
+    """One loop thrown at the start, trailing off in a long tail."""
+    pts = [(46 + 30 * math.cos(t), 25 + 16 * math.sin(t)) for t in [math.pi * 0.2 + i / 60 * 2.1 * math.pi for i in range(61)]]
+    end = pts[-1]
+    tail = wobble(rng, n=2, amp=2)
+    pts += [(end[0] + 200 * u, end[1] + 8 * u + tail(u * 5)) for u in [i / 40 for i in range(1, 41)]]
+    return [stroke(rng, pts, 4.4)]
+
+
+GESTURES = [scribble_fill, coil, hatching, arc, underline, spring, tangle, ticks, brush_swipes, dabs,
+            cross_hatch, oval, strike, verticals, spiral, wave, hook, crossing_diagonals, taps, lasso]
+
+
+def svg(parts):
     paths, fibres = [], []
     for p, f in parts:
         paths += p
         fibres += f
-    body = f'<path fill="#000" d="{" ".join(paths)}"/>{"".join(fibres)}'
-    w, h = W, H
-    if vertical:
-        # Turn the mark a quarter clockwise: (x, y) -> (H - y, x).
-        body = re.sub(r"(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)",
-                      lambda m: f"{H - float(m.group(2)):.1f} {float(m.group(1)):.1f}", body)
-        w, h = H, W
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" preserveAspectRatio="none">'
-            f'{body}</svg>\n')
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" preserveAspectRatio="none">'
+            f'<path fill="#000" d="{" ".join(paths)}"/>{"".join(fibres)}</svg>\n')
 
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
+    for old in glob.glob(os.path.join(OUT, "annotate-*.svg")):  # drop marks no longer drawn
+        os.remove(old)
     rules = ["/* Generated by app/scripts/glyphs/annotations.py: one mask per hover",
              " * annotation. Edit the generator, not this file. */", ""]
-    for i in range(30):
-        family = FAMILIES[i % len(FAMILIES)]
-        parts = family(random.Random(1000 + i))
-        for vertical in (False, True):
-            name = f"annotate-{'v-' if vertical else ''}{i + 1:02d}.svg"
-            open(os.path.join(OUT, name), "w").write(svg(parts, vertical))
-            url = f'url("../images/marks/{name}")'
-            sel = f'[data-fx-ann="{i + 1}"]' + ('[data-fx-ann-dir="v"]' if vertical else '')
-            rules.append(f'{sel}::after {{ -webkit-mask-image: {url}; mask-image: {url}; }}')
-        print(name, family.__name__)
+    for i, gesture in enumerate(GESTURES, 1):
+        name = f"annotate-{i:02d}.svg"
+        open(os.path.join(OUT, name), "w").write(svg(gesture(random.Random(2000 + i))))
+        url = f'url("../images/marks/{name}")'
+        rules.append(f'[data-fx-ann="{i}"]::after {{ -webkit-mask-image: {url}; mask-image: {url}; }}')
+        print(f"{i:02d}", gesture.__name__)
     open(CSS, "w").write("\n".join(rules) + "\n")
     print(os.path.normpath(CSS))

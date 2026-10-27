@@ -137,6 +137,32 @@
 
 .fx-mark--circle.fx-mark--b { --fx-mark-img: url("../images/marker/paint-circle-b.svg"); }
 
+/* Annotations: any mark from the hover library (annotations.css supplies
+ * the mask), always shown, in the margin beside the line rather than over
+ * the words, which are too light to survive it. The mark stays unpositioned
+ * so its block is the containing block: the mark keeps the line's height
+ * (its static position) and moves out to the column's edge. */
+:has(> .fx-mark--annotate) {
+  position: relative;
+}
+
+.fx-mark--annotate::after {
+  content: "";
+  position: absolute;
+  width: 6.5em;
+  aspect-ratio: 280 / 50;
+  margin-top: 0.25em;
+  pointer-events: none;
+  background-color: var(--fx-ann, var(--fx-yellow));
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.fx-mark--annotate[data-fx-ann-side="left"]::after { left: -6.7em; }
+.fx-mark--annotate[data-fx-ann-side="right"]::after { right: -6.7em; }
+
 /* -------------------------------------------------------------------------
  * Base: the printed page
  * ---------------------------------------------------------------------- */
@@ -549,7 +575,8 @@ main blockquote a:hover {
   top: calc(100% + 0.9rem);
   width: min(31rem, calc(100vw - 2 * var(--fx-inset)));
   max-height: min(72vh, 44rem);
-  padding: 1.25rem 1.5rem 1.5rem;
+  /* Extra room on the left for the hover marks drawn across thumbnails. */
+  padding: 2rem 1.5rem 1.5rem 2.5rem;
   /* A sheet of the same paper, boxed in marker. paint-frame.svg draws the
    * line as a 9-slice border image, so corners stay put and the line keeps
    * its weight at any size. paint-frame-mask.svg masks the panel to the
@@ -586,26 +613,33 @@ main blockquote a:hover {
 }
 
 /* Hover annotation: a mark from the library (annotations.css, one mask
- * per mark) in a paint color, set behind the row's text and thumbnail so
- * the title stays readable, like marker under a line of print. Each result
- * gets its mark and color at random (see SEARCH_LABEL_TAGS in _app.mdx);
- * black is left out because black text would vanish on it. */
+ * per mark) in a paint color, drawn across the thumbnail at its original
+ * shape and stopping just short of the text, which is too light to survive
+ * it. Each result gets its mark and color from SEARCH_LABEL_TAGS in
+ * _app.mdx. Rows carry 0.6rem / 0.75rem of padding, a 64px thumbnail and a
+ * 1.1rem gap before the text. The panel's left padding is wider to make
+ * room: the mark starts there and its box runs just into the text, so the
+ * paint barely reaches it. */
 .canopy-header .canopy-search-teaser__item {
   position: relative;
-  isolation: isolate;
+  overflow: visible;
 }
 
 .canopy-header .canopy-search-teaser__item::after {
   content: "";
   position: absolute;
-  inset: -0.35rem -0.6rem;
+  top: calc(0.6rem + 32px);
+  left: -1.65rem;
+  width: calc((64px + 2.5rem) * 1.3);
+  aspect-ratio: 280 / 50;
+  transform: translateY(-50%);
   pointer-events: none;
   background-color: var(--fx-ann, var(--fx-red));
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  z-index: -1;
+  z-index: 2;
   visibility: hidden;
 }
 
@@ -619,29 +653,21 @@ main blockquote a:hover {
   visibility: visible;
 }
 
-/* On /search, card marks run down one edge and never touch text: beside
- * the image for works (half in the gutter, slightly over the image, never
- * reaching the caption), beside the text card for pages (in the gutter). */
-/* Canopy clips the card and its media box; the images round their own
- * corners, so let the mark's outer half sit in the gutter. */
+/* On /search, card marks keep their drawn shape and never touch text.
+ * Works: across the top of the image from its left or right edge, the
+ * outer end in the gutter, with the image grayed and faded back beneath
+ * (as in the dropdown). Pages: in the margin beside the title, left of the column or
+ * right of the text. Canopy clips the card and its media box; the images
+ * round their own corners, so let the mark reach into the gutter. */
 .canopy-search-results .canopy-card {
   overflow: visible;
 }
 
-.canopy-search-results .canopy-card-media {
+.canopy-search-results .canopy-card-media,
+.canopy-search-results .canopy-card figure[data-fx-ann],
+.canopy-search-results .canopy-article-card article {
   position: relative;
   overflow: visible;
-}
-
-/* Works without an image: the mark runs beside the square placeholder
- * only, so it never sits alongside the caption. */
-.canopy-search-results .canopy-card figure[data-fx-ann] {
-  position: relative;
-  container-type: inline-size;
-}
-
-.canopy-search-results .canopy-article-card {
-  position: relative;
 }
 
 .canopy-search-results .canopy-article-card {
@@ -650,12 +676,12 @@ main blockquote a:hover {
 
 .canopy-search-results .canopy-card-media::after,
 .canopy-search-results .canopy-card figure[data-fx-ann]::after,
-.canopy-search-results .canopy-article-card::after {
+.canopy-search-results .canopy-article-card article::after {
   content: "";
   position: absolute;
-  top: -0.25rem;
-  bottom: -0.25rem;
-  width: 1.35rem;
+  top: 0.9rem;
+  width: 94%;
+  aspect-ratio: 280 / 50;
   pointer-events: none;
   z-index: 2;
   background-color: var(--fx-ann, var(--fx-red));
@@ -666,25 +692,38 @@ main blockquote a:hover {
   visibility: hidden;
 }
 
-.canopy-search-results .canopy-card figure[data-fx-ann]::after {
-  bottom: auto;
-  height: calc(100cqw + 0.5rem);
+.canopy-search-results .canopy-card-media[data-fx-ann-side="left"]::after,
+.canopy-search-results .canopy-card figure[data-fx-ann-side="left"]::after { left: -1rem; }
+.canopy-search-results .canopy-card-media[data-fx-ann-side="right"]::after,
+.canopy-search-results .canopy-card figure[data-fx-ann-side="right"]::after { right: -1rem; }
+
+.canopy-search-results .canopy-article-card article::after {
+  top: 0.1em;
+  width: 8.4rem;
 }
 
-.canopy-search-results .canopy-card-media[data-fx-ann-side="left"]::after,
-.canopy-search-results .canopy-card figure[data-fx-ann-side="left"]::after { left: -0.95rem; }
-.canopy-search-results .canopy-card-media[data-fx-ann-side="right"]::after,
-.canopy-search-results .canopy-card figure[data-fx-ann-side="right"]::after { right: -0.95rem; }
-.canopy-search-results .canopy-article-card[data-fx-ann-side="left"]::after { left: -1.6rem; }
-.canopy-search-results .canopy-article-card[data-fx-ann-side="right"]::after { right: -1.6rem; }
+.canopy-search-results .canopy-article-card article[data-fx-ann-side="left"]::after { left: -8.45rem; }
+.canopy-search-results .canopy-article-card article[data-fx-ann-side="right"]::after { right: -8.45rem; }
 
-.canopy-search-results .canopy-card:hover .canopy-card-media::after,
-.canopy-search-results .canopy-card:focus-visible .canopy-card-media::after,
-.canopy-search-results .canopy-card:hover figure[data-fx-ann]::after,
-.canopy-search-results .canopy-card:focus-visible figure[data-fx-ann]::after,
-.canopy-search-results .canopy-article-card:hover::after,
-.canopy-search-results .canopy-article-card:focus-visible::after {
+.canopy-search-results .canopy-card:is(:hover, :focus-visible) .canopy-card-media::after,
+.canopy-search-results .canopy-card:is(:hover, :focus-visible) figure[data-fx-ann]::after,
+.canopy-search-results .canopy-article-card:is(:hover, :focus-visible) article::after {
   visibility: visible;
+}
+
+.canopy-search-results .canopy-card-media img {
+  transition: opacity 160ms cubic-bezier(0.2, 0, 0, 1), filter 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.canopy-search-results .canopy-card:is(:hover, :focus-visible) .canopy-card-media img {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canopy-search-results .canopy-card-media img {
+    transition: none;
+  }
 }
 
 /* Keyboard focus also gets a plain outline, since some paint colors are
@@ -694,12 +733,33 @@ main blockquote a:hover {
   outline-offset: 2px;
 }
 
-[data-fx-ann-color="red"] { --fx-ann: var(--fx-red); }
-[data-fx-ann-color="blue"] { --fx-ann: var(--fx-blue); }
-[data-fx-ann-color="green"] { --fx-ann: var(--fx-green); }
-[data-fx-ann-color="yellow"] { --fx-ann: var(--fx-yellow); }
-[data-fx-ann-color="pink"] { --fx-ann: var(--fx-pink); }
-[data-fx-ann-color="black"] { --fx-ann: var(--fx-ink); }
+/* Each annotation color also names the marker stroke that underlines the
+ * hovered result's title, so mark and underline share one paint. */
+[data-fx-ann-color="red"] { --fx-ann: var(--fx-red); --fx-ann-paint: url("../images/marker/paint-red.svg"); }
+[data-fx-ann-color="blue"] { --fx-ann: var(--fx-blue); --fx-ann-paint: url("../images/marker/paint-blue.svg"); }
+[data-fx-ann-color="green"] { --fx-ann: var(--fx-green); --fx-ann-paint: url("../images/marker/paint-green.svg"); }
+[data-fx-ann-color="yellow"] { --fx-ann: var(--fx-yellow); --fx-ann-paint: url("../images/marker/paint-yellow.svg"); }
+[data-fx-ann-color="pink"] { --fx-ann: var(--fx-pink); --fx-ann-paint: url("../images/marker/paint-pink.svg"); }
+[data-fx-ann-color="black"] { --fx-ann: var(--fx-ink); --fx-ann-paint: url("../images/marker/paint-black.svg"); }
+
+/* The hovered or focused result's title is underlined in that paint, like
+ * <Mark>: shown at once, no fade, repeated on each wrapped line. */
+.canopy-header .canopy-search-teaser__title,
+.canopy-search-results .canopy-card figcaption > span:first-child,
+.canopy-search-results .canopy-article-card h3 {
+  align-self: flex-start;
+  width: fit-content;
+  padding-bottom: 0.3em;
+  background: none left bottom / 100% 0.55em no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.canopy-header .canopy-search-teaser__item:is(:hover, :focus-visible) .canopy-search-teaser__title,
+.canopy-search-results .canopy-card:is(:hover, :focus-visible) figcaption > span:first-child,
+.canopy-search-results .canopy-article-card:is(:hover, :focus-visible) h3 {
+  background-image: var(--fx-ann-paint);
+}
 
 .canopy-header .canopy-search-teaser__item {
   --canopy-radius-none: var(--fx-radius);
@@ -714,6 +774,36 @@ main blockquote a:hover {
   height: 64px;
   /* Shows when a work has no image, or its image fails to load. */
   background: rgb(0 0 0 / 0.05);
+}
+
+/* On hover the thumbnail turns gray and fades back toward the paper,
+ * like a light media scrim, so the paint mark drawn across it reads as paint on a page. A
+ * short ease-out on the thumbnail only; the mark itself appears at once. */
+.canopy-header .canopy-search-teaser__thumb,
+.canopy-header .canopy-search-teaser__item:not(:has(.canopy-search-teaser__thumb))::before {
+  transition: background-color 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.canopy-header .canopy-search-teaser__thumb-img {
+  transition: opacity 160ms cubic-bezier(0.2, 0, 0, 1), filter 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.canopy-header .canopy-search-teaser__item:is(:hover, :focus-visible) .canopy-search-teaser__thumb,
+.canopy-header .canopy-search-teaser__item:not(:has(.canopy-search-teaser__thumb)):is(:hover, :focus-visible)::before {
+  background-color: rgb(0 0 0 / 0.025);
+}
+
+.canopy-header .canopy-search-teaser__item:is(:hover, :focus-visible) .canopy-search-teaser__thumb-img {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canopy-header .canopy-search-teaser__thumb,
+  .canopy-header .canopy-search-teaser__thumb-img,
+  .canopy-header .canopy-search-teaser__item::before {
+    transition: none;
+  }
 }
 
 /* Every result gets a square, even pages and works with no thumbnail, so
@@ -1004,6 +1094,47 @@ main .fx-palette li {
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
 }
+
+/* Color switcher for the library: native radios, no script. Choosing a
+ * color repaints every sample; "mixed" keeps each one's own. */
+.fx-ann-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  border: none;
+  font-size: 0.85rem;
+}
+
+.fx-ann-colors legend {
+  float: left;
+  margin-right: 0.5rem;
+  color: var(--fx-ink-50);
+}
+
+.fx-ann-colors label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+.fx-ann-colors input {
+  accent-color: var(--fx-ink);
+}
+
+.fx-ann-colors label:has(input:checked) span {
+  font-weight: 700;
+}
+
+.fx-ann-lab:has(input[value="red"]:checked) .fx-ann-sample { --fx-ann: var(--fx-red); }
+.fx-ann-lab:has(input[value="blue"]:checked) .fx-ann-sample { --fx-ann: var(--fx-blue); }
+.fx-ann-lab:has(input[value="green"]:checked) .fx-ann-sample { --fx-ann: var(--fx-green); }
+.fx-ann-lab:has(input[value="yellow"]:checked) .fx-ann-sample { --fx-ann: var(--fx-yellow); }
+.fx-ann-lab:has(input[value="pink"]:checked) .fx-ann-sample { --fx-ann: var(--fx-pink); }
+.fx-ann-lab:has(input[value="black"]:checked) .fx-ann-sample { --fx-ann: var(--fx-ink); }
 
 .fx-ann-cell figcaption {
   margin-top: 0.4rem;

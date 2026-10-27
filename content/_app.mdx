@@ -59,14 +59,18 @@ export const SEARCH_LABEL_TAGS =
   // - tag each group label ("Works", "Pages") with its word; custom.css swaps
   //   in the drawn version (assets/images/glyphs/label-<word>.svg) for known
   //   words and leaves any other label in plain type;
-  // - give each result a random hover annotation (1–30, from
-  //   app/scripts/glyphs/annotations.py) and a random paint color. Rows in
-  //   the header dropdown take a mark behind their text. On /search, whose
-  //   results also render in the browser, each card takes a vertical mark
-  //   down its left or right edge (never over its text): beside the image
-  //   for works, beside the text card for pages.
+  // - give each result a random hover annotation (1–20, from
+  //   app/scripts/glyphs/annotations.py) and a paint color, never repeating
+  //   a gesture within a list. Marks never go over text: rows in the header
+  //   dropdown take theirs across the thumbnail; on /search, whose results
+  //   also render in the browser, each card takes one at its left or right
+  //   edge.
   `(function () {
   var drawn = {works: 1, pages: 1, opere: 1, pagine: 1};
+  // Twenty marks (annotations.py GESTURES). Hover colors: any paint color
+  // except black, which would swallow black text; each maps to a token via
+  // [data-fx-ann-color] in custom.css.
+  var ANNOTATIONS = 20;
   var colors = ["red", "blue", "green", "yellow", "pink"];
   function tag() {
     var labels = document.querySelectorAll(".canopy-search-teaser__label:not([data-fx-label])");
@@ -74,22 +78,47 @@ export const SEARCH_LABEL_TAGS =
       var word = labels[i].textContent.trim().toLowerCase();
       labels[i].setAttribute("data-fx-label", drawn[word] ? word : "");
     }
+    /* Within one result list, every mark is a different gesture until all
+       of them are used, and colors rotate evenly without two in a row. */
+    function pick(options, used, avoid) {
+      var counts = {};
+      for (var u = 0; u < used.length; u++) counts[used[u]] = (counts[used[u]] || 0) + 1;
+      var pool = options.filter(function (o) { return o !== avoid; });
+      var least = Math.min.apply(null, pool.map(function (o) { return counts[o] || 0; }));
+      pool = pool.filter(function (o) { return (counts[o] || 0) === least; });
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+    var gestures = [];
+    for (var g = 1; g <= ANNOTATIONS; g++) gestures.push(String(g));
     function mark(el) {
-      el.setAttribute("data-fx-ann", 1 + Math.floor(Math.random() * 30));
-      el.setAttribute("data-fx-ann-color", colors[Math.floor(Math.random() * colors.length)]);
+      var scope = el.closest(".canopy-search-teaser, .canopy-search-results") || document;
+      var marked = scope.querySelectorAll("[data-fx-ann]");
+      var used = [], tints = [];
+      for (var m = 0; m < marked.length; m++) {
+        used.push(marked[m].getAttribute("data-fx-ann"));
+        tints.push(marked[m].getAttribute("data-fx-ann-color"));
+      }
+      el.setAttribute("data-fx-ann", pick(gestures, used));
+      var color = pick(colors, tints, tints[tints.length - 1]);
+      el.setAttribute("data-fx-ann-color", color);
+      /* The whole card carries the color too, for its title's underline. */
+      var card = el.parentElement && el.parentElement.closest(".canopy-card, .canopy-article-card");
+      if (card) card.setAttribute("data-fx-ann-color", color);
+    }
+    /* Marks sit to one side, never over text: in the dropdown always
+       across the thumbnail, on /search cards either side at random. */
+    function edge(el, side) {
+      mark(el);
+      el.setAttribute("data-fx-ann-side", side || (Math.random() < 0.5 ? "left" : "right"));
     }
     var rows = document.querySelectorAll(".canopy-search-teaser__item:not([data-fx-ann])");
-    for (var j = 0; j < rows.length; j++) mark(rows[j]);
+    for (var j = 0; j < rows.length; j++) edge(rows[j], "left");
     var cards = document.querySelectorAll(
       ".canopy-search-results .canopy-card-media:not([data-fx-ann]), " +
       ".canopy-search-results .canopy-card figure:not(:has(.canopy-card-media)):not([data-fx-ann]), " +
-      ".canopy-search-results .canopy-article-card:not([data-fx-ann])"
+      ".canopy-search-results .canopy-article-card article:not([data-fx-ann])"
     );
-    for (var k = 0; k < cards.length; k++) {
-      mark(cards[k]);
-      cards[k].setAttribute("data-fx-ann-dir", "v");
-      cards[k].setAttribute("data-fx-ann-side", Math.random() < 0.5 ? "left" : "right");
-    }
+    for (var k = 0; k < cards.length; k++) edge(cards[k]);
   }
   new MutationObserver(tag).observe(document.documentElement, {childList: true, subtree: true});
 })();`;
