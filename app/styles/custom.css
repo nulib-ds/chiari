@@ -750,6 +750,28 @@ main blockquote a:hover {
   }
 }
 
+/* A work's title: one big random mark (see tag in _app.mdx) drawn close
+ * below it, clear of the type, with room made for it under the heading. */
+.canopy-work--secondary header h1[data-fx-ann] {
+  position: relative;
+  margin-bottom: 5.5rem;
+}
+
+.canopy-work--secondary header h1[data-fx-ann]::after {
+  content: "";
+  position: absolute;
+  left: 2rem;
+  top: calc(100% - 0.5rem);
+  width: min(100% - 2rem, 26rem);
+  aspect-ratio: 280 / 50;
+  pointer-events: none;
+  background-color: var(--fx-ann, var(--fx-red));
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
 /* Filter button: the tangle in a random color (see shuffle in _app.mdx) drawn just above
  * the pill, centered on it and nudged down and right. */
 .canopy-search-tabs__filters-button {

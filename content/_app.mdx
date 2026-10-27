@@ -67,6 +67,19 @@ export const SEARCH_LABEL_TAGS =
   //   edge.
   `(function () {
   var drawn = {works: 1, pages: 1, opere: 1, pagine: 1};
+  /* The works grid is react-masonry-css, whose column count is fixed in
+     Canopy (six above 1280px, five to 1024, four below) with no setting for
+     it. To cap the grid at four columns, the search page reports at most
+     1024px wide to it; narrower windows still get fewer, as before. */
+  if (location.pathname.replace("/index.html", "").replace(/[/]$/, "").slice(-7) === "/search") {
+    var desc = Object.getOwnPropertyDescriptor(window, "innerWidth");
+    var realWidth = desc && desc.get ? function () { return desc.get.call(window); }
+      : function () { return document.documentElement.clientWidth; };
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      get: function () { return Math.min(realWidth(), 1024); },
+    });
+  }
   // Twenty marks (annotations.py GESTURES). Hover colors: any paint color
   // except black, which would swallow black text; each maps to a token via
   // [data-fx-ann-color] in custom.css.
@@ -111,6 +124,12 @@ export const SEARCH_LABEL_TAGS =
       mark(el);
       el.setAttribute("data-fx-ann-side", side || (Math.random() < 0.5 ? "left" : "right"));
     }
+    /* A work's title takes one big mark below it, in a random gesture and color. */
+    var titles = document.querySelectorAll(".canopy-work--secondary header h1:not([data-fx-ann])");
+    for (var t = 0; t < titles.length; t++) {
+      titles[t].setAttribute("data-fx-ann", 1 + Math.floor(Math.random() * ANNOTATIONS));
+      titles[t].setAttribute("data-fx-ann-color", colors[Math.floor(Math.random() * colors.length)]);
+    }
     var rows = document.querySelectorAll(".canopy-search-teaser__item:not([data-fx-ann])");
     for (var j = 0; j < rows.length; j++) edge(rows[j], "left");
     var cards = document.querySelectorAll(
@@ -131,6 +150,7 @@ export const SEARCH_LABEL_TAGS =
   document.addEventListener("mouseover", shuffle);
   document.addEventListener("focusin", shuffle);
   new MutationObserver(tag).observe(document.documentElement, {childList: true, subtree: true});
+  document.addEventListener("DOMContentLoaded", tag);
 })();`;
 
 export function Head() {
