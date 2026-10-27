@@ -29,10 +29,10 @@
     --fx-green: #00885a;
     --fx-yellow: #fad000;
     --fx-pink: #e5199a;
-    /* Paper: a cool off-white, the darkest point of the page. The sheen in
+    /* Paper: almost white, the darkest point of the page. The sheen in
      * body's background only ever lightens it, so Rich Black 50% captions
-     * stay at 4.6:1 or better everywhere. */
-    --fx-paper: #f1f1ee;
+     * stay at 5.0:1 or better everywhere. */
+    --fx-paper: #fbfbf9;
 
     /* Print: Rich Black, with Rich Black 80% / 50% for muted copy. */
     --fx-ink: #000000;
@@ -585,7 +585,7 @@ main blockquote a:hover {
 }
 
 /* The browser's clear button (Chromium and Safari; Firefox draws none)
- * becomes a pink brush × to match the magnifier. Pink holds 3.8:1 on the
+ * becomes a pink brush × to match the magnifier. Pink holds 4.1:1 on the
  * paper, above the 3:1 needed for a control. */
 /* Search results dropdown: no border, and the group labels drawn in
  * Chiari's hand (see SEARCH_LABEL_TAGS in _app.mdx). The text stays for
