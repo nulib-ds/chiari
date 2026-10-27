@@ -51,7 +51,7 @@ To swap a letter:
 - **Output:** inline SVG with the painted finish, while the real text stays in the heading for screen readers and search.
 - **Other characters:** anything outside A–Z falls back to IBM Plex Sans Bold.
 - **Quotations:** `<Hand as="blockquote" cite="Giuseppe Chiari">Art is easy</Hand>` sets a short drawn quotation with a Plex attribution.
-- **Use it sparingly:** an occasional short heading or quotation, never every one. `content/lookbook/index.mdx` (`/lookbook`) shows the intended balance in placeholder text.
+- **Use it sparingly:** an occasional short heading or quotation, never every one. `content/about/lookbook.mdx` (`/about/lookbook`) shows the intended balance in placeholder text.
 
 ## Printed lettering (`extract.py`)
 

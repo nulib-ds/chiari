@@ -1,5 +1,8 @@
 import {Meta, Stylesheet} from "@canopy-iiif/app/head";
+import fs from "node:fs";
 import React from "react";
+import {useMDXComponents} from "@mdx-js/react";
+import {withBasePath} from "@canopy-iiif/app/base-path";
 import {CanopyHeader, CanopyFooter} from "@canopy-iiif/app/ui";
 
 export const NU_CDN = "https://common.northwestern.edu/v8/css";
@@ -80,6 +83,57 @@ export function navSection(href) {
   return path.split("/").pop();
 }
 
+export const GENERATED_SECTIONS =
+  // Sections Canopy builds for every locale from IIIF data or templates, so
+  // their counterpart pages always exist without an MDX file.
+  ["works", "search"];
+
+export function counterpartHref(pathname, locale, locales) {
+  // Same page in another locale: the Italian content mirrors the English
+  // folder structure, so swap the /it prefix. Fall back to that locale's
+  // home when the counterpart page doesn't exist.
+  const prefixes = locales.filter((l) => !l.default).map((l) => l.lang);
+  const parts = pathname.replace(/^\/+/, "").split("/");
+  const rest = prefixes.includes(parts[0]) ? parts.slice(1) : parts;
+  const target = [locale.default ? null : locale.lang, ...rest].filter(Boolean).join("/");
+  const home = locale.default ? "/" : `/${locale.lang}`;
+  if (!rest.join("")) return home;
+  const generated = GENERATED_SECTIONS.includes(rest[0]);
+  const mdx = `content/${target}`.replace(/\.html$/, ".mdx");
+  const exists = generated || fs.existsSync(mdx) || fs.existsSync(mdx.replace(/\/index\.mdx$/, ".mdx"));
+  return exists ? `/${target}` : home;
+}
+
+export function LanguageToggle({page, site}) {
+  // English / Italiano drawn in Chiari's hand. The current language is full
+  // black; the other is Rich Black 50% and links to the same page there.
+  const {Hand} = useMDXComponents();
+  const locales = (site && site.languageToggle && site.languageToggle.locales) || [];
+  if (locales.length < 2) return null;
+  const pathname = String(page.href || "/").split(/[?#]/)[0];
+  const first = pathname.replace(/^\/+/, "").split("/")[0];
+  const active = locales.find((l) => !l.default && l.lang === first) || locales.find((l) => l.default) || locales[0];
+  return (
+    <nav className="fx-lang" aria-label="Language">
+      {locales.map((locale) => {
+        const current = locale.lang === active.lang;
+        const label = locale.label || locale.lang;
+        return (
+          <a
+            key={locale.lang}
+            href={withBasePath(counterpartHref(pathname, locale, locales))}
+            hrefLang={locale.lang}
+            lang={locale.lang}
+            aria-current={current ? "true" : undefined}
+          >
+            {Hand ? <Hand as="span" size="0.95rem" tracking={18}>{label}</Hand> : label}
+          </a>
+        );
+      })}
+    </nav>
+  );
+}
+
 export function ChiariHeader() {
   // Canopy's header with navigation.yml split in two: Watch, Play, Write and
   // Collaborate stay in the main nav row; About and Works move to a plain
@@ -103,16 +157,23 @@ export function ChiariHeader() {
     <div className="fx-masthead">
       {/* The header brand shows ART IS EASY (an image, via CSS) over this
           line of text; the page <title> keeps canopy.yml's "Chiari". */}
-      <CanopyHeader title={HEADER_TAGLINE} navigation={links.filter((link) => !isSecondary(link))} />
-      {secondary.length ? (
-        <nav className="fx-secondary-nav" aria-label="Secondary">
-          {secondary.map((link) => (
-            <a key={link.href} href={link.href} aria-current={link.isActive ? "page" : undefined}>
-              {link.label || link.href}
-            </a>
-          ))}
-        </nav>
-      ) : null}
+      <CanopyHeader
+        title={HEADER_TAGLINE}
+        navigation={links.filter((link) => !isSecondary(link))}
+        languageToggle={false}
+      />
+      <div className="fx-subbar">
+        {secondary.length ? (
+          <nav className="fx-secondary-nav" aria-label="Secondary">
+            {secondary.map((link) => (
+              <a key={link.href} href={link.href} aria-current={link.isActive ? "page" : undefined}>
+                {link.label || link.href}
+              </a>
+            ))}
+          </nav>
+        ) : null}
+        <LanguageToggle page={page} site={(context && context.site) || {}} />
+      </div>
     </div>
   );
 }
@@ -131,8 +192,7 @@ export function App({children}) {
           <a href="https://nulib-ds.github.io/canopy/">Canopy IIIF</a>.
         </p>
       </CanopyFooter>
-      {/* The site's only purple: a slim Purple 120 sliver for the white
-          wordmark, which needs a purple ground. */}
+      {/* Northwestern wordmark, black on white (see .fx-footer-sliver). */}
       <div className="fx-footer-sliver">
         <a href="https://www.northwestern.edu/">
           <img className="nu-wordmark" src={`${NU_CDN}/images/northwestern.svg`} alt="Northwestern University" />

@@ -2,11 +2,11 @@
  * Chiari project layer.
  *
  * The page reads as printed black-and-white paper: white ground, Rich Black
- * type, no color fields. Color arrives only as marker annotations laid over
- * the print, as if someone went through it with highlighters and felt-tips:
- * highlights, strike-throughs, circles and underlines in Northwestern's
- * secondary brights. Purple survives only as a sliver in the footer behind
- * the wordmark.
+ * type, no color fields. Color arrives only as paint-marker strokes laid
+ * over the print, in Northwestern's secondary brights, and only in a few
+ * places: the main menu, the search field, the language toggle, and the
+ * occasional <Mark> in copy. There is no purple; the Northwestern wordmark is
+ * black on white in the footer.
  *
  * `northwestern.css` is left as the upstream brand layer; everything here
  * overrides it. Decisions and rationale live in DESIGN.md.
@@ -94,50 +94,41 @@
 }
 
 /* -------------------------------------------------------------------------
- * Marker annotations
- *
- * `.fx-mark` plus a type and a color, e.g. `fx-mark fx-mark--strike
- * fx-mark--red`. Authors reach these through the `<Mark>` MDX component.
- * The SVGs stretch to the text and keep a constant pen width, and
- * `box-decoration-break: clone` repeats the mark on every wrapped line.
+ * Marker annotations (<Mark>), using the same marks as the site chrome:
+ * the main menu's colored paint underlines, the search bar's black stroke,
+ * and the language toggle's two open brush loops. Use them sparingly.
+ * `box-decoration-break: clone` repeats an underline on each wrapped line.
  * ---------------------------------------------------------------------- */
 
 .fx-mark {
-  --fx-mark-img: url("../images/marker/highlight-yellow.svg");
+  --fx-mark-img: url("../images/marker/paint-black.svg");
   color: inherit;
-  background: var(--fx-mark-img) center / 100% 100% no-repeat;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-  padding: 0.05em 0.2em;
-  margin: 0 -0.05em;
+  background: none;
   text-decoration: none;
 }
 
-.fx-mark--circle {
-  padding: 0.4em 0.8em;
-  margin: -0.4em -0.35em;
+.fx-mark--underline {
+  padding-bottom: 0.3em;
+  background: var(--fx-mark-img) left bottom / 100% 0.55em no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
-.fx-mark--highlight.fx-mark--yellow { --fx-mark-img: url("../images/marker/highlight-yellow.svg"); }
-.fx-mark--highlight.fx-mark--green { --fx-mark-img: url("../images/marker/highlight-green.svg"); }
-.fx-mark--highlight.fx-mark--blue { --fx-mark-img: url("../images/marker/highlight-blue.svg"); }
-.fx-mark--highlight.fx-mark--red { --fx-mark-img: url("../images/marker/highlight-red.svg"); }
-.fx-mark--highlight.fx-mark--teal { --fx-mark-img: url("../images/marker/highlight-teal.svg"); }
-.fx-mark--strike.fx-mark--yellow { --fx-mark-img: url("../images/marker/strike-yellow.svg"); }
-.fx-mark--strike.fx-mark--green { --fx-mark-img: url("../images/marker/strike-green.svg"); }
-.fx-mark--strike.fx-mark--blue { --fx-mark-img: url("../images/marker/strike-blue.svg"); }
-.fx-mark--strike.fx-mark--red { --fx-mark-img: url("../images/marker/strike-red.svg"); }
-.fx-mark--strike.fx-mark--teal { --fx-mark-img: url("../images/marker/strike-teal.svg"); }
-.fx-mark--underline.fx-mark--yellow { --fx-mark-img: url("../images/marker/underline-yellow.svg"); }
-.fx-mark--underline.fx-mark--green { --fx-mark-img: url("../images/marker/underline-green.svg"); }
-.fx-mark--underline.fx-mark--blue { --fx-mark-img: url("../images/marker/underline-blue.svg"); }
-.fx-mark--underline.fx-mark--red { --fx-mark-img: url("../images/marker/underline-red.svg"); }
-.fx-mark--underline.fx-mark--teal { --fx-mark-img: url("../images/marker/underline-teal.svg"); }
-.fx-mark--circle.fx-mark--yellow { --fx-mark-img: url("../images/marker/circle-yellow.svg"); }
-.fx-mark--circle.fx-mark--green { --fx-mark-img: url("../images/marker/circle-green.svg"); }
-.fx-mark--circle.fx-mark--blue { --fx-mark-img: url("../images/marker/circle-blue.svg"); }
-.fx-mark--circle.fx-mark--red { --fx-mark-img: url("../images/marker/circle-red.svg"); }
-.fx-mark--circle.fx-mark--teal { --fx-mark-img: url("../images/marker/circle-teal.svg"); }
+.fx-mark--underline.fx-mark--red { --fx-mark-img: url("../images/marker/paint-red.svg"); }
+.fx-mark--underline.fx-mark--blue { --fx-mark-img: url("../images/marker/paint-blue.svg"); }
+.fx-mark--underline.fx-mark--green { --fx-mark-img: url("../images/marker/paint-green.svg"); }
+.fx-mark--underline.fx-mark--gold { --fx-mark-img: url("../images/marker/paint-gold.svg"); }
+
+/* Loops wrap a word or short phrase; padding makes room for the brush, the
+ * negative margin keeps the line spacing as it was. */
+.fx-mark--circle {
+  --fx-mark-img: url("../images/marker/paint-circle-a.svg");
+  padding: 0.45em 0.85em;
+  margin: -0.45em -0.55em;
+  background: var(--fx-mark-img) center / 100% 100% no-repeat;
+}
+
+.fx-mark--circle.fx-mark--b { --fx-mark-img: url("../images/marker/paint-circle-b.svg"); }
 
 /* -------------------------------------------------------------------------
  * Base: the printed page
@@ -277,11 +268,21 @@ main blockquote a:hover {
   padding-inline: var(--fx-gutter);
 }
 
+/* Below 70rem the secondary menu and language toggle share one small row
+ * under the masthead; on desktop each is placed on its own (display:
+ * contents). */
+.fx-subbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 2rem;
+  padding: 0.6rem var(--fx-gutter);
+}
+
 .fx-secondary-nav {
   display: flex;
   justify-content: flex-end;
   gap: 1.5rem;
-  padding: 0.6rem var(--fx-gutter);
   font-size: 0.9rem;
 }
 
@@ -310,6 +311,20 @@ main blockquote a:hover {
     padding-block: 0;
   }
 
+  .fx-subbar {
+    display: contents;
+  }
+
+  /* Vertically centred on the main nav labels (top inset 0.4rem, line box
+   * 1.3 × the nav font size). */
+  .fx-lang {
+    position: absolute;
+    right: var(--fx-gutter);
+    top: calc(var(--fx-masthead-row) + 0.4rem);
+    height: calc(1.3 * clamp(1.35rem, 1rem + 0.9vw, 1.85rem));
+    z-index: 2;
+  }
+
   .fx-secondary-nav {
     position: absolute;
     top: 0;
@@ -329,20 +344,17 @@ main blockquote a:hover {
  * "Giuseppe Chiari at 100" in live text. The image is generated content with
  * alt text, so the link reads "Art is easy, Giuseppe Chiari at 100".
  *
- * On desktop ART IS EASY spans the main nav row exactly. That row is the
- * four labels' text width (proportional to the nav font size; measured for
- * each language) plus three link-to-link steps of 2 × 1.4rem inset + 0.25rem
- * gap. */
+ * On desktop ART IS EASY spans the English main nav row exactly, and keeps
+ * that size in every language so the mark never changes. The row is the four
+ * labels' text width (12.842 × the nav font size, measured for Watch, Play,
+ * Write, Collaborate) plus three link-to-link steps of 2 × 1.4rem inset +
+ * 0.25rem gap. */
 .canopy-header .canopy-logo {
   --fx-nav-size: clamp(1.35rem, 1rem + 0.9vw, 1.85rem);
   --fx-nav-text: 12.842;
   display: block;
   width: calc(var(--fx-nav-text) * var(--fx-nav-size) + 3 * 3.05rem);
   max-width: 100%;
-}
-
-.canopy-header .canopy-logo:lang(it) {
-  --fx-nav-text: 15.411;
 }
 
 .canopy-header .canopy-logo::before {
@@ -488,30 +500,48 @@ main blockquote a:hover {
   backdrop-filter: none;
 }
 
-/* Language toggle. Canopy puts it in the same grid cell as the search field,
- * where it hides under the search on wide screens and over the brand on
- * narrow ones (TASKS.md). On desktop it moves to the right end of the main
- * nav row; below 70rem it hides, since the nav menu has its own toggle. */
-.canopy-header__language-toggle--desktop .canopy-language-toggle__select-input {
-  border: none;
+/* Language toggle (LanguageToggle in _app.mdx): ENGLISH / ITALIANO drawn in
+ * Chiari's hand. The current language prints in full black, the other in
+ * Rich Black 50% until hovered. On desktop it sits at the right end of the
+ * main nav row; below 70rem it shares the small row with About / Works. */
+.fx-lang {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+.fx-lang a {
+  display: block;
   color: var(--fx-ink-50);
-  font-family: var(--font-sans);
-  font-size: 0.9rem;
-  background-color: transparent;
+  text-decoration: none;
+  transition: color 150ms ease;
 }
 
-@media (min-width: 70rem) {
-  .fx-masthead .canopy-header__actions {
-    grid-row: 2;
-    align-self: center;
-    padding-bottom: 2.75rem;
-  }
+.fx-lang a:hover,
+.fx-lang a[aria-current="true"] {
+  color: var(--fx-ink);
 }
 
-@media (max-width: 69.99rem) {
-  .canopy-header__language-toggle--desktop {
-    display: none;
-  }
+/* The current language is circled in black paint marker, kin to the search
+ * underline. Padding makes room for the loop; the negative margin
+ * keeps the two words where they were. */
+.fx-lang a {
+  padding: 0.55rem 0.95rem;
+  margin: -0.55rem -0.95rem;
+}
+
+/* Each language has its own loop (paint_circle.py), so the two circles are
+ * drawn differently. */
+.fx-lang a[aria-current="true"] {
+  background: url("../images/marker/paint-circle-a.svg") center / 100% 100% no-repeat;
+}
+
+.fx-lang a[aria-current="true"]:lang(it) {
+  background-image: url("../images/marker/paint-circle-b.svg");
+}
+
+.fx-lang .fx-hand {
+  margin: 0;
 }
 
 /* -------------------------------------------------------------------------
@@ -696,8 +726,7 @@ main {
 }
 
 /* -------------------------------------------------------------------------
- * Footer: white, closed by the site's only purple — a slim Purple 120
- * sliver that carries the white wordmark.
+ * Footer: white, closed by the black Northwestern wordmark.
  * ---------------------------------------------------------------------- */
 
 .canopy-footer {
@@ -731,16 +760,14 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 52px;
-  background: var(--nu-purple-120);
+  padding-block: 0 4rem;
+  background: var(--nu-white);
 }
 
+/* The CDN wordmark is white; brightness(0) renders it solid black. */
 .fx-footer-sliver .nu-wordmark {
   display: block;
-  height: 18px;
+  height: 20px;
   width: auto;
-}
-
-.fx-footer-sliver a:focus-visible {
-  outline-color: var(--nu-white);
+  filter: brightness(0);
 }
