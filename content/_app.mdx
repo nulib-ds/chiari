@@ -130,6 +130,16 @@ export const SEARCH_LABEL_TAGS =
       titles[t].setAttribute("data-fx-ann", 1 + Math.floor(Math.random() * ANNOTATIONS));
       titles[t].setAttribute("data-fx-ann-color", colors[Math.floor(Math.random() * colors.length)]);
     }
+    /* "Related Items" takes a smaller mark beside it, a different gesture
+       and color from the title's. */
+    var lead = document.querySelector(".canopy-work--secondary header h1[data-fx-ann]");
+    var related = document.querySelectorAll(".canopy-work--layout + div > h2:not([data-fx-ann])");
+    for (var h = 0; h < related.length && lead; h++) {
+      var g = lead.getAttribute("data-fx-ann");
+      var c = lead.getAttribute("data-fx-ann-color");
+      related[h].setAttribute("data-fx-ann", pick(gestures, [], g));
+      related[h].setAttribute("data-fx-ann-color", pick(colors, [], c));
+    }
     var rows = document.querySelectorAll(".canopy-search-teaser__item:not([data-fx-ann])");
     for (var j = 0; j < rows.length; j++) edge(rows[j], "left");
     var cards = document.querySelectorAll(

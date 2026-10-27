@@ -772,6 +772,29 @@ main blockquote a:hover {
   mask-repeat: no-repeat;
 }
 
+/* "Related Items": a smaller mark under the heading, a little right of
+ * the heading text's center and clear of the type; its gesture and color
+ * differ from the title's (see tag in _app.mdx). */
+.canopy-work--layout + div > h2[data-fx-ann] {
+  position: relative;
+  margin-bottom: 3.25rem;
+}
+
+.canopy-work--layout + div > h2[data-fx-ann]::after {
+  content: "";
+  position: absolute;
+  left: 3rem;
+  top: calc(100% - 0.35rem);
+  width: 11rem;
+  aspect-ratio: 280 / 50;
+  pointer-events: none;
+  background-color: var(--fx-ann, var(--fx-red));
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
 /* Filter button: the tangle in a random color (see shuffle in _app.mdx) drawn just above
  * the pill, centered on it and nudged down and right. */
 .canopy-search-tabs__filters-button {
