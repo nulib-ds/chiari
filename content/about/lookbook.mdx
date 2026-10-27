@@ -3,9 +3,93 @@ title: Lookbook
 description: Design reference for the site's type and handwriting, set in placeholder text.
 ---
 
-# Lorem ipsum dolor sit amet
+# Lookbook
 
-Lookbook. Placeholder text set the way real pages will be. Chiari's drawn hand appears twice below, once as a section heading and once as a short quotation. Paint marks from the site chrome turn up now and then: the main menu's colored underlines, the search bar's black stroke and the language toggle's loops. Everything else is IBM Plex Sans. Both the hand and the marks are used sparingly.
+A working reference for how this site looks: the colors, the type, and the marks, followed by placeholder text set the way real pages will be. It is a design tool, not a page for visitors.
+
+## Color
+
+The site reads as printed black-and-white paper that someone has marked up by hand. The page is white and the type is black, with no color fields. Color appears only as paint, and only in a few places.
+
+### Print
+
+Everything that reads as printing is black on white, with two steps of Rich Black for quieter text. These come from Northwestern's primary palette.
+
+<Palette group="print" />
+
+### Paint
+
+The paint colors come from Northwestern's secondary brights and darks. Each of the four main sections owns one: its stroke appears under the menu label on hover and stays under the current section. Black paint marks the search field and circles the current language. In copy, `<Mark>` uses the same strokes, sparingly.
+
+Red, blue and green hold at least 3:1 against white, enough for a mark that shows state. Gold doesn't (1.6:1). It was chosen for its color, so it should never be the only signal of anything.
+
+<Palette group="paint" />
+
+## Type
+
+There is one typeface, IBM Plex Sans. Everything else is drawn: Chiari's hand for the occasional heading or quotation, and printed lettering vectorized from his own material.
+
+### IBM Plex Sans
+
+Loaded from Google Fonts. Body, menus, headings and captions are all Plex, in three weights.
+
+<div className="fx-specimens">
+  <div className="fx-specimen">
+    <span className="fx-specimen__label">Main menu · Bold 700 · 1.35–1.85rem</span>
+    <p className="fx-specimen__sample fx-specimen--menu">Watch Play Write Collaborate</p>
+  </div>
+  <div className="fx-specimen">
+    <span className="fx-specimen__label">Heading 1 · Bold 700 · 2rem</span>
+    <p className="fx-specimen__sample fx-specimen--h1">Gesti sul piano</p>
+  </div>
+  <div className="fx-specimen">
+    <span className="fx-specimen__label">Heading 2 · Bold 700 · 1.618rem</span>
+    <p className="fx-specimen__sample fx-specimen--h2">Chiari and Fluxus</p>
+  </div>
+  <div className="fx-specimen">
+    <span className="fx-specimen__label">Heading 3 · Bold 700 · 1.382rem</span>
+    <p className="fx-specimen__sample fx-specimen--h3">Per Arco</p>
+  </div>
+  <div className="fx-specimen">
+    <span className="fx-specimen__label">Tagline · Medium 500 · 1.05rem</span>
+    <p className="fx-specimen__sample fx-specimen--tagline">Giuseppe Chiari at 100</p>
+  </div>
+  <div className="fx-specimen">
+    <span className="fx-specimen__label">Body · Regular 400 · 17.6px, line height 1.7</span>
+    <p className="fx-specimen__sample fx-specimen--body">Scores, photographs, letters and recordings from Giuseppe Chiari's work, gathered and set in plain print so the material can speak for itself.</p>
+  </div>
+  <div className="fx-specimen">
+    <span className="fx-specimen__label">Caption and metadata · Regular 400 · 0.9rem · Rich Black 50%</span>
+    <p className="fx-specimen__sample fx-specimen--caption">Object type, medium, date. Holding institution.</p>
+  </div>
+</div>
+
+### Chiari's hand
+
+Traced from the bold uppercase passages in *Musica senza contrappunto*. J, K, W and Y never appear there, so they are built from his strokes. Set it with `<Hand>`, for a short heading or a short quotation, and never for every one.
+
+<div className="fx-specimens">
+  <div className="fx-specimen">
+    <span className="fx-specimen__label">Alphabet · A–Z · drawn, solid with a wet edge</span>
+    <Hand as="p" size="2.25rem">ABCDEFGHIJKLM</Hand>
+    <Hand as="p" size="2.25rem">NOPQRSTUVWXYZ</Hand>
+  </div>
+</div>
+
+### Printed lettering
+
+Vectorized from the 1974 "Art is Easy" flyer, keeping the chips and pinholes where the ink didn't take. It is used only for the masthead.
+
+<div className="fx-specimens">
+  <div className="fx-specimen">
+    <span className="fx-specimen__label">Masthead · ART IS EASY · black vector</span>
+    <span className="fx-specimen__art" role="img" aria-label="Art is easy, printed lettering"></span>
+  </div>
+</div>
+
+## Text in use
+
+Placeholder text below, set the way real pages will be. Chiari's drawn hand appears twice, once as a section heading and once as a short quotation. Paint marks from the site chrome turn up now and then. Everything else is IBM Plex Sans.
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, <Mark color="red">quis nostrud exercitation</Mark> ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
 

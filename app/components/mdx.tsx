@@ -9,6 +9,7 @@ export const components = {
   Mark: './Mark.tsx',
   FeaturedWorks: './FeaturedWorks.tsx',
   Hand: './Hand.tsx',
+  Palette: './Palette.tsx',
 };
 
 // Map browser-only components to their source files; the builder bundles

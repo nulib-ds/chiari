@@ -5,7 +5,7 @@ import path from "node:path";
 /**
  * A heading set in Giuseppe Chiari's hand: uppercase glyphs traced from
  * "Musica senza contrappunto" (see app/scripts/glyphs). Rendered at build
- * time as inline SVG with a painted finish; the real text stays in the
+ * time as inline SVG with a slightly wet edge; the real text stays in the
  * heading for screen readers, search and the page outline.
  *
  * Use sparingly, for an occasional short heading or quotation, not every one.
@@ -22,7 +22,7 @@ type Glyph = {d: string; advance: number; descent?: number};
 
 const GLYPH_DIR = path.resolve("app/scripts/glyphs/glyphs");
 const CAP = 100; // glyph units per cap height
-const SPACE = 45;
+const SPACE = 32;
 const PAD = 6;
 
 let cache: Record<string, Glyph | null> = {};
@@ -45,7 +45,7 @@ function textOf(node: React.ReactNode): string {
 export default function Hand({
   as: Tag = "h1",
   size = "1em",
-  tracking = 14,
+  tracking = 6,
   paint = true,
   id,
   className = "",
@@ -107,14 +107,11 @@ export default function Hand({
     >
       {paint ? (
         <defs>
-          {/* Edge: low-frequency displacement wobbles the outline like wet
-              paint. Fill: noise thresholded high leaves sparse dry flecks. */}
+          {/* Edge only: low-frequency displacement wobbles the outline
+              slightly, like wet ink. The fill stays solid. */}
           <filter id={filterId} x="-5%" y="-10%" width="110%" height="120%">
             <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves={2} seed={7} result="edge" />
-            <feDisplacementMap in="SourceGraphic" in2="edge" scale={1.6} xChannelSelector="R" yChannelSelector="G" result="rough" />
-            <feTurbulence type="fractalNoise" baseFrequency="0.22 0.4" numOctaves={3} seed={3} result="grain" />
-            <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -16 12.2" result="dry" />
-            <feComposite in="rough" in2="dry" operator="in" />
+            <feDisplacementMap in="SourceGraphic" in2="edge" scale={1.2} xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
       ) : null}

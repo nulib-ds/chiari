@@ -48,7 +48,7 @@ To swap a letter:
 <Hand as="h2" size="3rem">Per Arco</Hand>
 ```
 
-- **Output:** inline SVG with the painted finish, while the real text stays in the heading for screen readers and search.
+- **Output:** inline SVG with solid letters and a slightly wet edge, while the real text stays in the heading for screen readers and search.
 - **Other characters:** anything outside A–Z falls back to IBM Plex Sans Bold.
 - **Quotations:** `<Hand as="blockquote" cite="Giuseppe Chiari">Art is easy</Hand>` sets a short drawn quotation with a Plex attribution.
 - **Use it sparingly:** an occasional short heading or quotation, never every one. `content/about/lookbook.mdx` (`/about/lookbook`) shows the intended balance in placeholder text.
