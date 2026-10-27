@@ -216,22 +216,24 @@ def frame(seed=21, width=13.0, color="#000"):
     return drawn, mask
 
 
-for prefix, color in COLORS.items():
-    for name, params in VARIANTS.items():
-        path = os.path.join(OUT, f"paint-circle-{prefix}{name}.svg")
-        open(path, "w").write(loop(**params, color=color))
-        print(os.path.normpath(path))
+if __name__ == "__main__":
+    # Importable: annotations.py reuses brush() and wobble().
+    for prefix, color in COLORS.items():
+        for name, params in VARIANTS.items():
+            path = os.path.join(OUT, f"paint-circle-{prefix}{name}.svg")
+            open(path, "w").write(loop(**params, color=color))
+            print(os.path.normpath(path))
 
-path = os.path.join(OUT, "paint-magnifier.svg")
-open(path, "w").write(magnifier())
-print(os.path.normpath(path))
-
-path = os.path.join(OUT, "paint-close-pink.svg")
-open(path, "w").write(close())
-print(os.path.normpath(path))
-
-drawn, mask = frame()
-for name, svg in (("paint-frame.svg", drawn), ("paint-frame-mask.svg", mask)):
-    path = os.path.join(OUT, name)
-    open(path, "w").write(svg)
+    path = os.path.join(OUT, "paint-magnifier.svg")
+    open(path, "w").write(magnifier())
     print(os.path.normpath(path))
+
+    path = os.path.join(OUT, "paint-close-pink.svg")
+    open(path, "w").write(close())
+    print(os.path.normpath(path))
+
+    drawn, mask = frame()
+    for name, svg in (("paint-frame.svg", drawn), ("paint-frame-mask.svg", mask)):
+        path = os.path.join(OUT, name)
+        open(path, "w").write(svg)
+        print(os.path.normpath(path))

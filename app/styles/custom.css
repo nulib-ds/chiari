@@ -585,10 +585,121 @@ main blockquote a:hover {
   margin-top: 0;
 }
 
+/* Hover annotation: a mark from the library (annotations.css, one mask
+ * per mark) in a paint color, set behind the row's text and thumbnail so
+ * the title stays readable, like marker under a line of print. Each result
+ * gets its mark and color at random (see SEARCH_LABEL_TAGS in _app.mdx);
+ * black is left out because black text would vanish on it. */
+.canopy-header .canopy-search-teaser__item {
+  position: relative;
+  isolation: isolate;
+}
+
+.canopy-header .canopy-search-teaser__item::after {
+  content: "";
+  position: absolute;
+  inset: -0.35rem -0.6rem;
+  pointer-events: none;
+  background-color: var(--fx-ann, var(--fx-red));
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  z-index: -1;
+  visibility: hidden;
+}
+
 .canopy-header .canopy-search-teaser__item:hover,
 .canopy-header .canopy-search-teaser__item:focus-visible {
-  background: rgb(0 0 0 / 0.045);
+  background: none;
 }
+
+.canopy-header .canopy-search-teaser__item:hover::after,
+.canopy-header .canopy-search-teaser__item:focus-visible::after {
+  visibility: visible;
+}
+
+/* On /search, card marks run down one edge and never touch text: beside
+ * the image for works (half in the gutter, slightly over the image, never
+ * reaching the caption), beside the text card for pages (in the gutter). */
+/* Canopy clips the card and its media box; the images round their own
+ * corners, so let the mark's outer half sit in the gutter. */
+.canopy-search-results .canopy-card {
+  overflow: visible;
+}
+
+.canopy-search-results .canopy-card-media {
+  position: relative;
+  overflow: visible;
+}
+
+/* Works without an image: the mark runs beside the square placeholder
+ * only, so it never sits alongside the caption. */
+.canopy-search-results .canopy-card figure[data-fx-ann] {
+  position: relative;
+  container-type: inline-size;
+}
+
+.canopy-search-results .canopy-article-card {
+  position: relative;
+}
+
+.canopy-search-results .canopy-article-card {
+  display: block;
+}
+
+.canopy-search-results .canopy-card-media::after,
+.canopy-search-results .canopy-card figure[data-fx-ann]::after,
+.canopy-search-results .canopy-article-card::after {
+  content: "";
+  position: absolute;
+  top: -0.25rem;
+  bottom: -0.25rem;
+  width: 1.35rem;
+  pointer-events: none;
+  z-index: 2;
+  background-color: var(--fx-ann, var(--fx-red));
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  visibility: hidden;
+}
+
+.canopy-search-results .canopy-card figure[data-fx-ann]::after {
+  bottom: auto;
+  height: calc(100cqw + 0.5rem);
+}
+
+.canopy-search-results .canopy-card-media[data-fx-ann-side="left"]::after,
+.canopy-search-results .canopy-card figure[data-fx-ann-side="left"]::after { left: -0.95rem; }
+.canopy-search-results .canopy-card-media[data-fx-ann-side="right"]::after,
+.canopy-search-results .canopy-card figure[data-fx-ann-side="right"]::after { right: -0.95rem; }
+.canopy-search-results .canopy-article-card[data-fx-ann-side="left"]::after { left: -1.6rem; }
+.canopy-search-results .canopy-article-card[data-fx-ann-side="right"]::after { right: -1.6rem; }
+
+.canopy-search-results .canopy-card:hover .canopy-card-media::after,
+.canopy-search-results .canopy-card:focus-visible .canopy-card-media::after,
+.canopy-search-results .canopy-card:hover figure[data-fx-ann]::after,
+.canopy-search-results .canopy-card:focus-visible figure[data-fx-ann]::after,
+.canopy-search-results .canopy-article-card:hover::after,
+.canopy-search-results .canopy-article-card:focus-visible::after {
+  visibility: visible;
+}
+
+/* Keyboard focus also gets a plain outline, since some paint colors are
+ * too light to signal focus on their own. */
+.canopy-header .canopy-search-teaser__item:focus-visible {
+  outline: 2px solid var(--fx-ink);
+  outline-offset: 2px;
+}
+
+[data-fx-ann-color="red"] { --fx-ann: var(--fx-red); }
+[data-fx-ann-color="blue"] { --fx-ann: var(--fx-blue); }
+[data-fx-ann-color="green"] { --fx-ann: var(--fx-green); }
+[data-fx-ann-color="yellow"] { --fx-ann: var(--fx-yellow); }
+[data-fx-ann-color="pink"] { --fx-ann: var(--fx-pink); }
+[data-fx-ann-color="black"] { --fx-ann: var(--fx-ink); }
 
 .canopy-header .canopy-search-teaser__item {
   --canopy-radius-none: var(--fx-radius);
@@ -863,6 +974,42 @@ main .fx-palette li {
   font-size: inherit;
   background: none;
   padding: 0;
+}
+
+/* The annotation library as a grid; the masks come from annotations.css. */
+.fx-ann-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 1.75rem 1.5rem;
+  margin: 2rem 0 3.5rem;
+}
+
+.fx-ann-cell {
+  margin: 0;
+}
+
+.fx-ann-sample {
+  position: relative;
+  display: block;
+  aspect-ratio: 280 / 50;
+}
+
+.fx-ann-sample::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--fx-ann, var(--fx-red));
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.fx-ann-cell figcaption {
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--fx-ink-50);
 }
 
 .fx-specimens {

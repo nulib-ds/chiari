@@ -2,6 +2,7 @@
 @import "@canopy-iiif/app/ui/styles/index.css";
 @import "./northwestern.css";
 @import "./custom.css";
+@import "./annotations.css";
 
 /* Both widths match the site container in custom.css (--fx-container). */
 @utility max-w-content {

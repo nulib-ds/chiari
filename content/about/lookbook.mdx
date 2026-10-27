@@ -25,6 +25,19 @@ The four main sections each own one: Watch red, Play blue, Write green, Collabor
 
 <Palette group="paint" />
 
+### Annotations
+
+Hover marks, after the marker and brush gestures Chiari laid over printed scores: scribble blocks, coils, hatching, arcs, underlines, springs, tangles, ticks, broad brush swipes and dabs. There are thirty, three of each. Every search result gets one at random, in a random paint color, laid over the row like marker on a print. Each mark is a mask, so any color can paint any mark. They come from `app/scripts/glyphs/annotations.py`.
+
+<div className="fx-ann-grid">
+  {Array.from({length: 30}, (_, i) => (
+    <figure key={i} className="fx-ann-cell">
+      <span className="fx-ann-sample" data-fx-ann={i + 1} data-fx-ann-color={["red", "blue", "green", "yellow", "pink", "black"][i % 6]} />
+      <figcaption>{String(i + 1).padStart(2, "0")}</figcaption>
+    </figure>
+  ))}
+</div>
+
 ## Type
 
 There is one typeface, IBM Plex Sans. Everything else is drawn: Chiari's hand for the occasional heading or quotation, and printed lettering vectorized from his own material.

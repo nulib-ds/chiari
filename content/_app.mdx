@@ -54,18 +54,41 @@ export const IIIF_SIZE_FALLBACK =
 })();`;
 
 export const SEARCH_LABEL_TAGS =
-  // Canopy's search script builds the results panel in the browser, so the
-  // group labels ("Works", "Pages") can't be set with <Hand> at build time.
-  // Tag each label with its word as it appears; custom.css swaps in the
-  // drawn version (assets/images/glyphs/label-<word>.svg) for known words
-  // and leaves any other label in plain type.
+  // Canopy's search script builds the results panel in the browser, so it
+  // can't be dressed at build time. As it appears:
+  // - tag each group label ("Works", "Pages") with its word; custom.css swaps
+  //   in the drawn version (assets/images/glyphs/label-<word>.svg) for known
+  //   words and leaves any other label in plain type;
+  // - give each result a random hover annotation (1–30, from
+  //   app/scripts/glyphs/annotations.py) and a random paint color. Rows in
+  //   the header dropdown take a mark behind their text. On /search, whose
+  //   results also render in the browser, each card takes a vertical mark
+  //   down its left or right edge (never over its text): beside the image
+  //   for works, beside the text card for pages.
   `(function () {
   var drawn = {works: 1, pages: 1, opere: 1, pagine: 1};
+  var colors = ["red", "blue", "green", "yellow", "pink"];
   function tag() {
     var labels = document.querySelectorAll(".canopy-search-teaser__label:not([data-fx-label])");
     for (var i = 0; i < labels.length; i++) {
       var word = labels[i].textContent.trim().toLowerCase();
       labels[i].setAttribute("data-fx-label", drawn[word] ? word : "");
+    }
+    function mark(el) {
+      el.setAttribute("data-fx-ann", 1 + Math.floor(Math.random() * 30));
+      el.setAttribute("data-fx-ann-color", colors[Math.floor(Math.random() * colors.length)]);
+    }
+    var rows = document.querySelectorAll(".canopy-search-teaser__item:not([data-fx-ann])");
+    for (var j = 0; j < rows.length; j++) mark(rows[j]);
+    var cards = document.querySelectorAll(
+      ".canopy-search-results .canopy-card-media:not([data-fx-ann]), " +
+      ".canopy-search-results .canopy-card figure:not(:has(.canopy-card-media)):not([data-fx-ann]), " +
+      ".canopy-search-results .canopy-article-card:not([data-fx-ann])"
+    );
+    for (var k = 0; k < cards.length; k++) {
+      mark(cards[k]);
+      cards[k].setAttribute("data-fx-ann-dir", "v");
+      cards[k].setAttribute("data-fx-ann-side", Math.random() < 0.5 ? "left" : "right");
     }
   }
   new MutationObserver(tag).observe(document.documentElement, {childList: true, subtree: true});
