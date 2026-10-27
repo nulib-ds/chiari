@@ -120,6 +120,16 @@ export const SEARCH_LABEL_TAGS =
     );
     for (var k = 0; k < cards.length; k++) edge(cards[k]);
   }
+  /* The Filter button always gets the tangle (gesture 7), in a fresh random
+     color each time it is hovered or focused (see .canopy-search-tabs__filters-button). */
+  function shuffle(e) {
+    var b = e.target.closest && e.target.closest(".canopy-search-tabs__filters-button");
+    if (!b || b.contains(e.relatedTarget)) return;
+    b.setAttribute("data-fx-ann", "7");
+    b.setAttribute("data-fx-ann-color", colors[Math.floor(Math.random() * colors.length)]);
+  }
+  document.addEventListener("mouseover", shuffle);
+  document.addEventListener("focusin", shuffle);
   new MutationObserver(tag).observe(document.documentElement, {childList: true, subtree: true});
 })();`;
 

@@ -14,7 +14,8 @@ close to the shape of a circled word, so stretching barely distorts it.
 Also writes paint-magnifier.svg, paint-close-pink.svg (the search field's
 clear button), and paint-frame.svg with paint-frame-mask.svg (a sketched box
 for panels and the matching fill that masks a panel to it, both used as
-9-slice images) with the same brush.
+9-slice images) with the same brush, and paint-block.svg (a solid black block
+laid in flat-brush strokes, the background of the /search Filter button).
 """
 import math, os, random
 
@@ -216,6 +217,29 @@ def frame(seed=21, width=13.0, color="#000"):
     return drawn, mask
 
 
+def block(seed=41, w=200, h=60, color="#000"):
+    """A blocky patch of black laid in with a flat brush: overlapping
+    horizontal strokes, each a little off true in length and height, so the
+    edges are ragged and the corners are square but not exact. Stretches to
+    any button; the inset keeps the rough edge inside the viewBox."""
+    rng = random.Random(seed)
+    rows = 5
+    band = (h - 8) / rows
+    parts = []
+    for r in range(rows):
+        y = 4 + band * (r + 0.5) + rng.uniform(-0.8, 0.8)
+        x0 = 4 + rng.uniform(0, 3.5)
+        x1 = w - 4 - rng.uniform(0, 3.5)
+        n = 30
+        wob = wobble(rng, n=2, amp=0.9)
+        centre = [(x0 + (x1 - x0) * i / n, y + wob(i / n * 6)) for i in range(n + 1)]
+        widths = [band * 1.35 + rng.uniform(-0.6, 0.6) for _ in centre]
+        paths, _ = brush(rng, centre, widths, band * 1.35, color, jag=1.1, worn=False)
+        parts += paths
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" preserveAspectRatio="none">'
+            f'<path fill="{color}" d="{" ".join(parts)}"/></svg>\n')
+
+
 if __name__ == "__main__":
     # Importable: annotations.py reuses brush() and wobble().
     for prefix, color in COLORS.items():
@@ -237,3 +261,7 @@ if __name__ == "__main__":
         path = os.path.join(OUT, name)
         open(path, "w").write(svg)
         print(os.path.normpath(path))
+
+    path = os.path.join(OUT, "paint-block.svg")
+    open(path, "w").write(block())
+    print(os.path.normpath(path))

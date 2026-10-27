@@ -444,6 +444,30 @@ main blockquote a:hover {
   }
 }
 
+/* The same wordmark brands the modals (filters, menu). The label stays in
+ * the DOM, visually hidden, so the link reads "Art is easy, Chiari". */
+.canopy-modal .canopy-modal__brand .canopy-logo {
+  display: block;
+  width: min(15rem, 100%);
+}
+
+.canopy-modal .canopy-modal__brand .canopy-logo::before {
+  content: "" / "Art is easy,";
+  display: block;
+  width: 100%;
+  aspect-ratio: 2613 / 305;
+  background: url("../images/glyphs/art-is-easy.svg") left top / 100% 100% no-repeat;
+}
+
+.canopy-modal .canopy-modal__brand .canopy-logo span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* Upstream sets this color with !important inside @layer components; an
  * important declaration only loses to a later one in the same layer. */
 @layer components {
@@ -724,6 +748,70 @@ main blockquote a:hover {
   .canopy-search-results .canopy-card-media img {
     transition: none;
   }
+}
+
+/* Filter button: the tangle in a random color (see shuffle in _app.mdx) drawn just above
+ * the pill, centered on it and nudged down and right. */
+.canopy-search-tabs__filters-button {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+}
+
+.canopy-search-tabs__filters-button::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: calc(100% - 0.85rem);
+  width: 20vw;
+  transform: translateX(calc(-50% + 1.25rem));
+  aspect-ratio: 280 / 50;
+  pointer-events: none;
+  background-color: var(--fx-ann, var(--fx-red));
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  visibility: hidden;
+}
+
+.canopy-search-tabs__filters-button:is(:hover, :focus-visible)::after {
+  visibility: visible;
+}
+
+/* The button stays black on hover, and the marker stroke in the tangle's
+ * color underlines its label, across the bottom of the pill (set by --fx-ann-paint from data-fx-ann-color). */
+/* The black is a hand-painted block (paint_circle.py → paint-block.svg,
+ * five flat-brush strokes with ragged ends) instead of a pill: the fill is
+ * the image, the radius and border drop away, and the box gets more
+ * padding so the rough edge sits outside the label. */
+.canopy-button.canopy-search-tabs__filters-button,
+.canopy-button.canopy-search-tabs__filters-button:is(:hover, :focus-visible) {
+  --canopy-radius-none: 0;
+  background-color: transparent;
+  background-image: url("../images/marker/paint-block.svg");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  border-color: transparent;
+  color: var(--nu-white);
+  padding: 0.95rem 2rem;
+}
+
+.canopy-search-tabs__filters-button::before {
+  content: "";
+  position: absolute;
+  left: 1.5rem;
+  right: 1.5rem;
+  bottom: 0.5rem;
+  height: 0.45rem;
+  pointer-events: none;
+  background: var(--fx-ann-paint, none) center / 100% 100% no-repeat;
+  visibility: hidden;
+}
+
+.canopy-search-tabs__filters-button:is(:hover, :focus-visible)::before {
+  visibility: visible;
 }
 
 /* Keyboard focus also gets a plain outline, since some paint colors are
