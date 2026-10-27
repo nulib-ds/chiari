@@ -1,0 +1,229 @@
+{
+ "_about": "Letter sources: PDF page renders at 400 dpi (pdftoppm -gray -r 400), boxes in page pixels. Bold uppercase passages only. Rebuild with build.py.",
+ "A": {
+  "page": "p-060.png",
+  "box": [
+   1948,
+   2805,
+   2012,
+   2888
+  ],
+  "from": "VUOTO CAPOVOLTO"
+ },
+ "B": {
+  "page": "p-058.png",
+  "box": [
+   2318,
+   3212,
+   2424,
+   3294
+  ],
+  "clip": true,
+  "from": "ARMONICA A BOCCA"
+ },
+ "C": {
+  "page": "p-060.png",
+  "box": [
+   1888,
+   2812,
+   1952,
+   2885
+  ],
+  "from": "VUOTO CAPOVOLTO"
+ },
+ "D": {
+  "page": "p-056.png",
+  "box": [
+   2036,
+   2376,
+   2108,
+   2500
+  ],
+  "from": "DIVERSI"
+ },
+ "E": {
+  "page": "p-060.png",
+  "box": [
+   1115,
+   511,
+   1173,
+   568
+  ],
+  "from": "ELLE ENNE GI"
+ },
+ "F": {
+  "page": "p-058.png",
+  "box": [
+   713,
+   3194,
+   812,
+   3283
+  ],
+  "from": "BREVE FORTE",
+  "clip": true
+ },
+ "G": {
+  "page": "p-060.png",
+  "box": [
+   1613,
+   512,
+   1675,
+   567
+  ],
+  "from": "ELLE ENNE GI"
+ },
+ "H": {
+  "page": "p-057.png",
+  "box": [
+   1130,
+   250,
+   1188,
+   334
+  ],
+  "clip": true,
+  "from": "CHIUDENDOSI"
+ },
+ "I": {
+  "page": "p-056.png",
+  "box": [
+   2110,
+   2378,
+   2144,
+   2496
+  ],
+  "from": "DIVERSI"
+ },
+ "L": {
+  "page": "p-060.png",
+  "box": [
+   1033,
+   514,
+   1080,
+   575
+  ],
+  "clip": true,
+  "from": "ELLE ENNE GI"
+ },
+ "M": {
+  "page": "p-058.png",
+  "box": [
+   1843,
+   3222,
+   1907,
+   3286
+  ],
+  "from": "ARMONICA A BOCCA"
+ },
+ "N": {
+  "page": "p-060.png",
+  "box": [
+   1383,
+   514,
+   1434,
+   564
+  ],
+  "from": "ELLE ENNE GI"
+ },
+ "O": {
+  "page": "p-060.png",
+  "box": [
+   1651,
+   2828,
+   1700,
+   2876
+  ],
+  "from": "VUOTO CAPOVOLTO"
+ },
+ "P": {
+  "page": "p-058.png",
+  "box": [
+   1617,
+   1410,
+   1665,
+   1462
+  ],
+  "from": "TUTTE LE CAMPANE"
+ },
+ "Q": {
+  "page": "p-058.png",
+  "box": [
+   1913,
+   2930,
+   1990,
+   3020
+  ],
+  "baseline": 2975,
+  "from": "QUARTA CORDA"
+ },
+ "R": {
+  "page": "p-056.png",
+  "box": [
+   2306,
+   2378,
+   2370,
+   2494
+  ],
+  "from": "DIVERSI"
+ },
+ "S": {
+  "page": "p-059.png",
+  "box": [
+   1436,
+   2657,
+   1487,
+   2726
+  ],
+  "from": "GIORNALE STRETTO"
+ },
+ "T": {
+  "page": "p-060.png",
+  "box": [
+   1700,
+   2821,
+   1756,
+   2873
+  ],
+  "from": "VUOTO CAPOVOLTO"
+ },
+ "U": {
+  "page": "p-059.png",
+  "box": [
+   2215,
+   2666,
+   2267,
+   2714
+  ],
+  "from": "CONVULSAMENTE"
+ },
+ "V": {
+  "page": "p-060.png",
+  "box": [
+   1531,
+   2818,
+   1592,
+   2884
+  ],
+  "from": "VUOTO CAPOVOLTO"
+ },
+ "X": {
+  "page": "p-057.png",
+  "box": [
+   557,
+   2476,
+   608,
+   2546
+  ],
+  "clip": true,
+  "from": "SAX SOPRANO"
+ },
+ "Z": {
+  "page": "p-056.png",
+  "box": [
+   1093,
+   1152,
+   1130,
+   1189
+  ],
+  "from": "PIZZICATO FORTISSIMO"
+ }
+}

@@ -1,4 +1,5 @@
 import {Meta, Stylesheet} from "@canopy-iiif/app/head";
+import React from "react";
 import {CanopyHeader, CanopyFooter} from "@canopy-iiif/app/ui";
 
 export const NU_CDN = "https://common.northwestern.edu/v8/css";
@@ -53,27 +54,13 @@ export function Head() {
   return (
     <>
       <Meta />
-      <link rel="preconnect" href="https://common.northwestern.edu" crossOrigin="anonymous" />
+      {/* IBM Plex Sans is the site's only typeface besides the hand-drawn
+          Chiari glyphs. The wordmark image still comes from NU_CDN. */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link
-        rel="preload"
-        href={`${NU_CDN}/fonts/AkkuratProRegular.woff2`}
-        as="font"
-        type="font/woff2"
-        crossOrigin="anonymous"
-      />
-      <link
-        rel="preload"
-        href={`${NU_CDN}/fonts/AkkuratProBold.woff2`}
-        as="font"
-        type="font/woff2"
-        crossOrigin="anonymous"
-      />
-      <link
-        rel="preload"
-        href={`${NU_CDN}/fonts/Poppins-Bold.woff`}
-        as="font"
-        type="font/woff"
-        crossOrigin="anonymous"
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap"
       />
       <Stylesheet />
       <script dangerouslySetInnerHTML={{__html: IIIF_SIZE_FALLBACK}} />
@@ -81,13 +68,59 @@ export function Head() {
   );
 }
 
+export const HEADER_TAGLINE = "Giuseppe Chiari at 100";
+
+export const SECONDARY_SECTIONS =
+  // Sections that sit in the quiet secondary menu beside search instead of
+  // the main nav, matched on the last path segment (`/it/about`, `/search`).
+  ["about", "search"];
+
+export function navSection(href) {
+  const path = String(href).split(/[?#]/)[0].replace(/\/(index\.html)?$/, "").replace(/\.html$/, "");
+  return path.split("/").pop();
+}
+
+export function ChiariHeader() {
+  // Canopy's header with navigation.yml split in two: Watch, Play, Write and
+  // Collaborate stay in the main nav row; About and Works move to a plain
+  // secondary menu next to search. Every link stays in navigation.yml, so
+  // Canopy still resolves locale labels, /it/ routes and the current page.
+  // The page context is shared on globalThis (see getSafePageContext in
+  // @canopy-iiif/app/ui).
+  const PageContext = globalThis[Symbol.for("__CANOPY_PAGE_CONTEXT__")];
+  const context = PageContext ? React.useContext(PageContext) : null;
+  // Canopy leaves isActive unset on primary links, so mark the section the
+  // current page lives under (e.g. /it/watch/per_arco/ → Watch).
+  const page = (context && context.page) || {};
+  const pageSegments = String(page.href || page.url || "").split(/[?#]/)[0].split("/");
+  const links = ((context && context.primaryNavigation) || []).map((link) => ({
+    ...link,
+    isActive: link.isActive || pageSegments.includes(navSection(link.href)),
+  }));
+  const isSecondary = (link) => SECONDARY_SECTIONS.includes(navSection(link.href));
+  const secondary = links.filter(isSecondary);
+  return (
+    <div className="fx-masthead">
+      {/* The header brand shows ART IS EASY (an image, via CSS) over this
+          line of text; the page <title> keeps canopy.yml's "Chiari". */}
+      <CanopyHeader title={HEADER_TAGLINE} navigation={links.filter((link) => !isSecondary(link))} />
+      {secondary.length ? (
+        <nav className="fx-secondary-nav" aria-label="Secondary">
+          {secondary.map((link) => (
+            <a key={link.href} href={link.href} aria-current={link.isActive ? "page" : undefined}>
+              {link.label || link.href}
+            </a>
+          ))}
+        </nav>
+      ) : null}
+    </div>
+  );
+}
+
 export function App({children}) {
   return (
     <>
-      {/* Fluxus "score" strip in the Northwestern secondary brights. The
-          white wordmark needs a purple ground, so it lives in the footer. */}
-      <div className="fx-score" aria-hidden="true" />
-      <CanopyHeader />
+      <ChiariHeader />
       <main>{children}</main>
       <CanopyFooter>
         <p>
@@ -98,7 +131,8 @@ export function App({children}) {
           <a href="https://nulib-ds.github.io/canopy/">Canopy IIIF</a>.
         </p>
       </CanopyFooter>
-      {/* The site's only purple: a slim Purple 120 sliver for the wordmark. */}
+      {/* The site's only purple: a slim Purple 120 sliver for the white
+          wordmark, which needs a purple ground. */}
       <div className="fx-footer-sliver">
         <a href="https://www.northwestern.edu/">
           <img className="nu-wordmark" src={`${NU_CDN}/images/northwestern.svg`} alt="Northwestern University" />

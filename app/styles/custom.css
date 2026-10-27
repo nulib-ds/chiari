@@ -1,11 +1,12 @@
 /**
  * Chiari project layer.
  *
- * Moves the site off the Purple-led Northwestern palette and onto the
- * University's secondary "Brights" — green, teal, blue, yellow, gold, red —
- * on a white page with Rich Black type. Purple survives only as a sliver in
- * the footer behind the wordmark. Shapes are round and loose (dots, dashes,
- * squiggles) rather than blocky, in keeping with Fluxus scores.
+ * The page reads as printed black-and-white paper: white ground, Rich Black
+ * type, no color fields. Color arrives only as marker annotations laid over
+ * the print, as if someone went through it with highlighters and felt-tips:
+ * highlights, strike-throughs, circles and underlines in Northwestern's
+ * secondary brights. Purple survives only as a sliver in the footer behind
+ * the wordmark.
  *
  * `northwestern.css` is left as the upstream brand layer; everything here
  * overrides it. Decisions and rationale live in DESIGN.md.
@@ -20,51 +21,50 @@
 @layer properties {
   :root,
   :host {
-    /* Secondary palette — Brights. Fills, shapes and rules only: none of
-     * these reach 4.5:1 as text on white. Rich Black on any of them does. */
-    --fx-green: #58b947;
-    --fx-teal: #7fcecd;
-    --fx-blue: #5091cd;
+    /* Secondary palette — Brights, used only as marker ink. */
     --fx-yellow: #ede93b;
-    --fx-gold: #ffc520;
+    --fx-green: #58b947;
+    --fx-blue: #5091cd;
     --fx-red: #ef553f;
+    --fx-teal: #7fcecd;
 
-    /* Secondary palette — Darks, for colored text and icons. */
-    --fx-green-dark: #008656;
-    --fx-blue-dark: #007fa4;
-    --fx-navy: #0d2d6c;
-    --fx-gold-dark: #ca7c1b;
-    --fx-red-dark: #d85820;
-
-    /* Type: Rich Black, with Rich Black 80% / 50% for muted copy. */
+    /* Print: Rich Black, with Rich Black 80% / 50% for muted copy. */
     --fx-ink: #000000;
     --fx-ink-80: var(--nu-rich-black-80);
     --fx-ink-50: var(--nu-rich-black-50);
+    --fx-highlight: color-mix(in srgb, var(--fx-yellow) 60%, white);
 
-    /* Soft tints of the brights for hover/current-state washes. */
-    --fx-green-wash: color-mix(in srgb, var(--fx-green) 18%, white);
-    --fx-blue-wash: color-mix(in srgb, var(--fx-blue) 16%, white);
-    --fx-gold-wash: color-mix(in srgb, var(--fx-gold) 22%, white);
-    --fx-red-wash: color-mix(in srgb, var(--fx-red) 14%, white);
-    --fx-teal-wash: color-mix(in srgb, var(--fx-teal) 24%, white);
+    /* One typeface: IBM Plex Sans (loaded in _app.mdx) replaces Akkurat Pro,
+     * Poppins and Noto Serif for body, display and serif roles. */
+    --font-sans: "IBM Plex Sans", Arial, sans-serif;
+    --font-display: var(--font-sans);
+    --font-serif: var(--font-sans);
+    --default-font-family: var(--font-sans);
+    --canopy-font-sans: var(--font-sans);
 
-    --fx-radius: 1.25rem;
+    /* One container site-wide, matching the search results: 1200px with a
+     * 1.618rem inset, so every page's content edge lines up with the masthead. */
+    --fx-container: 1200px;
+    --fx-inset: 1.618rem;
+    --fx-gutter: max(var(--fx-inset), calc((100% - var(--fx-container)) / 2 + var(--fx-inset)));
+
+    --fx-radius: 4px;
     --fx-pill: 999px;
-    --fx-section-space: clamp(3rem, 8vw, 6rem);
+    --fx-section-space: clamp(6rem, 14vw, 11rem);
 
-    /* Canopy accent ramp → Blue. Default is the dark Secondary blue so
-     * Canopy's accent-colored links and labels keep 4.5:1 on white. */
+    /* Canopy accent ramp → ink and paper grays, so Canopy's own accent
+     * colors print in black like everything else. */
     --color-accent-50: var(--nu-white);
-    --color-accent-100: var(--fx-blue-wash);
-    --color-accent-200: color-mix(in srgb, var(--fx-blue) 30%, white);
-    --color-accent-300: color-mix(in srgb, var(--fx-blue) 50%, white);
-    --color-accent-400: color-mix(in srgb, var(--fx-blue) 75%, white);
-    --color-accent-500: var(--fx-blue);
-    --color-accent-600: var(--fx-blue-dark);
-    --color-accent-700: var(--fx-blue-dark);
-    --color-accent-800: var(--fx-navy);
-    --color-accent-900: var(--fx-navy);
-    --color-accent-default: var(--fx-blue-dark);
+    --color-accent-100: var(--nu-offwhite);
+    --color-accent-200: var(--nu-rich-black-10);
+    --color-accent-300: var(--nu-rich-black-20);
+    --color-accent-400: var(--nu-rich-black-40);
+    --color-accent-500: var(--nu-rich-black-50);
+    --color-accent-600: var(--nu-rich-black-70);
+    --color-accent-700: var(--nu-rich-black-80);
+    --color-accent-800: var(--fx-ink);
+    --color-accent-900: var(--fx-ink);
+    --color-accent-default: var(--fx-ink);
 
     --color-gray-900: var(--fx-ink);
     --color-gray-default: var(--fx-ink);
@@ -73,35 +73,74 @@
 }
 
 :root {
-  --clover-color-accent-alt: var(--fx-navy);
+  --clover-color-accent-alt: var(--fx-ink-80);
 }
 
 ::selection {
-  background: var(--fx-yellow);
+  background: var(--fx-highlight);
   color: var(--fx-ink);
 }
 
 /* Canopy squares every corner with `border-radius:
  * var(--canopy-radius-none) !important` on `*`. Rather than fight the
- * !important, rounded elements redefine that variable for themselves (their
- * children inherit it, which is what we want for card images). */
-.canopy-button,
-.canopy-header .canopy-search-form,
-.canopy-header .canopy-nav-links a,
-.canopy-header .canopy-nav-links a::after,
-.canopy-interstitial__nav-btn,
-.canopy-interstitial__pagination button,
-.canopy-interstitial__pagination [role="tab"] {
+ * !important, rounded elements redefine that variable for themselves. */
+.canopy-button {
   --canopy-radius-none: var(--fx-pill);
 }
 
 .canopy-card,
-.canopy-interstitial--hero .canopy-interstitial__media-group img {
+.fx-plate__media img {
   --canopy-radius-none: var(--fx-radius);
 }
 
 /* -------------------------------------------------------------------------
- * Base: Rich Black type, roomy rhythm, playful links
+ * Marker annotations
+ *
+ * `.fx-mark` plus a type and a color, e.g. `fx-mark fx-mark--strike
+ * fx-mark--red`. Authors reach these through the `<Mark>` MDX component.
+ * The SVGs stretch to the text and keep a constant pen width, and
+ * `box-decoration-break: clone` repeats the mark on every wrapped line.
+ * ---------------------------------------------------------------------- */
+
+.fx-mark {
+  --fx-mark-img: url("../images/marker/highlight-yellow.svg");
+  color: inherit;
+  background: var(--fx-mark-img) center / 100% 100% no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding: 0.05em 0.2em;
+  margin: 0 -0.05em;
+  text-decoration: none;
+}
+
+.fx-mark--circle {
+  padding: 0.4em 0.8em;
+  margin: -0.4em -0.35em;
+}
+
+.fx-mark--highlight.fx-mark--yellow { --fx-mark-img: url("../images/marker/highlight-yellow.svg"); }
+.fx-mark--highlight.fx-mark--green { --fx-mark-img: url("../images/marker/highlight-green.svg"); }
+.fx-mark--highlight.fx-mark--blue { --fx-mark-img: url("../images/marker/highlight-blue.svg"); }
+.fx-mark--highlight.fx-mark--red { --fx-mark-img: url("../images/marker/highlight-red.svg"); }
+.fx-mark--highlight.fx-mark--teal { --fx-mark-img: url("../images/marker/highlight-teal.svg"); }
+.fx-mark--strike.fx-mark--yellow { --fx-mark-img: url("../images/marker/strike-yellow.svg"); }
+.fx-mark--strike.fx-mark--green { --fx-mark-img: url("../images/marker/strike-green.svg"); }
+.fx-mark--strike.fx-mark--blue { --fx-mark-img: url("../images/marker/strike-blue.svg"); }
+.fx-mark--strike.fx-mark--red { --fx-mark-img: url("../images/marker/strike-red.svg"); }
+.fx-mark--strike.fx-mark--teal { --fx-mark-img: url("../images/marker/strike-teal.svg"); }
+.fx-mark--underline.fx-mark--yellow { --fx-mark-img: url("../images/marker/underline-yellow.svg"); }
+.fx-mark--underline.fx-mark--green { --fx-mark-img: url("../images/marker/underline-green.svg"); }
+.fx-mark--underline.fx-mark--blue { --fx-mark-img: url("../images/marker/underline-blue.svg"); }
+.fx-mark--underline.fx-mark--red { --fx-mark-img: url("../images/marker/underline-red.svg"); }
+.fx-mark--underline.fx-mark--teal { --fx-mark-img: url("../images/marker/underline-teal.svg"); }
+.fx-mark--circle.fx-mark--yellow { --fx-mark-img: url("../images/marker/circle-yellow.svg"); }
+.fx-mark--circle.fx-mark--green { --fx-mark-img: url("../images/marker/circle-green.svg"); }
+.fx-mark--circle.fx-mark--blue { --fx-mark-img: url("../images/marker/circle-blue.svg"); }
+.fx-mark--circle.fx-mark--red { --fx-mark-img: url("../images/marker/circle-red.svg"); }
+.fx-mark--circle.fx-mark--teal { --fx-mark-img: url("../images/marker/circle-teal.svg"); }
+
+/* -------------------------------------------------------------------------
+ * Base: the printed page
  * ---------------------------------------------------------------------- */
 
 body {
@@ -117,40 +156,47 @@ h6 {
   color: var(--fx-ink);
 }
 
-/* Each heading level carries one bright mark, so color arrives in small
- * splashes rather than large fields. */
 main h1 {
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.9rem;
-  background: url("../images/fluxus/squiggle-red.svg") left bottom / 24px 8px repeat-x;
-  /* Fit to the text so the squiggle underlines the heading, not the column. */
-  width: fit-content;
+  margin-bottom: 3rem;
+}
+
+/* <Hand> headings: the drawn SVG carries the look, the visually hidden
+ * text carries the meaning. */
+.fx-hand {
+  margin-bottom: 3rem;
+  line-height: 1;
+  color: var(--fx-ink);
+}
+
+.fx-hand__svg {
+  display: block;
+  width: auto;
   max-width: 100%;
+  overflow: visible;
+}
+
+/* A drawn quotation: no margin rule, room above and below, attribution in
+ * quiet print. */
+main blockquote.fx-hand--quote {
+  margin-block: 4rem;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.fx-hand__cite {
+  margin-top: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--fx-ink-50);
 }
 
 main h2 {
-  position: relative;
-  margin-top: 3.5rem;
-  margin-bottom: 1rem;
-}
-
-main h2::before {
-  content: "";
-  display: inline-block;
-  width: 0.55em;
-  height: 0.55em;
-  margin-right: 0.45em;
-  --canopy-radius-none: 50%;
-  background: var(--fx-gold);
-  vertical-align: 0.08em;
+  margin-top: 6rem;
+  margin-bottom: 1.5rem;
 }
 
 main h3 {
-  margin-top: 2.5rem;
-  text-decoration: underline;
-  text-decoration-color: var(--fx-green);
-  text-decoration-thickness: 3px;
-  text-underline-offset: 0.3em;
+  margin-top: 4rem;
 }
 
 main p,
@@ -159,67 +205,173 @@ main li {
 }
 
 main p + p {
-  margin-top: 1.25em;
+  margin-top: 1.75em;
 }
 
 main small,
-main figcaption,
-main .canopy-muted {
+main figcaption {
   color: var(--fx-ink-50);
 }
 
 main blockquote {
-  border-left: none;
+  border-left: 2px solid var(--nu-rich-black-20);
   padding: 0.25rem 0 0.25rem 1.5rem;
   color: var(--fx-ink-80);
-  background: linear-gradient(var(--fx-teal), var(--fx-teal)) left / 4px 100% no-repeat;
-  --canopy-radius-none: 2px;
 }
 
-/* Links: Rich Black text with a bright underline that warms on hover.
- * The underline (not color) carries the link affordance — WCAG 1.4.1. */
+/* Marker strokes are reserved for the main menu. In-copy links keep a plain
+ * thin underline only because they are the same black as the text around
+ * them, and color alone can't distinguish them (WCAG 1.4.1). */
 main p a,
 main li a,
 main dd a,
 main blockquote a {
   color: var(--fx-ink);
-  text-decoration-color: var(--fx-blue);
-  text-decoration-thickness: 2px;
+  text-decoration-color: var(--fx-ink-50);
+  text-decoration-thickness: 1px;
 }
 
 main p a:hover,
 main li a:hover,
 main dd a:hover,
 main blockquote a:hover {
-  text-decoration-color: var(--fx-red);
-  text-decoration-thickness: 3px;
-  background: var(--fx-gold-wash);
+  text-decoration-color: var(--fx-ink);
+  text-decoration-thickness: 1px;
 }
 
 :focus-visible {
-  outline: 3px solid var(--fx-blue);
+  outline: 2px solid var(--fx-ink);
   outline-offset: 3px;
 }
 
 /* -------------------------------------------------------------------------
- * Header
+ * Header: a plain printed masthead.
  * ---------------------------------------------------------------------- */
 
-/* A thin Fluxus "score" — rounded dashes and dots — replaces the Purple
- * top bar as the first thing on the page. */
-.fx-score {
-  display: block;
-  height: 12px;
-  margin: 0;
-  background: url("../images/fluxus/score.svg") left center / 600px 12px repeat-x;
-}
-
+/* No rule between masthead and page: white space does the separating. */
 .canopy-header {
   border-bottom: none;
 }
 
 .canopy-header__brand {
-  padding: 2.5rem 0 1.5rem;
+  padding: 3.5rem 0 2.25rem;
+}
+
+/* Secondary menu (About, Works) — plain print, no marker. On desktop it
+ * sits in the brand row just left of the 265px search field; the brand row
+ * gets a fixed height so the two line up. */
+.fx-masthead {
+  position: relative;
+  --fx-masthead-row: 11.5rem;
+}
+
+.fx-masthead .canopy-header {
+  grid-template-columns:
+    [full-start] minmax(var(--fx-inset), 1fr)
+    [content-start] minmax(0, calc(var(--fx-container) - 2 * var(--fx-inset)))
+    [content-end] minmax(var(--fx-inset), 1fr)
+    [full-end];
+}
+
+.fx-masthead .canopy-nav-links.canopy-header__desktop-nav {
+  padding-inline: var(--fx-gutter);
+}
+
+.fx-secondary-nav {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.5rem;
+  padding: 0.6rem var(--fx-gutter);
+  font-size: 0.9rem;
+}
+
+/* Rich Black 50% (5.3:1 on white) keeps these quieter than the main nav. */
+.fx-secondary-nav a {
+  color: var(--fx-ink-50);
+  text-decoration: none;
+}
+
+.fx-secondary-nav a:hover,
+.fx-secondary-nav a[aria-current="page"] {
+  color: var(--fx-ink);
+}
+
+/* Weight, not a mark, shows the current page here. */
+.fx-secondary-nav a[aria-current="page"] {
+  font-weight: 700;
+}
+
+@media (min-width: 70rem) {
+  .fx-masthead .canopy-header {
+    grid-template-rows: var(--fx-masthead-row) auto;
+  }
+
+  .fx-masthead .canopy-header__brand {
+    padding-block: 0;
+  }
+
+  .fx-secondary-nav {
+    position: absolute;
+    top: 0;
+    right: calc(var(--fx-gutter) + 265px + 2rem);
+    height: var(--fx-masthead-row);
+    align-items: center;
+    /* Canopy's header is position: relative; z-index: 1 on white. */
+    z-index: 2;
+    /* Matches the search form's stroke padding so the labels share a line. */
+    padding: 0 0 0.5rem;
+    border-bottom: none;
+  }
+}
+
+/* Masthead brand: ART IS EASY, vectorized from the 1974 flyer with its print
+ * texture kept (assets/images/glyphs/art-is-easy.svg), over the tagline
+ * "Giuseppe Chiari at 100" in live text. The image is generated content with
+ * alt text, so the link reads "Art is easy, Giuseppe Chiari at 100".
+ *
+ * On desktop ART IS EASY spans the main nav row exactly. That row is the
+ * four labels' text width (proportional to the nav font size; measured for
+ * each language) plus three link-to-link steps of 2 × 1.4rem inset + 0.25rem
+ * gap. */
+.canopy-header .canopy-logo {
+  --fx-nav-size: clamp(1.35rem, 1rem + 0.9vw, 1.85rem);
+  --fx-nav-text: 12.842;
+  display: block;
+  width: calc(var(--fx-nav-text) * var(--fx-nav-size) + 3 * 3.05rem);
+  max-width: 100%;
+}
+
+.canopy-header .canopy-logo:lang(it) {
+  --fx-nav-text: 15.411;
+}
+
+.canopy-header .canopy-logo::before {
+  content: "" / "Art is easy,";
+  display: block;
+  width: 100%;
+  aspect-ratio: 2613 / 305;
+  margin-bottom: 0.55rem;
+  background: url("../images/glyphs/art-is-easy.svg") left top / 100% 100% no-repeat;
+}
+
+.canopy-header .canopy-logo span {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  line-height: 1.2;
+}
+
+@media (max-width: 70rem) {
+  .canopy-header .canopy-logo {
+    width: min(18rem, 100%);
+  }
+
+  .canopy-header .canopy-logo span {
+    font-size: 0.85rem;
+  }
 }
 
 /* Upstream sets this color with !important inside @layer components; an
@@ -232,100 +384,69 @@ main blockquote a:hover {
   }
 }
 
-/* Confetti after the site name: four dots, one of each primary-ish bright. */
-.canopy-header .canopy-logo span::after {
-  content: "";
-  display: inline-block;
-  width: 3.2rem;
-  height: 0.9rem;
-  margin-left: 0.6rem;
-  vertical-align: 0.1em;
-  background:
-    radial-gradient(circle, var(--fx-red) 0 0.3rem, transparent 0.32rem) 0 50% / 0.8rem 0.8rem no-repeat,
-    radial-gradient(circle, var(--fx-gold) 0 0.22rem, transparent 0.24rem) 0.85rem 15% / 0.6rem 0.6rem no-repeat,
-    radial-gradient(circle, var(--fx-blue) 0 0.3rem, transparent 0.32rem) 1.55rem 70% / 0.8rem 0.8rem no-repeat,
-    radial-gradient(circle, var(--fx-green) 0 0.18rem, transparent 0.2rem) 2.5rem 30% / 0.5rem 0.5rem no-repeat;
-}
-
-.canopy-modal .canopy-logo span::after {
-  display: none;
-}
-
-/* On small screens the language toggle sits right after the site name. */
-@media (max-width: 56.25em) {
-  .canopy-header .canopy-logo span::after {
-    display: none;
-  }
-}
-
 .canopy-nav-links.canopy-header__desktop-nav {
   border-top: none;
   gap: 0.25rem;
-  padding-bottom: 1rem;
+  padding-bottom: 2.75rem;
 }
 
+/* The four main sections are the loudest type in the header. Each owns a
+ * paint-marker color. Hovering draws a thick opaque stroke under the word,
+ * point to point from the left: the stroke stays full size and a clip
+ * uncovers it, so its weight never stretches and the stray bristle fibers
+ * at the tail arrive last. The current section keeps its stroke. Colors
+ * hold 3:1 against white so that mark stays perceivable (WCAG 1.4.11). */
 .canopy-header .canopy-nav-links a {
-  --fx-nav: var(--fx-blue);
-  --fx-nav-squiggle: url("../images/fluxus/squiggle-blue.svg");
+  --fx-paint: url("../images/marker/paint-red.svg");
+  --fx-nav-inset: 1.4rem;
   position: relative;
-  padding: 0.6rem 1rem 0.9rem;
+  padding: 0.4rem var(--fx-nav-inset) 0.75rem;
+  font-family: var(--font-sans);
+  font-size: clamp(1.35rem, 1rem + 0.9vw, 1.85rem);
+  letter-spacing: -0.01em;
   color: var(--fx-ink);
-  --canopy-radius-none: 999px;
   background: none;
 }
 
-/* Each nav item owns one bright, cycling through the palette. */
-.canopy-header .canopy-nav-links a:nth-child(5n + 1) {
-  --fx-nav: var(--fx-red);
-  --fx-nav-squiggle: url("../images/fluxus/squiggle-red.svg");
-}
-.canopy-header .canopy-nav-links a:nth-child(5n + 2) {
-  --fx-nav: var(--fx-gold);
-  --fx-nav-squiggle: url("../images/fluxus/squiggle-gold.svg");
-}
-.canopy-header .canopy-nav-links a:nth-child(5n + 3) {
-  --fx-nav: var(--fx-green);
-  --fx-nav-squiggle: url("../images/fluxus/squiggle-green.svg");
-}
-.canopy-header .canopy-nav-links a:nth-child(5n + 4) {
-  --fx-nav: var(--fx-blue);
-  --fx-nav-squiggle: url("../images/fluxus/squiggle-blue.svg");
-}
-.canopy-header .canopy-nav-links a:nth-child(5n + 5) {
-  --fx-nav: var(--fx-teal);
-  --fx-nav-squiggle: url("../images/fluxus/squiggle-teal.svg");
-}
-
-/* A small dot under every link; hover draws it out into a squiggle. */
 .canopy-header .canopy-nav-links a::after {
   content: "";
   position: absolute;
-  left: 50%;
+  left: calc(var(--fx-nav-inset) - 0.15em);
+  right: calc(var(--fx-nav-inset) - 0.15em);
   bottom: 0.2rem;
-  width: 0.4rem;
-  height: 0.4rem;
-  --canopy-radius-none: 999px;
-  background: var(--fx-nav);
-  transform: translateX(-50%);
-  transition: width 200ms ease, height 200ms ease, border-radius 200ms ease;
+  height: 0.42em;
+  background: var(--fx-paint) center / 100% 100% no-repeat;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 420ms cubic-bezier(0.3, 0.55, 0.35, 1);
+  pointer-events: none;
 }
 
-.canopy-header .canopy-nav-links a:hover {
-  background: none;
+/* Pull the row left by the first link's inset so "Watch" sits flush with
+ * the site name. Both are in rem so they resolve to the same length. */
+.canopy-nav-links.canopy-header__desktop-nav {
+  margin-left: -1.4rem;
+}
+
+.canopy-header .canopy-nav-links a:nth-child(4n + 1) { --fx-paint: url("../images/marker/paint-red.svg"); }
+.canopy-header .canopy-nav-links a:nth-child(4n + 2) { --fx-paint: url("../images/marker/paint-blue.svg"); }
+.canopy-header .canopy-nav-links a:nth-child(4n + 3) { --fx-paint: url("../images/marker/paint-green.svg"); }
+.canopy-header .canopy-nav-links a:nth-child(4n + 4) { --fx-paint: url("../images/marker/paint-gold.svg"); }
+
+.canopy-header .canopy-nav-links a:hover,
+.canopy-header .canopy-nav-links a[aria-current="page"] {
   color: var(--fx-ink);
+  background: none;
 }
 
 .canopy-header .canopy-nav-links a:hover::after,
 .canopy-header .canopy-nav-links a[aria-current="page"]::after {
-  width: calc(100% - 2rem);
-  height: 8px;
-  --canopy-radius-none: 0;
-  background: var(--fx-nav-squiggle) left center / 24px 8px repeat-x;
+  clip-path: inset(0 0 0 0);
 }
 
-.canopy-header .canopy-nav-links a[aria-current="page"] {
-  background: none;
-  color: var(--fx-ink);
+@media (prefers-reduced-motion: reduce) {
+  .canopy-header .canopy-nav-links a::after {
+    transition: none;
+  }
 }
 
 .canopy-header .canopy-nav-links a:focus-visible {
@@ -340,16 +461,16 @@ main blockquote a:hover {
   color: var(--fx-ink);
 }
 
-/* Search: a soft pill instead of the purple underline. */
+/* Search: the form line is a black paint-marker stroke, kin to the main
+ * menu's colored ones. */
 .canopy-header .canopy-search-form {
   border-bottom: none;
-  --canopy-radius-none: 999px;
-  background: var(--fx-teal-wash);
-  padding: 0 0.9rem;
+  padding-bottom: 0.5rem;
+  background: url("../images/marker/paint-black.svg") left bottom / 100% 0.5rem no-repeat;
 }
 
 .canopy-header .canopy-search-form__label svg {
-  color: var(--fx-blue-dark);
+  color: var(--fx-ink);
 }
 
 .canopy-header .canopy-search-form__input {
@@ -360,85 +481,154 @@ main blockquote a:hover {
   color: var(--fx-ink-50);
 }
 
-/* The header search sits on its pill, without a frosted backdrop. */
+/* The header search sits on solid white, without a frosted backdrop. */
 .canopy-header .canopy-search-form-shell {
+  background-color: var(--nu-white);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 
-/* Remove the language-select border peeking around the header search. */
+/* Language toggle. Canopy puts it in the same grid cell as the search field,
+ * where it hides under the search on wide screens and over the brand on
+ * narrow ones (TASKS.md). On desktop it moves to the right end of the main
+ * nav row; below 70rem it hides, since the nav menu has its own toggle. */
 .canopy-header__language-toggle--desktop .canopy-language-toggle__select-input {
   border: none;
+  color: var(--fx-ink-50);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  background-color: transparent;
+}
+
+@media (min-width: 70rem) {
+  .fx-masthead .canopy-header__actions {
+    grid-row: 2;
+    align-self: center;
+    padding-bottom: 2.75rem;
+  }
+}
+
+@media (max-width: 69.99rem) {
+  .canopy-header__language-toggle--desktop {
+    display: none;
+  }
 }
 
 /* -------------------------------------------------------------------------
- * Hero
+ * Featured plates (`<FeaturedWorks />`): one work per screen, centered on
+ * white, its title circled in marker.
  * ---------------------------------------------------------------------- */
 
-.canopy-interstitial--hero {
-  --hero-bg-start: var(--nu-white);
-  --hero-bg-mid: var(--nu-white);
-  --hero-bg-end: var(--nu-white);
-  --hero-dot-bg: var(--nu-rich-black-10);
-  --hero-dot-active-bg: var(--fx-red);
-  border-bottom: none;
-  padding-block: 2rem var(--fx-section-space);
+.fx-plates {
+  display: grid;
 }
 
-.canopy-interstitial--hero .canopy-interstitial__nav-btn {
-  background-color: var(--nu-white) !important;
-  color: var(--fx-ink) !important;
-  border: 2px solid var(--fx-ink);
+.fx-plate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.75rem;
+  min-height: 100svh;
+  margin: 0;
+  padding: clamp(2rem, 6vh, 4rem) 1.25rem;
 }
 
-.canopy-interstitial--hero .canopy-interstitial__nav-btn svg {
-  stroke: var(--fx-ink);
+/* The first plate shares its screen with the masthead. */
+.fx-plate:first-child {
+  min-height: calc(100svh - 16rem);
+  padding-top: clamp(3.5rem, 8vh, 6rem);
 }
 
-.canopy-interstitial--hero .canopy-interstitial__nav-btn:hover {
-  background-color: var(--fx-gold) !important;
-  border-color: var(--fx-gold);
+.fx-plate__media {
+  display: block;
+  max-width: min(100%, calc(var(--fx-container) - 2 * var(--fx-inset)));
 }
 
-.canopy-interstitial--hero .canopy-interstitial__headline {
+.fx-plate__media img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: calc(100svh - 14rem);
+  object-fit: contain;
+}
+
+/* Leave room for the masthead so the first title shows without scrolling. */
+.fx-plate:first-child .fx-plate__media img {
+  max-height: calc(100svh - 32rem);
+}
+
+.fx-plate__caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: center;
+}
+
+.fx-plate__index {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  color: var(--fx-ink-50);
+}
+
+.fx-plate__title {
+  font-size: 1.15rem;
+  font-weight: 700;
   color: var(--fx-ink);
+  text-decoration: none;
 }
 
-.canopy-interstitial--hero .canopy-interstitial__description {
+.fx-plate__title:hover {
   color: var(--fx-ink-80);
 }
 
-/* Loose circles and a scribbled stroke float behind the featured image. */
-.canopy-interstitial--hero .canopy-interstitial__media-group {
-  background: url("../images/fluxus/hero-shapes.svg") center / contain no-repeat;
+/* Intro copy under the plates: plain print with room to breathe. */
+.fx-intro {
+  max-width: 40rem;
+  padding-block: var(--fx-section-space);
 }
 
-.canopy-interstitial--hero .canopy-interstitial__media-group img {
-  --canopy-radius-none: var(--fx-radius);
+.fx-intro p {
+  font-size: 1.1rem;
+  color: var(--fx-ink-80);
+}
+
+.fx-intro .canopy-button-wrapper,
+.fx-intro > :last-child {
+  margin-top: 2rem;
 }
 
 /* -------------------------------------------------------------------------
- * Buttons: bright pills with Rich Black text (every bright clears 4.5:1
- * against Rich Black).
+ * Buttons: ink on paper; hovering inverts them.
  * ---------------------------------------------------------------------- */
 
 .canopy-button {
-  border-width: 2px;
-  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+  border-width: 1.5px;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
 .canopy-button--primary {
-  background-color: var(--fx-gold);
-  border-color: var(--fx-gold);
-  color: var(--fx-ink);
+  background-color: var(--fx-ink);
+  border-color: var(--fx-ink);
+  color: var(--nu-white);
 }
 
 .canopy-button--primary:hover,
 .canopy-button--primary:focus-visible {
-  background-color: var(--fx-red);
-  border-color: var(--fx-red);
+  background-color: var(--nu-white);
+  border-color: var(--fx-ink);
   color: var(--fx-ink);
-  transform: rotate(-1.5deg);
+  text-decoration: none;
+}
+
+.canopy-button--secondary:hover,
+.canopy-button--secondary:focus-visible {
+  background-color: var(--fx-ink);
+  border-color: var(--fx-ink);
+  color: var(--nu-white);
+  text-decoration: none;
 }
 
 .canopy-button--secondary {
@@ -447,30 +637,13 @@ main blockquote a:hover {
   color: var(--fx-ink);
 }
 
-.canopy-button--secondary:hover,
-.canopy-button--secondary:focus-visible {
-  background-color: var(--fx-teal);
-  border-color: var(--fx-teal);
-  color: var(--fx-ink);
-  transform: rotate(1.5deg);
-}
-
 /* -------------------------------------------------------------------------
- * Cards: white space around rounded images; a bright ring on hover.
+ * Cards: printed thumbnails.
  * ---------------------------------------------------------------------- */
 
 .canopy-card {
   border: none;
   background: var(--nu-white);
-  --canopy-radius-none: var(--fx-radius);
-  outline: 4px solid transparent;
-  outline-offset: 4px;
-  transition: outline-color 200ms ease, transform 200ms ease;
-}
-
-.canopy-card img,
-.canopy-card figure > :first-child {
-  --canopy-radius-none: var(--fx-radius);
 }
 
 .canopy-card figcaption {
@@ -478,40 +651,22 @@ main blockquote a:hover {
   color: var(--fx-ink);
 }
 
-/* Cards sit one per wrapper, so the color cycles on the wrapper. */
-:nth-child(4n + 1) > .canopy-card { --fx-card: var(--fx-red); }
-:nth-child(4n + 2) > .canopy-card { --fx-card: var(--fx-gold); }
-:nth-child(4n + 3) > .canopy-card { --fx-card: var(--fx-green); }
-:nth-child(4n + 4) > .canopy-card { --fx-card: var(--fx-blue); }
 
-/* Outline, not box-shadow: Canopy also zeroes shadows with !important. */
-.canopy-card:hover {
-  outline-color: var(--fx-card, var(--fx-blue));
-  transform: translateY(-2px);
-}
-
-/* Reserve a square image surface when a search card has no thumbnail. */
+/* Reserve a square paper surface when a search card has no thumbnail. */
 .canopy-search-results .canopy-card figure:has(> figcaption:first-child)::before {
   content: "";
   display: block;
   aspect-ratio: 1;
-  --canopy-radius-none: var(--fx-radius);
-  background: var(--fx-teal-wash);
+  background: var(--nu-offwhite);
 }
 
 /* -------------------------------------------------------------------------
  * Search results
  * ---------------------------------------------------------------------- */
 
-/* Search extends slightly beyond the header's 1120px content column. */
+/* The search results set the site container (see --fx-container). */
 .canopy-search-results {
-  max-width: 1200px;
-  margin-inline: auto;
-}
-
-.canopy-search-results [data-canopy-search-tabs],
-.canopy-search-results [data-canopy-search-summary] {
-  max-width: 1120px;
+  max-width: var(--fx-container);
   margin-inline: auto;
 }
 
@@ -534,36 +689,42 @@ main {
 }
 
 .canopy-layout {
-  padding-top: clamp(1.5rem, 4vw, 3rem);
+  max-width: var(--fx-container);
+  margin-inline: auto;
+  padding-top: clamp(4.5rem, 10vw, 8rem);
+  padding-inline: var(--fx-inset);
 }
 
 /* -------------------------------------------------------------------------
- * Footer: white, with the score repeated, and the only purple on the site —
- * a slim Purple 120 sliver that carries the white wordmark.
+ * Footer: white, closed by the site's only purple — a slim Purple 120
+ * sliver that carries the white wordmark.
  * ---------------------------------------------------------------------- */
 
 .canopy-footer {
   background: var(--nu-white);
   color: var(--fx-ink-80);
+  border-top: 1px solid var(--nu-rich-black-10);
   margin-top: var(--fx-section-space);
 }
 
 .canopy-footer a {
   color: var(--fx-ink);
-  text-decoration-color: var(--fx-green);
-  text-decoration-thickness: 2px;
+  text-decoration-color: var(--fx-ink-50);
+  text-decoration-thickness: 1px;
 }
 
 .canopy-footer a:hover {
-  text-decoration-color: var(--fx-red);
+  text-decoration-color: var(--fx-ink);
 }
 
 .canopy-footer :focus-visible {
-  outline-color: var(--fx-blue);
+  outline-color: var(--fx-ink);
 }
 
 .canopy-footer__inner {
+  max-width: var(--fx-container);
   padding-block: 3rem;
+  padding-inline: var(--fx-inset);
 }
 
 .fx-footer-sliver {

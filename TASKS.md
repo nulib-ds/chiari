@@ -4,9 +4,7 @@ Check the [master document](https://docs.google.com/spreadsheets/d/1-aGPaTOeCPDg
 ## Issues/Bugs
 - Navigation in Italian super messed up. Shows top level navigation items rather than subitems.
     - Looks like an issue with nested navigation.yml files.
-- Language toggle disappears at certain aspect ratios.
-    - 850 x 1300 px: button exists.
-    - 1700 x 1300 px: button does not exists.
+- ~~Language toggle disappears at certain aspect ratios.~~ Fixed: it was hidden under the header search on wide screens. It now sits at the right of the main nav on desktop and in the menu below 70rem.
 
 ## Introduction
 ### Introduction

@@ -3,12 +3,13 @@
 @import "./northwestern.css";
 @import "./custom.css";
 
+/* Both widths match the site container in custom.css (--fx-container). */
 @utility max-w-content {
-  max-width: 1080px;
+  max-width: 1200px;
 }
 
 @utility max-w-wide {
-  max-width: 1300px;
+  max-width: 1200px;
 }
 
 @utility font-display {
