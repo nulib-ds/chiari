@@ -562,3 +562,29 @@
     transition: none !important;
   }
 }
+
+/* Debugging only, not part of the exhibit: LaStradaDebug.client.tsx, Clover 4's
+ * viewer showing the arrangement as it is made. */
+.fx-strada-debug {
+  margin-block: 3rem 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--fx-ink-50);
+}
+
+.fx-strada-debug__note {
+  margin: 0 0 1rem;
+  color: var(--fx-ink-80);
+  font: 0.8rem / 1.5 var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.fx-strada-debug__note strong {
+  margin-right: 0.5em;
+  color: var(--fx-pink);
+  text-transform: uppercase;
+}
+
+.fx-strada-debug__viewer {
+  display: block;
+  height: 80vh;
+}

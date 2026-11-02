@@ -43,7 +43,9 @@ import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from "reac
  * stand every time one moves: the same annotations, in the order of their
  * times, each with a new target (xywh=...&t=...) where it now is. It can be
  * downloaded or copied, and is also announced as a "la-strada:arrangement"
- * event on the section, with the page as the event's detail.
+ * event on the section, with the page as the event's detail, and as a
+ * "la-strada:manifest" event with the manifest that carries it and its
+ * chapters (which LaStradaDebug.client.tsx shows in Clover's viewer).
  *
  * Positions are kept in page-width units (the sheet is 100 wide) and drawn
  * with container units, so the board scales with its container and nothing
@@ -269,7 +271,7 @@ function readScore(manifest: any, rebase: (url: string) => string): Score {
  * this site is deployed, so follow the manifest rather than its ids. That
  * keeps one manifest working on localhost, on Pages and under a base path.
  */
-function rebaser(manifest: any, fetched: string) {
+export function rebaser(manifest: any, fetched: string) {
   const own = String(manifest.id).replace(/[^/]*$/, "");
   const here = fetched.replace(/[^/]*$/, "");
   // The site the manifest sits in, too, so a link to a page of it works wherever it is.
@@ -829,12 +831,14 @@ export default function LaStrada({
     [score, arranged]
   );
 
-  // ...and announced once the slip being moved is let go.
+  // ...and announced once the slip being moved is let go: the page, and the
+  // manifest that carries it with its chapters.
   useEffect(() => {
-    if (page && !lifted) {
-      section.current?.dispatchEvent(new CustomEvent("la-strada:arrangement", {detail: page, bubbles: true}));
+    if (arranged && !lifted) {
+      section.current?.dispatchEvent(new CustomEvent("la-strada:arrangement", {detail: arranged.page, bubbles: true}));
+      section.current?.dispatchEvent(new CustomEvent("la-strada:manifest", {detail: arranged.manifest, bubbles: true}));
     }
-  }, [page, lifted]);
+  }, [arranged, lifted]);
 
   useEffect(
     () => () => {

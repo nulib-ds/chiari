@@ -45,6 +45,12 @@ document.querySelector(".fx-strada").addEventListener("la-strada:arrangement", (
 
 Before anything is moved, and after a reset, it is the original page again.
 
+A `la-strada:manifest` event follows it each time, with the manifest that carries the page and its chapters (what the **Manifest** button downloads) as its `detail`. Both events bubble.
+
+### Seeing it in Clover
+
+`<LaStradaDebug manifest="/la-strada/manifest.json" />` (`app/components/LaStradaDebug.client.tsx`) is for debugging and not part of the exhibit; it is not on the page now. Put it under `<LaStrada>` in `content/play/la_strada/index.mdx` to use it. It hands every `la-strada:manifest` to Clover 4's `<clover-viewer>` web component, which brings its own React and is loaded from jsDelivr at the installed version, and lists the order the annotation page gives. Its images and sounds are rebased to wherever the page is served, as the exhibit's are.
+
 ## The typewriter's grid
 
 `prepare.py` measures the grid from the typing itself and writes it to the manifest as a `TypewriterGrid` service on the sheet's canvas: `characterWidth`, `lineHeight`, `skew` (the tilt of the typing in the photograph, so that columns and lines are measured along and across it) and `originX`/`originY` (where a slip's corner stands at the left margin's first column and the first typed line). The exhibit settles dropped slips onto it, moves slips a column or a line with the arrow keys (Shift for five), and puts the shuffle's actions on it.
