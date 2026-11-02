@@ -42,7 +42,7 @@
 
     /* One typeface: IBM Plex Sans (loaded in _app.mdx) replaces Akkurat Pro,
      * Poppins and Noto Serif for body, display and serif roles. */
-    --font-sans: "IBM Plex Sans", Arial, sans-serif;
+    --font-sans: "Cutive Mono", Arial, sans-serif;
     --font-display: var(--font-sans);
     --font-serif: var(--font-sans);
     --default-font-family: var(--font-sans);
