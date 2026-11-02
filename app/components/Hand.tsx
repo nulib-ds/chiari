@@ -17,7 +17,7 @@ import {gestureNumber} from "./Mark";
  * <Hand as="h1" size="1.75rem" annotate="wave" annotateColor="blue">La Strada</Hand>
  *
  * Letters A–Z use the traced glyphs (J, K, W, Y are built from his strokes).
- * Anything else, such as digits or punctuation, falls back to IBM Plex Sans.
+ * Anything else, such as digits or punctuation, falls back to Courier Prime.
  */
 
 type Glyph = {d: string; advance: number; descent?: number};
@@ -64,7 +64,7 @@ export default function Hand({
   paint?: boolean;
   id?: string;
   className?: string;
-  /** Attribution under a blockquote, set in IBM Plex Sans. */
+  /** Attribution under a blockquote, set in Courier Prime. */
   cite?: string;
   /** A heading only: an annotation drawn to its right, by gesture name (as in the lookbook) or number. */
   annotate?: string | number;
@@ -88,9 +88,10 @@ export default function Hand({
       descent = Math.max(descent, g.descent || 0);
       x += g.advance + tracking;
     } else {
-      // Not in the traced set: IBM Plex Sans Bold, sized to the cap height.
+      // Not in the traced set: the site's Courier Prime, sized to the cap
+      // height. Its every character is 0.6 em, the 84 it advances.
       parts.push(
-        <text key={parts.length} x={x.toFixed(1)} y="0" fontFamily="IBM Plex Sans, Arial, sans-serif" fontWeight={700} fontSize={140}>
+        <text key={parts.length} x={x.toFixed(1)} y="0" fontFamily="Courier Prime, Courier New, monospace" fontSize={140}>
           {raw}
         </text>,
       );
