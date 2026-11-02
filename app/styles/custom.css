@@ -212,6 +212,36 @@ main h1 {
   overflow: visible;
 }
 
+/* A hand heading with an annotation (<Hand annotate>): the mark sits to its
+ * right, centered on the lettering and clear of it. Em is the heading's size. */
+.fx-hand[data-fx-ann] {
+  position: relative;
+  width: fit-content;
+}
+
+.fx-hand[data-fx-ann]::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 0.5em);
+  width: 4.2em;
+  aspect-ratio: 280 / 50;
+  transform: translateY(-50%);
+  pointer-events: none;
+  background-color: var(--fx-ann, var(--fx-yellow));
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* On a phone the margin it would sit in isn't there. */
+@media (max-width: 40rem) {
+  .fx-hand[data-fx-ann]::after {
+    display: none;
+  }
+}
+
 /* A drawn quotation: no margin rule, room above and below, attribution in
  * quiet print. */
 main blockquote.fx-hand--quote {

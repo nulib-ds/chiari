@@ -1,6 +1,7 @@
 import React from "react";
 import fs from "node:fs";
 import path from "node:path";
+import {gestureNumber} from "./Mark";
 
 /**
  * A heading set in Giuseppe Chiari's hand: uppercase glyphs traced from
@@ -13,6 +14,7 @@ import path from "node:path";
  * <Hand>Watch</Hand>
  * <Hand as="h2" size="1.6rem">Per Arco</Hand>
  * <Hand as="blockquote" cite="Giuseppe Chiari, 1972">Art is easy</Hand>
+ * <Hand as="h1" size="1.75rem" annotate="wave" annotateColor="blue">La Strada</Hand>
  *
  * Letters A–Z use the traced glyphs (J, K, W, Y are built from his strokes).
  * Anything else, such as digits or punctuation, falls back to IBM Plex Sans.
@@ -50,6 +52,8 @@ export default function Hand({
   id,
   className = "",
   cite,
+  annotate,
+  annotateColor = "yellow",
   children,
 }: {
   as?: "h1" | "h2" | "h3" | "h4" | "blockquote" | "p" | "span";
@@ -62,6 +66,10 @@ export default function Hand({
   className?: string;
   /** Attribution under a blockquote, set in IBM Plex Sans. */
   cite?: string;
+  /** A heading only: an annotation drawn to its right, by gesture name (as in the lookbook) or number. */
+  annotate?: string | number;
+  /** Paint color of that annotation. */
+  annotateColor?: "red" | "blue" | "green" | "yellow" | "pink" | "black";
   children?: React.ReactNode;
 }) {
   const text = textOf(children).trim();
@@ -132,7 +140,13 @@ export default function Hand({
   }
 
   return (
-    <Tag id={slug || undefined} className={`fx-hand ${className}`.trim()}>
+    <Tag
+      id={slug || undefined}
+      className={`fx-hand ${className}`.trim()}
+      {...(annotate === undefined
+        ? {}
+        : {"data-fx-ann": gestureNumber(annotate), "data-fx-ann-color": annotateColor, style: {fontSize: size}})}
+    >
       <span className="sr-only">{text}</span>
       {drawing}
     </Tag>

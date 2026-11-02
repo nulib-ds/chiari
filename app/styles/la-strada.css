@@ -1,0 +1,566 @@
+/**
+ * La Strada: the typescript falls apart and the visitor puts it back.
+ *
+ * LaStrada.client.tsx sets every size and position as a number of page widths.
+ * The stage is a size container, so 1cqw is one page-width unit, and the whole
+ * board scales with its container without measuring anything.
+ */
+
+.fx-strada {
+  margin-block: 2rem 4rem;
+}
+
+/* The exhibit's page starts higher than the others: half the room above the
+ * heading that custom.css gives every page (clamp(4.5rem, 10vw, 8rem)). */
+.canopy-layout:has(.fx-strada) {
+  padding-top: clamp(2.25rem, 5vw, 4rem);
+}
+
+/* The controls stay in reach while the sheet, which is taller than the
+ * window, scrolls under them. */
+.fx-strada__bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  padding-block: 0.75rem;
+  background: color-mix(in srgb, var(--fx-paper) 92%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.fx-strada__button {
+  min-width: 6rem;
+  padding: 0.65rem 1.4rem;
+  border: 0;
+  border-radius: var(--fx-pill);
+  background: var(--fx-ink);
+  color: var(--fx-paper);
+  font: 700 0.95rem/1 var(--font-sans);
+  cursor: pointer;
+}
+
+.fx-strada__button--quiet {
+  background: transparent;
+  color: var(--fx-ink);
+  box-shadow: inset 0 0 0 1.5px var(--fx-ink);
+}
+
+.fx-strada__button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.fx-strada__button:focus-visible,
+.fx-slip:focus-visible {
+  outline: 2px solid var(--fx-ink);
+  outline-offset: 3px;
+}
+
+/* The arrangement the sheet is in. */
+.fx-strada__button--quiet[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 3px var(--fx-ink);
+}
+
+/* Reset: an icon, drawn in close beside Original, whose sheet it puts back. */
+.fx-strada__reset {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-left: -0.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--fx-pill);
+  background: transparent;
+  color: var(--fx-ink);
+  cursor: pointer;
+}
+
+.fx-strada__reset svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.fx-strada__reset:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.fx-strada__reset:focus-visible {
+  outline: 2px solid var(--fx-ink);
+  outline-offset: 2px;
+}
+
+/* Playing: filled, and saying Stop. */
+.fx-strada__button--quiet.is-playing {
+  background: var(--fx-ink);
+  color: var(--fx-paper);
+  box-shadow: none;
+}
+
+/* The caption is as tall as the longest thing it can say, at any width: every
+ * line it might be sits in one cell, and only the current one shows. */
+.fx-strada__caption {
+  display: grid;
+  flex: 1 1 14rem;
+  min-height: 1.5rem;
+  margin: 0;
+  color: var(--fx-ink-80);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.fx-strada__caption > * {
+  grid-area: 1 / 1;
+}
+
+.fx-strada__sizer {
+  visibility: hidden;
+}
+
+/* An action being heard may be three lines long; two is all the bar keeps. */
+.fx-strada__caption > :first-child {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.fx-strada__caption em {
+  margin-right: 0.5em;
+  color: var(--fx-ink-50);
+  font-style: normal;
+}
+
+/* The sheet stands no taller than 90vh: it is never wider than that allows
+ * (--tallest, from its height in page widths). Within that it is wider than the
+ * column the rest of the page keeps to: out to 4rem short of the window on either
+ * side, up to 80rem, never narrower than the column, and centred on it. Where the
+ * window has no room for that, the sheet keeps to the column, less a rail on its
+ * left for the seek bar. */
+.fx-strada__stage {
+  --rail: 3rem;
+  --tallest: calc(90vh * 100 / var(--page-h, 133.333));
+  --sheet: min(calc(100% - var(--rail)), var(--tallest));
+  container-type: inline-size;
+  width: var(--sheet);
+  margin-left: max(var(--rail), calc((100% - var(--sheet)) / 2));
+}
+
+@media (min-width: 80rem) {
+  .fx-strada__stage {
+    --sheet: min(max(100%, min(calc(100vw - 2 * (var(--fx-inset) + 4rem)), 80rem)), var(--tallest));
+    margin-inline: calc((100% - var(--sheet)) / 2);
+  }
+}
+
+/* The sheet, and the floor below it for whatever falls. */
+.fx-strada__board {
+  position: relative;
+  isolation: isolate;
+  height: calc((var(--page-h) + var(--credit, 0) + var(--floor)) * 1cqw);
+  user-select: none;
+}
+
+/* The credit under the sheet; what falls lands below it. */
+.fx-strada__credit {
+  position: absolute;
+  top: calc(var(--page-h) * 1cqw + 0.9rem);
+  left: 0;
+  width: 100%;
+  color: var(--fx-ink-80);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-align: right;
+  transition: opacity 300ms ease-out, visibility 300ms;
+}
+
+/* The credit is the original's: away from it, it goes, but keeps its room. */
+.fx-strada:not([data-mode="original"]) .fx-strada__credit {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.fx-strada__credit a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.fx-strada__ground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: calc(var(--page-h) * 1cqw);
+  /* The sheet is cut out of its photograph, so the shadow follows its edge. */
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.16)) drop-shadow(0 8px 24px rgb(0 0 0 / 0.1));
+  -webkit-user-drag: none;
+}
+
+/* A slip is a window onto the scan: the whole sheet, drawn at page width and
+ * shifted so that only its own region shows. It has two faces. Sitting on the
+ * sheet it shows the photograph, which is exactly what is under it, so it is
+ * invisible. Once it has fallen it shows only the type, on transparency, so the
+ * words lie on the page like ink with no paper behind them. */
+.fx-slip {
+  position: absolute;
+  left: calc(var(--x) * 1cqw);
+  top: calc(var(--y) * 1cqw);
+  width: calc(var(--w) * 1cqw);
+  height: calc(var(--h) * 1cqw);
+  z-index: var(--z);
+  padding: 0;
+  border: 0;
+  background: none;
+  touch-action: none;
+  pointer-events: none;
+}
+
+.fx-slip::before,
+.fx-slip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: 100cqw auto;
+  background-position: calc(var(--bx) * -1cqw) calc(var(--by) * -1cqw);
+}
+
+.fx-slip::before {
+  background-image: var(--score);
+}
+
+.fx-slip::after {
+  background-image: var(--ink);
+  opacity: 0;
+}
+
+.fx-strada:is([data-phase="falling"], [data-phase="free"], [data-phase="shuffling"]) .fx-slip::before {
+  opacity: 0;
+}
+
+.fx-strada:is([data-phase="falling"], [data-phase="free"], [data-phase="shuffling"]) .fx-slip::after {
+  opacity: 1;
+}
+
+/* On the sheet as typed, a line is there to be heard and moved: touched, it plays;
+ * carried, it comes away, and the sheet is free. */
+.fx-strada[data-phase="intact"] .fx-slip {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.fx-strada[data-phase="free"] .fx-slip {
+  pointer-events: auto;
+  cursor: grab;
+  transition: transform 120ms ease-out, filter 120ms ease-out;
+}
+
+/* Let go of, a slip settles onto its place on the grid; held, it follows the pointer. */
+.fx-strada[data-phase="free"] .fx-slip:not(.is-lifted) {
+  transition: transform 120ms ease-out, filter 120ms ease-out, left 140ms ease-out, top 140ms ease-out;
+}
+
+.fx-slip.is-lifted {
+  cursor: grabbing;
+  transform: scale(1.04);
+  filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.22));
+}
+
+/* The seek bar runs down the rail to the left of the sheet, level with its typed
+ * lines. Play and pause head the rail and stay in reach under the controls as the
+ * sheet scrolls. --gap is the room between the bar's blocks. */
+.fx-strada__rail {
+  --gap: 2px;
+  position: absolute;
+  top: 0;
+  right: 100%;
+  width: var(--rail);
+  height: calc(var(--page-h) * 1cqw);
+}
+
+.fx-strada__play {
+  position: sticky;
+  top: 7rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin: 0.25rem auto 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--fx-pill);
+  background: var(--fx-ink);
+  color: var(--fx-paper);
+  cursor: pointer;
+}
+
+.fx-strada__play svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  fill: currentColor;
+}
+
+.fx-strada__play:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.fx-strada__play:focus-visible {
+  outline: 2px solid var(--fx-ink);
+  outline-offset: 3px;
+}
+
+/* The seek bar: the actions on the sheet, each a block cut from the sheet's own
+ * paper, with a gap between each and the next that the page shows through. The
+ * blocks are as if cut from one strip: each shows the paper at its own place along
+ * it. As in
+ * Clover's timeline the gap is made by a band of the page's paper above and below
+ * each block, which its fill does not reach. A block fills black as it is heard:
+ * --done once it has been, and the one playing as far as it has got (--progress,
+ * set as it plays). The blocks are square but for the bar's two ends, the first
+ * block's top corners and the last's bottom ones (--round); Canopy squares every
+ * corner, so the rounding is asked for through its variable.
+ *
+ * The strip comes from below the sheet's horizontal crease, which would otherwise
+ * cross the bar as a black line, stretched so that a bar of everything reaches from
+ * the first typed line to the last (--length, from --top). Where, in page widths,
+ * measured on the 1964 photograph: across, the margin (--margin); down, just under
+ * the crease (--below), for as much clean paper as there is above the sheet's
+ * shadowed foot (--span). Measure again for a new scan. */
+.fx-strada__chapters {
+  --margin: 5.25;
+  --below: 67.3;
+  --span: 61.5;
+  --stretch: calc(var(--length) / var(--span));
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform: translateX(-50%);
+}
+
+.fx-strada__chapters li {
+  position: absolute;
+  left: 0;
+  top: calc(var(--from) * 1cqw);
+  height: calc((var(--to) - var(--from)) * 1cqw);
+  width: 100%;
+  list-style: none;
+}
+
+.fx-strada__chapters li::marker {
+  content: "";
+}
+
+.fx-strada__chapters button {
+  --round: 0;
+  --canopy-radius-none: var(--round);
+  --fill: max(var(--done, 0), var(--progress, 0));
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-block: calc(var(--gap) / 2) solid var(--fx-paper);
+  border-radius: var(--round);
+  background:
+    linear-gradient(to bottom, var(--fx-ink) calc(var(--fill) * 100%), transparent calc(var(--fill) * 100%))
+      0 0 / 100% 100% no-repeat,
+    var(--score)
+      calc(var(--margin) * var(--stretch) * -1cqw)
+      calc((var(--below) * var(--stretch) + var(--from) - var(--top)) * -1cqw)
+      / calc(100cqw * var(--stretch)) auto no-repeat;
+  background-clip: padding-box;
+  cursor: pointer;
+}
+
+.fx-strada__chapters li:first-child button {
+  --round: 3px 3px 0 0;
+}
+
+.fx-strada__chapters li:last-child button {
+  --round: 0 0 3px 3px;
+}
+
+.fx-strada__chapters li:only-child button {
+  --round: 3px;
+}
+
+.fx-strada__chapters button:disabled {
+  cursor: default;
+}
+
+/* The block at the end of the line (see .fx-strada__pointer) is pink, boxed in pink
+ * marker: paint-frame-pink.svg as a 9-slice border image, drawn round the block.
+ * Its stroke lies about 7.5 to 20.5 units into the image's 24-unit corner, 2.5 to
+ * 6.8px into the 8px border, so standing the box 6px out lays the stroke's inner
+ * edge just over the block's edge. It stands over the blocks either side. */
+.fx-strada__chapters button.is-pointed {
+  position: relative;
+  background: var(--fx-pink);
+  background-clip: padding-box;
+}
+
+.fx-strada__chapters button.is-pointed::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  z-index: 1;
+  border: 8px solid transparent;
+  border-image: url("../images/marker/paint-frame-pink.svg") 24 / 8px stretch;
+  pointer-events: none;
+}
+
+/* A line between a block and its action on the sheet, while either is pointed at
+ * (or reached with the keyboard), at the middle of the left edge of the type: from
+ * the block's edge (--at, down the rail) to the type (--x, --y, on the sheet,
+ * which starts a rail's width to the right). It is painted, in the pink marker
+ * stroke the site's menu underlines with, stretched along it (--stroke thick). It
+ * stands above every slip, which are stacked from 1 up as they are picked up. */
+.fx-strada__pointer {
+  --x0: calc(var(--rail) / 2 + 0.5rem);
+  --y0: calc(var(--at) * 1cqw);
+  --dx: calc(var(--rail) + var(--x) * 1cqw - var(--x0));
+  --dy: calc(var(--y) * 1cqw - var(--y0));
+  --stroke: 0.6rem;
+  position: absolute;
+  top: var(--y0);
+  left: var(--x0);
+  z-index: 100000;
+  width: hypot(var(--dx), var(--dy));
+  height: var(--stroke);
+  margin-top: calc(var(--stroke) / -2);
+  background: url("../images/marker/paint-pink.svg") center / 100% 100% no-repeat;
+  transform-origin: 0 50%;
+  rotate: atan2(var(--dy), var(--dx));
+  pointer-events: none;
+}
+
+/* How long the performance takes, written under the last block, and moving down
+ * and counting up as actions are added. */
+.fx-strada__total {
+  position: absolute;
+  top: calc(var(--y) * 1cqw + 0.45rem);
+  left: 0;
+  right: 0;
+  color: var(--fx-ink-80);
+  font: 600 0.7rem / 1 var(--font-sans);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Gravity: the fall speeds up, the sideways drift does not. The paper lets go
+ * of the type as the slip does. */
+.fx-strada[data-phase="falling"] .fx-slip {
+  transition:
+    left calc(var(--dur) * 1.1) cubic-bezier(0.2, 0.6, 0.4, 1) var(--delay),
+    top var(--dur) cubic-bezier(0.55, 0, 0.85, 0.45) var(--delay);
+}
+
+.fx-strada[data-phase="falling"] .fx-slip::before,
+.fx-strada[data-phase="falling"] .fx-slip::after {
+  transition: opacity 500ms ease-out var(--delay);
+}
+
+/* Shuffled onto the sheet: the same unhurried drift as rising, but the type
+ * stays off the paper. */
+.fx-strada[data-phase="shuffling"] .fx-slip {
+  transition:
+    left var(--dur) ease-in-out var(--delay),
+    top var(--dur) ease-in-out var(--delay);
+}
+
+.fx-strada[data-phase="shuffling"] .fx-slip::before,
+.fx-strada[data-phase="shuffling"] .fx-slip::after {
+  transition: opacity 400ms ease-out var(--delay);
+}
+
+.fx-strada[data-phase="rising"] .fx-slip {
+  transition:
+    left var(--dur) ease-in-out var(--delay),
+    top var(--dur) ease-in-out var(--delay);
+}
+
+/* Back on the sheet the type takes its paper again near the end of the trip. */
+.fx-strada[data-phase="rising"] .fx-slip::before,
+.fx-strada[data-phase="rising"] .fx-slip::after {
+  transition: opacity 400ms ease-in-out calc(var(--delay) + var(--dur) * 0.5);
+}
+
+.fx-strada__extract {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  width: min(100%, 62rem);
+  margin: 2rem auto 0;
+}
+
+.fx-strada__extract p {
+  flex: 1 1 14rem;
+  margin: 0;
+  color: var(--fx-ink-80);
+  font-size: 0.95rem;
+}
+
+.fx-strada__annotations {
+  width: min(100%, 62rem);
+  margin: 1.25rem auto 0;
+  color: var(--fx-ink-80);
+}
+
+.fx-strada__annotations summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.fx-strada__annotations pre {
+  max-height: 26rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  overflow: auto;
+  background: none;
+  color: var(--fx-ink-80);
+  font: 0.75rem / 1.5 ui-monospace, Menlo, Consolas, monospace;
+}
+
+.fx-strada__transcription {
+  width: min(100%, 62rem);
+  margin: 2rem auto 0;
+  color: var(--fx-ink-80);
+}
+
+.fx-strada__transcription summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.fx-strada__transcription p {
+  margin: 0.75rem 0 0;
+  white-space: pre-line;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-strada .fx-slip,
+  .fx-strada .fx-slip::before,
+  .fx-strada .fx-slip::after,
+  .fx-strada__credit {
+    transition: none !important;
+  }
+}

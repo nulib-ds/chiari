@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@canopy-iiif/app": "^1.14.1",
+    "@nulib/clover": "^4.1.0",
     "@samvera/clover-iiif": "^3.16.2",
     "embla-carousel": "^8.6.0",
     "esbuild": "^0.21.4",

@@ -1,0 +1,1152 @@
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "https://nulib-ds.github.io/chiari/la-strada/manifest.json",
+  "type": "Manifest",
+  "label": {
+    "en": [
+      "La strada"
+    ]
+  },
+  "summary": {
+    "en": [
+      "Typescript score by Giuseppe Chiari, 1964, dedicated to George Maciunas."
+    ]
+  },
+  "requiredStatement": {
+    "label": {
+      "en": [
+        "Note"
+      ]
+    },
+    "value": {
+      "en": [
+        "Provisional photograph used to prototype the exhibit. It is not the final digitization."
+      ]
+    }
+  },
+  "metadata": [
+    {
+      "label": {
+        "en": [
+          "Creator"
+        ]
+      },
+      "value": {
+        "en": [
+          "Giuseppe Chiari"
+        ]
+      }
+    },
+    {
+      "label": {
+        "en": [
+          "Date"
+        ]
+      },
+      "value": {
+        "en": [
+          "1964"
+        ]
+      }
+    },
+    {
+      "label": {
+        "en": [
+          "Material Type"
+        ]
+      },
+      "value": {
+        "en": [
+          "Typescript score"
+        ]
+      }
+    }
+  ],
+  "homepage": [
+    {
+      "id": "https://nulib-ds.github.io/chiari/works/la-strada.html",
+      "type": "Text",
+      "label": {
+        "en": [
+          "La Strada"
+        ]
+      },
+      "format": "text/html"
+    }
+  ],
+  "provider": [
+    {
+      "id": "https://www.library.northwestern.edu/",
+      "type": "Agent",
+      "label": {
+        "en": [
+          "Northwestern University Libraries"
+        ]
+      }
+    }
+  ],
+  "structures": [
+    {
+      "id": "https://nulib-ds.github.io/chiari/la-strada/range/score",
+      "type": "Range",
+      "label": {
+        "en": [
+          "La strada"
+        ]
+      },
+      "items": [
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/cards",
+          "type": "Range",
+          "label": {
+            "en": [
+              "The silence of a room where someone is playing cards Noise of cards being skillfully shuffled"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=168,332,662,63&t=0.0,38.1",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/object-put-down",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Some object being put down"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=169,395,347,23&t=90.6,106.6",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/people-upstairs",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Noises of the people living in the floor above"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=171,418,598,38&t=124.1,163.3",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/churchill",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Voice of Winston Churchill"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1046,450,350,65&t=170.3,277.5",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/oboe",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Melancholy sound of an oboe"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=730,514,358,35&t=262.7,292.9",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/confused-noises-a",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Confused noises"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=415,579,204,36&t=357.8,370.8",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/pulse",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Beating of the pulse"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=922,591,270,40&t=375.0,396.6",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/radio",
+          "type": "Range",
+          "label": {
+            "en": [
+              "A song on the radio, reception slightly shifted from the broadcast band."
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=263,634,1071,63&t=437.5,475.5",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/door",
+          "type": "Range",
+          "label": {
+            "en": [
+              "A door banged"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=518,784,168,34&t=655.0,659.8",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/cello",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Melancholy sound of a cello"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1026,794,378,40&t=668.5,692.2",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/confused-noises-b",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Confused noises"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=226,866,206,34&t=772.7,783.9",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/cheers",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Cheers"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=481,897,91,31&t=818.0,883.8",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/piano",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Something on a piano as an amateur touching the keys of a piano and playing arpeggios or sketching a tune Absentmindedly"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=756,903,835,94&t=827.1,895.6",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/writing",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Writing."
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1250,1018,118,24&t=992.9,1020.1",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/pen",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Noise of pen flying on paper"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1251,1042,383,28&t=1029.1,1055.3",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/raincoat",
+          "type": "Range",
+          "label": {
+            "en": [
+              "A woman who takes off a nylon raincoat"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=227,1056,501,36&t=1049.0,1057.5",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/detective-story",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Reading a detective story (Delaney, Bant Singer) 3′ 22″"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=329,1103,728,36&t=1117.0,1145.4",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/strap",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Quick rotation of a strap and exhaust the movement"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=906,1147,669,39&t=1180.4,1190.0",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/confused-noises-c",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Confused noises"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=438,1203,215,30&t=1261.9,1278.0",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/hand-on-table",
+          "type": "Range",
+          "label": {
+            "en": [
+              "A hand laid on a table."
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=792,1256,308,45&t=1338.9,1342.8",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/pencil",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Playing with a pencil held flabbily"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1100,1256,473,43&t=1338.9,1376.2",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/football-crowd",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Bellowing of the crowd during a football match"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=236,1298,314,65&t=1398.7,1416.3",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/square-wave",
+          "type": "Range",
+          "label": {
+            "en": [
+              "A square sound-wave of 212 cycles every second"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=793,1344,610,45&t=1465.7,1480.9",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/water-drop",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Drop of water evaporating on a red-hot plate"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=703,1456,591,45&t=1628.8,1656.1",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/distant-speech",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Confused and vague sounds of someone speaking not very far away"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=225,1531,839,43&t=1737.5,1797.2",
+              "type": "Canvas"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score",
+      "type": "Canvas",
+      "label": {
+        "en": [
+          "La strada"
+        ]
+      },
+      "width": 1800,
+      "height": 2400,
+      "duration": 1800,
+      "items": [
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/page/paint/score",
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/paint/score",
+              "type": "Annotation",
+              "motivation": "painting",
+              "body": {
+                "id": "https://nulib-ds.github.io/chiari/la-strada/score.jpg",
+                "type": "Image",
+                "format": "image/jpeg",
+                "width": 1800,
+                "height": 2400
+              },
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score"
+            }
+          ]
+        }
+      ],
+      "service": [
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score/grid",
+          "type": "TypewriterGrid",
+          "characterWidth": 12.747,
+          "lineHeight": 26.606,
+          "skew": -0.01499,
+          "originX": 162.459,
+          "originY": 341.542,
+          "tab": 4
+        }
+      ],
+      "annotations": [
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/page/actions",
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/cards",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "The silence of a room where someone is playing cards\nNoise of cards being skillfully shuffled",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/cards-shuffled.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 38.11
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=168,332,662,63&t=0.0,38.1"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/object-put-down",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Some object being put down",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/object-put-down.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 15.99
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=169,395,347,23&t=90.6,106.6"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/people-upstairs",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Noises of the people living in the floor above",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/people-upstairs.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 39.18
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=171,418,598,38&t=124.1,163.3"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/churchill",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Voice of Winston Churchill",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/churchill.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 107.18
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1046,450,350,65&t=170.3,277.5"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/oboe",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Melancholy sound of an oboe",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/oboe.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 30.22
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=730,514,358,35&t=262.7,292.9"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/confused-noises-a",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Confused noises",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/confused-noises-a.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 12.98
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=415,579,204,36&t=357.8,370.8"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/pulse",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Beating of the pulse",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/pulse.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 21.58
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=922,591,270,40&t=375.0,396.6"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/radio",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "A song on the radio,\nreception slightly shifted from the broadcast band.",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/radio.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 37.94
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=263,634,1071,63&t=437.5,475.5"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/door",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "A door banged",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/door.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 4.88
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=518,784,168,34&t=655.0,659.8"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/cello",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Melancholy sound of a cello",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/cello.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 23.64
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1026,794,378,40&t=668.5,692.2"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/confused-noises-b",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Confused noises",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/confused-noises-b.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 11.21
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=226,866,206,34&t=772.7,783.9"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/cheers",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Cheers",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/cheers.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 65.83
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=481,897,91,31&t=818.0,883.8"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/piano",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Something on a piano as an amateur touching\nthe keys of a piano and playing arpeggios\nor sketching a tune\nAbsentmindedly",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/piano.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 68.55
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=756,903,835,94&t=827.1,895.6"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/writing",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Writing.",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/writing.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 27.27
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1250,1018,118,24&t=992.9,1020.1"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/pen",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Noise of pen flying on paper",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/pen.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 26.25
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1251,1042,383,28&t=1029.1,1055.3"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/raincoat",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "A woman who takes off a nylon raincoat",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/raincoat.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 8.44
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=227,1056,501,36&t=1049.0,1057.5"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/detective-story",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Reading a detective story (Delaney, Bant Singer)\n3′ 22″",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "TextualBody",
+                  "purpose": "speech",
+                  "value": "Reading a detective story (Delaney, Bant Singer) 3 minutes 22 seconds",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/detective-story.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 28.44
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=329,1103,728,36&t=1117.0,1145.4"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/strap",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Quick rotation of a strap and exhaust the movement",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/strap.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 9.6
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=906,1147,669,39&t=1180.4,1190.0"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/confused-noises-c",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Confused noises",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/confused-noises-c.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 16.14
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=438,1203,215,30&t=1261.9,1278.0"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/hand-on-table",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "A hand laid on a table.",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/hand-on-table.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 3.89
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=792,1256,308,45&t=1338.9,1342.8"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/pencil",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Playing with a pencil held flabbily",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/pencil.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 37.28
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1100,1256,473,43&t=1338.9,1376.2"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/football-crowd",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Bellowing of the crowd\nduring a football match",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Choice",
+                  "items": [
+                    {
+                      "type": "Sound",
+                      "id": "https://nulib-ds.github.io/chiari/la-strada/audio/football-crowd-1.mp3",
+                      "format": "audio/mpeg",
+                      "duration": 10.37
+                    },
+                    {
+                      "type": "Sound",
+                      "id": "https://nulib-ds.github.io/chiari/la-strada/audio/football-crowd-2.mp3",
+                      "format": "audio/mpeg",
+                      "duration": 17.61
+                    },
+                    {
+                      "type": "Sound",
+                      "id": "https://nulib-ds.github.io/chiari/la-strada/audio/football-crowd-3.mp3",
+                      "format": "audio/mpeg",
+                      "duration": 11.49
+                    }
+                  ]
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=236,1298,314,65&t=1398.7,1416.3"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/square-wave",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "A square sound-wave of 212 cycles every second",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/square-wave.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 15.17
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=793,1344,610,45&t=1465.7,1480.9"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/water-drop",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Drop of water evaporating on a red-hot plate",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/water-drop.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 27.3
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=703,1456,591,45&t=1628.8,1656.1"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/distant-speech",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Confused and vague sounds of someone speaking\nnot very far away",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/distant-speech.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 59.74
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=225,1531,839,43&t=1737.5,1797.2"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/page/frame",
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/instructions",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "30′\nAll these actions\nOne after the other\nIn whatever order\nThe actions may be performed or recording\nof the performance may be broadcast.\nOr they may be announced leaving the spectator\nto imagine the auditive events they represent\nThe author prefers announcing nearly all the actions\nand performing or broadcasting only few of them.",
+                  "format": "text/plain",
+                  "language": "en"
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=225,1725,733,264&t=0.0,1800.0"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/title",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "\"LA STRADA\"\nby GIUSEPPE CHIARI\n1964\nto George Maciunas",
+                  "format": "text/plain",
+                  "language": "en"
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1162,1942,262,116&t=0.0,1800.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score-ground",
+      "type": "Canvas",
+      "label": {
+        "en": [
+          "La strada, with its actions lifted off"
+        ]
+      },
+      "width": 1800,
+      "height": 2400,
+      "items": [
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/page/paint/score-ground",
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/paint/score-ground",
+              "type": "Annotation",
+              "motivation": "painting",
+              "body": {
+                "id": "https://nulib-ds.github.io/chiari/la-strada/score-ground.webp",
+                "type": "Image",
+                "format": "image/webp",
+                "width": 1800,
+                "height": 2400
+              },
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score-ground"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score-ink",
+      "type": "Canvas",
+      "label": {
+        "en": [
+          "La strada, the actions alone"
+        ]
+      },
+      "width": 1800,
+      "height": 2400,
+      "items": [
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/page/paint/score-ink",
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/paint/score-ink",
+              "type": "Annotation",
+              "motivation": "painting",
+              "body": {
+                "id": "https://nulib-ds.github.io/chiari/la-strada/score-ink.png",
+                "type": "Image",
+                "format": "image/png",
+                "width": 1800,
+                "height": 2400
+              },
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score-ink"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

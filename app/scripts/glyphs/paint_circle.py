@@ -14,7 +14,8 @@ close to the shape of a circled word, so stretching barely distorts it.
 Also writes paint-magnifier.svg, paint-close-pink.svg (the search field's
 clear button), and paint-frame.svg with paint-frame-mask.svg (a sketched box
 for panels and the matching fill that masks a panel to it, both used as
-9-slice images) with the same brush, and paint-block.svg (a solid black block
+9-slice images; and paint-frame-pink.svg, the same box in pink, round the La
+Strada seek bar's block that is pointed at) with the same brush, and paint-block.svg (a solid black block
 laid in flat-brush strokes, the background of the /search Filter button).
 """
 import math, os, random
@@ -257,7 +258,8 @@ if __name__ == "__main__":
     print(os.path.normpath(path))
 
     drawn, mask = frame()
-    for name, svg in (("paint-frame.svg", drawn), ("paint-frame-mask.svg", mask)):
+    pink, _ = frame(color=COLORS["pink-"])
+    for name, svg in (("paint-frame.svg", drawn), ("paint-frame-mask.svg", mask), ("paint-frame-pink.svg", pink)):
         path = os.path.join(OUT, name)
         open(path, "w").write(svg)
         print(os.path.normpath(path))

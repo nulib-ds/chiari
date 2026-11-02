@@ -1,0 +1,42 @@
+{
+  "base": "https://nulib-ds.github.io/chiari/la-strada",
+  "label": "La strada",
+  "summary": "Typescript score by Giuseppe Chiari, 1964, dedicated to George Maciunas.",
+  "note": "Provisional photograph used to prototype the exhibit. It is not the final digitization.",
+  "canvas": {"width": 1800, "height": 2400},
+  "duration": 1800,
+  "credit": {"title": "La Strada", "creator": "Giuseppe Chiari", "date": "1964", "kind": "Typescript score", "item": "works/la-strada.html", "source": "Northwestern University Libraries", "sourceUrl": "https://www.library.northwestern.edu/"},
+  "grid": {"tab": 4},
+  "crop": [90, 150, 2880, 3840],
+  "actions": [
+    {"id": "cards", "box": [250, 530, 1340, 632], "text": "The silence of a room where someone is playing cards\nNoise of cards being skillfully shuffled", "audio": "audio/cards-shuffled.mp3"},
+    {"id": "object-put-down", "box": [250, 632, 1340, 669], "text": "Some object being put down", "audio": "audio/object-put-down.mp3"},
+    {"id": "people-upstairs", "box": [250, 669, 1340, 730], "text": "Noises of the people living in the floor above", "audio": "audio/people-upstairs.mp3"},
+    {"id": "churchill", "box": [1670, 720, 2240, 825], "text": "Voice of Winston Churchill", "audio": "audio/churchill.mp3"},
+    {"id": "oboe", "box": [1160, 822, 1750, 878], "text": "Melancholy sound of an oboe", "audio": "audio/oboe.mp3"},
+    {"id": "confused-noises-a", "box": [660, 925, 1000, 990], "text": "Confused noises", "audio": "audio/confused-noises-a.mp3"},
+    {"id": "pulse", "box": [1470, 945, 1910, 1010], "text": "Beating of the pulse", "audio": "audio/pulse.mp3"},
+    {"id": "radio", "box": [415, 1015, 2140, 1115], "text": "A song on the radio,\nreception slightly shifted from the broadcast band.", "audio": "audio/radio.mp3"},
+    {"id": "door", "box": [820, 1255, 1100, 1320], "text": "A door banged", "audio": "audio/door.mp3"},
+    {"id": "cello", "box": [1630, 1270, 2250, 1335], "text": "Melancholy sound of a cello", "audio": "audio/cello.mp3"},
+    {"id": "confused-noises-b", "box": [360, 1385, 700, 1440], "text": "Confused noises", "audio": "audio/confused-noises-b.mp3"},
+    {"id": "cheers", "box": [760, 1435, 930, 1490], "text": "Cheers", "audio": "audio/cheers.mp3"},
+    {"id": "piano", "box": [1210, 1445, 2555, 1595], "text": "Something on a piano as an amateur touching\nthe keys of a piano and playing arpeggios\nor sketching a tune\nAbsentmindedly", "audio": "audio/piano.mp3"},
+    {"id": "writing", "box": [1995, 1628, 2620, 1668], "text": "Writing.", "audio": "audio/writing.mp3"},
+    {"id": "pen", "box": [1995, 1668, 2620, 1712], "text": "Noise of pen flying on paper", "audio": "audio/pen.mp3"},
+    {"id": "raincoat", "box": [360, 1690, 1170, 1748], "text": "A woman who takes off a nylon raincoat", "audio": "audio/raincoat.mp3"},
+    {"id": "detective-story", "box": [520, 1765, 1710, 1822], "text": "Reading a detective story (Delaney, Bant Singer)\n3′ 22″", "speech": "Reading a detective story (Delaney, Bant Singer) 3 minutes 22 seconds", "audio": "audio/detective-story.mp3"},
+    {"id": "strap", "box": [1440, 1835, 2520, 1898], "text": "Quick rotation of a strap and exhaust the movement", "audio": "audio/strap.mp3"},
+    {"id": "confused-noises-c", "box": [700, 1925, 1050, 1975], "text": "Confused noises", "audio": "audio/confused-noises-c.mp3"},
+    {"id": "hand-on-table", "box": [1260, 2010, 1760, 2082], "text": "A hand laid on a table.", "audio": "audio/hand-on-table.mp3"},
+    {"id": "pencil", "box": [1760, 2010, 2530, 2082], "text": "Playing with a pencil held flabbily", "audio": "audio/pencil.mp3"},
+    {"id": "football-crowd", "box": [370, 2070, 880, 2182], "text": "Bellowing of the crowd\nduring a football match", "audio": [["audio/football-crowd-1.mp3", "audio/football-crowd-2.mp3", "audio/football-crowd-3.mp3"]]},
+    {"id": "square-wave", "box": [1260, 2150, 2260, 2222], "text": "A square sound-wave of 212 cycles every second", "audio": "audio/square-wave.mp3"},
+    {"id": "water-drop", "box": [1120, 2330, 2070, 2402], "text": "Drop of water evaporating on a red-hot plate", "audio": "audio/water-drop.mp3"},
+    {"id": "distant-speech", "box": [360, 2450, 1710, 2522], "text": "Confused and vague sounds of someone speaking\nnot very far away", "audio": "audio/distant-speech.mp3"}
+  ],
+  "frame": [
+    {"id": "instructions", "box": [360, 2760, 1540, 3182], "text": "30′\nAll these actions\nOne after the other\nIn whatever order\nThe actions may be performed or recording\nof the performance may be broadcast.\nOr they may be announced leaving the spectator\nto imagine the auditive events they represent\nThe author prefers announcing nearly all the actions\nand performing or broadcasting only few of them."},
+    {"id": "title", "box": [1860, 3100, 2290, 3300], "text": "\"LA STRADA\"\nby GIUSEPPE CHIARI\n1964\nto George Maciunas"}
+  ]
+}

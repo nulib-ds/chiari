@@ -18,4 +18,5 @@ export const clientComponents = {
   SearchFilterLabel: './SearchFilterLabel.client.tsx',
   ExampleClient: './Example.client.tsx',
   StoryMapJS: './StoryMapJS.client.tsx',
+  LaStrada: './LaStrada.client.tsx',
 };

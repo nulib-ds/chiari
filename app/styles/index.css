@@ -3,6 +3,7 @@
 @import "./northwestern.css";
 @import "./custom.css";
 @import "./annotations.css";
+@import "./la-strada.css";
 
 /* Both widths match the site container in custom.css (--fx-container). */
 @utility max-w-content {

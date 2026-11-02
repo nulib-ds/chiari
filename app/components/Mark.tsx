@@ -4,11 +4,18 @@ type MarkType = "underline" | "circle" | "annotate";
 type MarkColor = "red" | "blue" | "green" | "yellow" | "pink" | "black";
 
 /** The annotation library, in the order annotations.py generates it. */
-const GESTURES = [
+export const GESTURES = [
   "scribble-fill", "coil", "hatching", "arc", "underline", "spring", "tangle",
   "ticks", "brush-swipes", "dabs", "cross-hatch", "open-oval", "strike",
   "verticals", "spiral", "wave", "hook", "crossing-diagonals", "taps", "lasso",
 ];
+
+/** A gesture's number, 1 to 20, from its name as the lookbook captions it or from the number itself. */
+export function gestureNumber(gesture: string | number): number {
+  const byName = GESTURES.indexOf(String(gesture).toLowerCase().replace(/\s+/g, "-")) + 1;
+  const n = byName || Number(gesture);
+  return n >= 1 && n <= GESTURES.length ? n : 1;
+}
 
 /**
  * A paint-marker annotation over text, using the same marks as the site
@@ -44,10 +51,8 @@ export default function Mark({
   children?: React.ReactNode;
 }) {
   if (type === "annotate") {
-    const byName = GESTURES.indexOf(String(gesture).toLowerCase().replace(/\s+/g, "-")) + 1;
-    const n = byName || Number(gesture);
     return (
-      <mark className="fx-mark fx-mark--annotate" data-fx-ann={n >= 1 && n <= GESTURES.length ? n : 1}
+      <mark className="fx-mark fx-mark--annotate" data-fx-ann={gestureNumber(gesture)}
         data-fx-ann-side={side} data-fx-ann-color={color || "yellow"}>
         {children}
       </mark>
