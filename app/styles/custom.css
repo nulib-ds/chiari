@@ -40,12 +40,15 @@
     --fx-ink-50: var(--nu-rich-black-50);
     --fx-highlight: color-mix(in srgb, var(--fx-yellow) 60%, white);
 
-    /* One typeface: IBM Plex Sans (loaded in _app.mdx) replaces Akkurat Pro,
-     * Poppins and Noto Serif for body, display and serif roles. */
-    --font-sans: "Cutive Mono", Arial, sans-serif;
+    /* One typeface: Courier Prime (loaded in _app.mdx, Regular 400 and its
+     * italic only) replaces Akkurat Pro, Poppins and Noto Serif for body,
+     * display and serif roles, and Tailwind's monospace stack for code. */
+    --font-sans: "Courier Prime", "Courier New", Courier, monospace;
     --font-display: var(--font-sans);
     --font-serif: var(--font-sans);
+    --font-mono: var(--font-sans);
     --default-font-family: var(--font-sans);
+    --default-mono-font-family: var(--font-sans);
     --canopy-font-sans: var(--font-sans);
 
     /* One container site-wide, matching the search results: 1200px with a
@@ -80,6 +83,19 @@
 
 :root {
   --clover-color-accent-alt: var(--fx-ink-80);
+}
+
+/* One weight: Courier Prime Regular, the only one loaded. Canopy's components,
+ * the brand layer and the browser's own defaults (headings, strong, th) ask for
+ * others; none is drawn, real or synthesized. In the base layer because an
+ * important declaration in an earlier layer beats one in a later layer (Canopy's
+ * components force some to 300) and any outside the layers. */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    font-weight: 400 !important;
+  }
 }
 
 ::selection {
@@ -385,11 +401,6 @@ main blockquote a:hover {
   box-decoration-break: clone;
 }
 
-/* Weight, not a mark, shows the current page here. */
-.fx-secondary-nav a[aria-current="page"] {
-  font-weight: 700;
-}
-
 @media (min-width: 70rem) {
   .fx-masthead .canopy-header {
     grid-template-rows: var(--fx-masthead-row) auto;
@@ -458,7 +469,6 @@ main blockquote a:hover {
   display: block;
   font-family: var(--font-sans);
   font-size: 1.05rem;
-  font-weight: 500;
   letter-spacing: 0.01em;
   text-transform: none;
   line-height: 1.2;
@@ -1142,7 +1152,6 @@ main blockquote a:hover {
 
 .fx-plate__title {
   font-size: 1.15rem;
-  font-weight: 700;
   color: var(--fx-ink);
   text-decoration: none;
 }
@@ -1209,7 +1218,6 @@ main .fx-palette li {
 }
 
 .fx-swatch__name {
-  font-weight: 700;
   color: var(--fx-ink);
 }
 
@@ -1288,9 +1296,6 @@ main .fx-palette li {
   accent-color: var(--fx-ink);
 }
 
-.fx-ann-colors label:has(input:checked) span {
-  font-weight: 700;
-}
 
 .fx-ann-lab:has(input[value="red"]:checked) .fx-ann-sample { --fx-ann: var(--fx-red); }
 .fx-ann-lab:has(input[value="blue"]:checked) .fx-ann-sample { --fx-ann: var(--fx-blue); }
@@ -1333,15 +1338,14 @@ main .fx-specimen p + p {
 
 .fx-specimen--menu {
   font-size: clamp(1.35rem, 1rem + 0.9vw, 1.85rem);
-  font-weight: 700;
   letter-spacing: -0.01em;
   word-spacing: 0.6em;
 }
 
-.fx-specimen--h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; }
-.fx-specimen--h2 { font-size: 1.618rem; font-weight: 700; line-height: 1.25; }
-.fx-specimen--h3 { font-size: 1.382rem; font-weight: 700; line-height: 1.3; }
-.fx-specimen--tagline { font-size: 1.05rem; font-weight: 500; }
+.fx-specimen--h1 { font-size: 2rem; line-height: 1.2; }
+.fx-specimen--h2 { font-size: 1.618rem; line-height: 1.25; }
+.fx-specimen--h3 { font-size: 1.382rem; line-height: 1.3; }
+.fx-specimen--tagline { font-size: 1.05rem; }
 .fx-specimen--body { max-width: 40rem; font-size: 1rem; line-height: 1.7; }
 main .fx-specimen--caption { font-size: 0.9rem; color: var(--fx-ink-50); }
 
