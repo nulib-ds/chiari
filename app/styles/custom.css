@@ -569,7 +569,7 @@ main blockquote a:hover {
 
 /* The tip lands slowly, sweeps through the middle and slows to lift off. */
 .canopy-header .canopy-nav-links a:hover .fx-paint__tip,
-.canopy-header .canopy-nav-links a[aria-current="page"] .fx-paint__tip {
+.canopy-header .canopy-nav-links a[aria-current="page"] .fx-paint__tip .fx-paint__tip .fx-paint__tip {
   stroke-dashoffset: 0;
   transition: stroke-dashoffset 300ms cubic-bezier(0.55, 0.05, 0.3, 1);
 }
@@ -1092,34 +1092,54 @@ main blockquote a:hover {
 }
 
 /* -------------------------------------------------------------------------
- * Featured plates (`<FeaturedWorks />`): one work per screen, centered on
- * white, its title circled in marker.
+ * Home spread (`<FeaturedWorks>`): intro text beside the featured plates.
  * ---------------------------------------------------------------------- */
 
-.fx-plates {
+/* Text (1/2) beside the featured images (1/2). Each image is shown whole,
+ * scaled so it never exceeds the window's height or its column's width. */
+.fx-spread {
   display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  max-width: var(--fx-container);
+  margin-inline: auto;
+  padding: clamp(2rem, 6vh, 4rem) var(--fx-inset) 2rem;
+}
+
+@media (min-width: 64rem) {
+  .fx-spread {
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  .fx-spread__text {
+    position: sticky;
+    top: 2rem;
+  }
+}
+
+.fx-spread__text p {
+  font-size: 1.05rem;
+  color: var(--fx-ink-80);
+}
+
+.fx-spread__plates {
+  display: grid;
+  gap: 0;
 }
 
 .fx-plate {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 1.75rem;
-  min-height: 100svh;
+  gap: 0.9rem;
   margin: 0;
-  padding: clamp(2rem, 6vh, 4rem) 1.25rem;
-}
-
-/* The first plate shares its screen with the masthead. */
-.fx-plate:first-child {
-  min-height: calc(100svh - 16rem);
-  padding-top: clamp(3.5rem, 8vh, 6rem);
 }
 
 .fx-plate__media {
   display: block;
-  max-width: min(100%, calc(var(--fx-container) - 2 * var(--fx-inset)));
+  max-width: 100%;
 }
 
 .fx-plate__media img {
@@ -1127,37 +1147,137 @@ main blockquote a:hover {
   width: auto;
   height: auto;
   max-width: 100%;
-  max-height: calc(100svh - 14rem);
+  max-height: calc(100svh - 6rem);
   object-fit: contain;
-}
-
-/* Leave room for the masthead so the first title shows without scrolling. */
-.fx-plate:first-child .fx-plate__media img {
-  max-height: calc(100svh - 32rem);
 }
 
 .fx-plate__caption {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   text-align: center;
 }
 
-.fx-plate__index {
-  font-size: 0.8rem;
-  letter-spacing: 0.12em;
+/* Scribbles appear while a plate's title is hovered or focused: one in the
+ * gap below the plate and one turned on end in the margin beside it. The
+ * script in FeaturedWorks.tsx picks gesture, color and side at random on
+ * every load; the masks come from annotations.css. */
+.fx-plate {
+  position: relative;
+  margin-bottom: 3rem;
+}
+
+.fx-scribble {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.fx-scribble::after {
+  content: "";
+  position: absolute;
+  background-color: var(--fx-ann, var(--fx-red));
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  visibility: hidden;
+}
+
+.fx-scribble:not([data-fx-ann]) {
+  display: none;
+}
+
+.fx-plate:has(.fx-plate__title:is(:hover, :focus-visible)) .fx-scribble::after {
+  visibility: visible;
+}
+
+.fx-scribble--gap {
+  left: 0;
+  right: 0;
+  bottom: -3rem;
+  height: 3rem;
+}
+
+.fx-scribble--gap::after {
+  top: 50%;
+  width: min(60%, 18rem);
+  aspect-ratio: 280 / 50;
+  transform: translateY(-50%);
+}
+
+.fx-scribble--gap[data-fx-ann-side="left"]::after { left: 4%; }
+.fx-scribble--gap[data-fx-ann-side="right"]::after { right: 4%; }
+
+.fx-scribble--margin {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .fx-scribble--margin[data-fx-ann] {
+    display: block;
+    top: 50%;
+    width: 1.4rem;
+    height: 9rem;
+    margin-top: -4.5rem;
+  }
+
+  .fx-scribble--margin::after {
+    top: 50%;
+    left: 50%;
+    width: 9rem;
+    aspect-ratio: 280 / 50;
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+
+  .fx-scribble--margin[data-fx-ann-side="left"] { left: -2.2rem; }
+  .fx-scribble--margin[data-fx-ann-side="right"] { right: -1.5rem; }
+}
+
+.fx-plate__media[hidden] {
+  display: none;
+}
+
+.fx-plate__flip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
   color: var(--fx-ink-50);
 }
 
+.fx-plate__flip button {
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+  border: 1px solid currentColor;
+  border-radius: var(--fx-pill);
+  background: transparent;
+  color: var(--fx-ink);
+  --canopy-radius-none: var(--fx-pill);
+}
+
+.fx-plate__flip button {
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.2rem;
+}
+
+.fx-plate__flip button:hover {
+  background: var(--fx-ink);
+  color: var(--fx-paper);
+}
+
 .fx-plate__title {
-  font-size: 1.15rem;
+  font-size: 1rem;
   color: var(--fx-ink);
   text-decoration: none;
 }
 
 .fx-plate__title:hover {
-  color: var(--fx-ink-80);
+  text-decoration: underline;
 }
 
 /* Intro copy under the plates: plain print with room to breathe. */
@@ -1464,6 +1584,11 @@ main {
   color: var(--fx-ink-80);
   border-top: 1px solid var(--nu-rich-black-10);
   margin-top: var(--fx-section-space);
+}
+
+/* The home spread already ends with its own padding. */
+main:has(.fx-spread) ~ .canopy-footer {
+  margin-top: 0;
 }
 
 .canopy-footer a {
