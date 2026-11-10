@@ -14,6 +14,7 @@
   packages = [
     pkgs.git
     pkgs.tsx
+    pkgs.tre-command
   ];
 
   # https://devenv.sh/languages/
@@ -34,6 +35,7 @@
 
   # https://devenv.sh/scripts/
   scripts = {
+    langdiff.exec = "diff <(tre content -c never -E './it' -s | tail -n +2) <(tre content/it -c never -s | tail -n +2)";
     build.exec = "npm run build";
     run.exec = "npm run dev";
     update.exec = "npm install && npm install-scripts approve --all";
