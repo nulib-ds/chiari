@@ -20,11 +20,10 @@ const PRINT: Swatch[] = [
 ];
 
 const PAINT: Swatch[] = [
-  {name: "Red", hex: "#EA0138", token: "paint-red", use: "Watch", contrast: "4.4:1", onBlack: "4.6:1", paint: "paint-red.svg"},
   {name: "Blue", hex: "#2463E6", token: "paint-blue", use: "Play", contrast: "5.1:1", onBlack: "4.0:1", paint: "paint-blue.svg"},
   {name: "Green", hex: "#00885A", token: "paint-green", use: "Write", contrast: "4.3:1", onBlack: "4.7:1", paint: "paint-green.svg"},
   {name: "Yellow", hex: "#FAD000", token: "paint-yellow", use: "Collaborate", contrast: "1.4:1", onBlack: "14.1:1", paint: "paint-yellow.svg"},
-  {name: "Pink", hex: "#E5199A", token: "paint-pink", use: "Current page underline, circle around the current language, <Mark>", contrast: "4.1:1", onBlack: "4.9:1", paint: "paint-pink.svg"},
+  {name: "Pink", hex: "#E5199A", token: "paint-pink", use: "Watch, current page underline, circle around the current language, <Mark>", contrast: "4.1:1", onBlack: "4.9:1", paint: "paint-pink.svg"},
   {name: "Black paint", hex: "#000000", token: "paint-black", use: "Search field, black <Mark>", contrast: "20.3:1", paint: "paint-black.svg"},
 ];
 

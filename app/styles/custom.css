@@ -24,7 +24,6 @@
     /* Paint: sampled from the markers on Chiari's marked-up scores, then
      * nudged to midtones that read on both white and black (each ≥ 4:1 on
      * both, except yellow, which is light by nature). Decorative only. */
-    --fx-red: #ea0138;
     --fx-blue: #2463e6;
     --fx-green: #00885a;
     --fx-yellow: #fad000;
@@ -136,7 +135,6 @@
   box-decoration-break: clone;
 }
 
-.fx-mark--underline.fx-mark--red { --fx-mark-img: url("../images/marker/paint-red.svg"); }
 .fx-mark--underline.fx-mark--blue { --fx-mark-img: url("../images/marker/paint-blue.svg"); }
 .fx-mark--underline.fx-mark--green { --fx-mark-img: url("../images/marker/paint-green.svg"); }
 .fx-mark--underline.fx-mark--yellow { --fx-mark-img: url("../images/marker/paint-yellow.svg"); }
@@ -525,7 +523,7 @@ main blockquote a:hover {
 }
 
 /* The four main sections are the loudest type in the header. Each owns a
- * paint-marker color (red, blue, green, yellow). Hovering writes a thick
+ * paint-marker color (pink, blue, green, yellow). Hovering writes a thick
  * opaque stroke under the word: <PaintStroke> in _app.mdx masks the paint
  * with a round-capped line along its centreline, and moving that line's
  * dash makes the brush tip travel point to point. Leaving removes the
@@ -698,7 +696,7 @@ main blockquote a:hover {
   aspect-ratio: 280 / 50;
   transform: translateY(-50%);
   pointer-events: none;
-  background-color: var(--fx-ann, var(--fx-red));
+  background-color: var(--fx-ann, var(--fx-pink));
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
@@ -748,7 +746,7 @@ main blockquote a:hover {
   aspect-ratio: 280 / 50;
   pointer-events: none;
   z-index: 2;
-  background-color: var(--fx-ann, var(--fx-red));
+  background-color: var(--fx-ann, var(--fx-pink));
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
@@ -805,7 +803,7 @@ main blockquote a:hover {
   width: min(100% - 2rem, 26rem);
   aspect-ratio: 280 / 50;
   pointer-events: none;
-  background-color: var(--fx-ann, var(--fx-red));
+  background-color: var(--fx-ann, var(--fx-pink));
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
@@ -828,7 +826,7 @@ main blockquote a:hover {
   width: 11rem;
   aspect-ratio: 280 / 50;
   pointer-events: none;
-  background-color: var(--fx-ann, var(--fx-red));
+  background-color: var(--fx-ann, var(--fx-pink));
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
@@ -853,7 +851,7 @@ main blockquote a:hover {
   transform: translateX(calc(-50% + 1.25rem));
   aspect-ratio: 280 / 50;
   pointer-events: none;
-  background-color: var(--fx-ann, var(--fx-red));
+  background-color: var(--fx-ann, var(--fx-pink));
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
@@ -908,7 +906,6 @@ main blockquote a:hover {
 
 /* Each annotation color also names the marker stroke that underlines the
  * hovered result's title, so mark and underline share one paint. */
-[data-fx-ann-color="red"] { --fx-ann: var(--fx-red); --fx-ann-paint: url("../images/marker/paint-red.svg"); }
 [data-fx-ann-color="blue"] { --fx-ann: var(--fx-blue); --fx-ann-paint: url("../images/marker/paint-blue.svg"); }
 [data-fx-ann-color="green"] { --fx-ann: var(--fx-green); --fx-ann-paint: url("../images/marker/paint-green.svg"); }
 [data-fx-ann-color="yellow"] { --fx-ann: var(--fx-yellow); --fx-ann-paint: url("../images/marker/paint-yellow.svg"); }
@@ -1092,41 +1089,26 @@ main blockquote a:hover {
 }
 
 /* -------------------------------------------------------------------------
- * Home spread (`<FeaturedWorks>`): intro text beside the featured plates.
+ * Home spread (`<FeaturedWorks>`): intro text interspersed with featured plates.
  * ---------------------------------------------------------------------- */
 
-/* Text (1/2) beside the featured images (1/2). Each image is shown whole,
- * scaled so it never exceeds the window's height or its column's width. */
+/* One full-width column: text with featured plates (<FeaturedWork>) placed
+ * between paragraphs. Each image is shown whole, scaled so it never exceeds
+ * the window's height or the column's width. */
 .fx-spread {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2.5rem;
   max-width: var(--fx-container);
   margin-inline: auto;
   padding: clamp(2rem, 6vh, 4rem) var(--fx-inset) 2rem;
 }
 
-@media (min-width: 64rem) {
-  .fx-spread {
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem;
-    align-items: start;
-  }
-
-  .fx-spread__text {
-    position: sticky;
-    top: 2rem;
-  }
-}
-
-.fx-spread__text p {
+.fx-spread p {
   font-size: 1.05rem;
   color: var(--fx-ink-80);
 }
 
-.fx-spread__plates {
-  display: grid;
-  gap: 0;
+/* Plates sit between paragraphs, so they need air above as well as below. */
+.fx-spread .fx-plate {
+  margin-top: 3rem;
 }
 
 .fx-plate {
@@ -1177,7 +1159,7 @@ main blockquote a:hover {
 .fx-scribble::after {
   content: "";
   position: absolute;
-  background-color: var(--fx-ann, var(--fx-red));
+  background-color: var(--fx-ann, var(--fx-pink));
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
@@ -1280,6 +1262,51 @@ main blockquote a:hover {
   text-decoration: underline;
 }
 
+/* <Plate>: a picture from assets/ (a screenshot of an interactive page, say).
+ * The frame sets a pale screenshot apart from the page behind it. The figure
+ * is as wide as the picture can be (the column, or less when the window's
+ * height is the limit; the ratio comes from Plate.tsx), and the picture and
+ * caption both fill it, so they always line up. */
+.fx-plate--framed {
+  width: min(100%, calc((100svh - 6rem) * var(--fx-plate-ratio, 100)));
+  margin-inline: auto;
+  align-items: stretch;
+}
+
+.fx-plate--framed .fx-plate__media img {
+  width: 100%;
+  max-height: none;
+}
+
+.fx-plate--framed .fx-plate__media img {
+  border: 1px solid var(--fx-ink-50);
+}
+
+.fx-plate--framed .fx-plate__caption {
+  align-items: flex-start;
+  gap: 0.9rem;
+  text-align: left;
+}
+
+/* The caption is set apart from the exhibit text: smaller, lighter, and
+ * ruled in the same pink as the loop around the link above it. */
+.fx-plate__note {
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--fx-pink);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--fx-ink-50);
+}
+
+/* MDX wraps the caption in a paragraph, which would otherwise take the
+ * spread's body-text size and color. */
+.fx-spread .fx-plate__note p {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
 /* Intro copy under the plates: plain print with room to breathe. */
 .fx-intro {
   max-width: 40rem;
@@ -1379,7 +1406,7 @@ main .fx-palette li {
   content: "";
   position: absolute;
   inset: 0;
-  background-color: var(--fx-ann, var(--fx-red));
+  background-color: var(--fx-ann, var(--fx-pink));
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
@@ -1417,7 +1444,6 @@ main .fx-palette li {
 }
 
 
-.fx-ann-lab:has(input[value="red"]:checked) .fx-ann-sample { --fx-ann: var(--fx-red); }
 .fx-ann-lab:has(input[value="blue"]:checked) .fx-ann-sample { --fx-ann: var(--fx-blue); }
 .fx-ann-lab:has(input[value="green"]:checked) .fx-ann-sample { --fx-ann: var(--fx-green); }
 .fx-ann-lab:has(input[value="yellow"]:checked) .fx-ann-sample { --fx-ann: var(--fx-yellow); }
@@ -1515,6 +1541,29 @@ main .fx-specimen--caption { font-size: 0.9rem; color: var(--fx-ink-50); }
   background-color: transparent;
   border-color: var(--fx-ink);
   color: var(--fx-ink);
+}
+
+/* The "Play …" link under a <Plate>: ink text circled in pink paint marker,
+ * the same loops as the language toggle. Padding makes room for the loop; a
+ * second plate on the page gets the other loop so the two are drawn
+ * differently. Hovering underlines the words. */
+.fx-plate__action {
+  display: inline-block;
+  padding: 1rem 2rem 1.1rem;
+  color: var(--fx-ink);
+  font-weight: 700;
+  text-decoration: none;
+  background: url("../images/marker/paint-circle-pink-a.svg") center / 100% 100% no-repeat;
+}
+
+.fx-plate--framed ~ .fx-plate--framed .fx-plate__action {
+  background-image: url("../images/marker/paint-circle-pink-b.svg");
+}
+
+.fx-plate__action:hover,
+.fx-plate__action:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
 }
 
 /* -------------------------------------------------------------------------

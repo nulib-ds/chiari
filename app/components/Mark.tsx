@@ -1,7 +1,7 @@
 import React from "react";
 
 type MarkType = "underline" | "circle" | "annotate";
-type MarkColor = "red" | "blue" | "green" | "yellow" | "pink" | "black";
+type MarkColor = "blue" | "green" | "yellow" | "pink" | "black";
 
 /** The annotation library, in the order annotations.py generates it. */
 export const GESTURES = [
@@ -24,7 +24,7 @@ export function gestureNumber(gesture: string | number): number {
  * annotations. Styles live in `app/styles/custom.css` (`.fx-mark`). Use
  * sparingly.
  *
- * <Mark color="red">underlined in red paint</Mark>
+ * <Mark color="pink">underlined in pink paint</Mark>
  * <Mark>underlined in black, like the search bar</Mark>
  * <Mark type="circle">circled</Mark>
  * <Mark type="circle" variant="b">circled with the other loop</Mark>
