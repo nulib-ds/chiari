@@ -29,9 +29,10 @@ import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from "reac
  *
  * Things snap to the typewriter's grid. The manifest carries it as a service on
  * the canvas (see app/scripts/la-strada): the width of a character, the height
- * of a line, and the tilt of the typing in the photograph, measured from the
- * typing itself. Slips settle on a column and a line; the arrow keys move one
- * of each, and a tab stop, if the manifest names one, is the step along.
+ * of a line, and the tilt of the typing in the scan, measured from the typing
+ * itself. Slips are cut on the grid, and settle on a column and a line; the
+ * arrow keys move one of each, and a tab stop, if the manifest names one, is
+ * the step along.
  *
  * The arrangement is also read as chapters: the same actions, as Ranges that name
  * a place and a time, which Clover 4's helpers (`chaptersOf`, via ./clover)
@@ -43,7 +44,9 @@ import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from "reac
  * stand every time one moves: the same annotations, in the order of their
  * times, each with a new target (xywh=...&t=...) where it now is. It can be
  * downloaded or copied, and is also announced as a "la-strada:arrangement"
- * event on the section, with the page as the event's detail.
+ * event on the section, with the page as the event's detail, and as a
+ * "la-strada:manifest" event with the manifest that carries it and its
+ * chapters (which LaStradaDebug.client.tsx shows in Clover's viewer).
  *
  * Positions are kept in page-width units (the sheet is 100 wide) and drawn
  * with container units, so the board scales with its container and nothing
@@ -104,7 +107,7 @@ type Piece = {
 
 /**
  * The typewriter's grid, in page widths. Columns run along the typing and lines
- * across it, which is tilted a little in the photograph: u = x + skew*y runs
+ * across it, which may be tilted a little in a scan: u = x + skew*y runs
  * along a line and v = y - skew*x across, and a slip's corner stands where
  * (u0 + column*char, v0 + line*height) says.
  */
@@ -269,7 +272,7 @@ function readScore(manifest: any, rebase: (url: string) => string): Score {
  * this site is deployed, so follow the manifest rather than its ids. That
  * keeps one manifest working on localhost, on Pages and under a base path.
  */
-function rebaser(manifest: any, fetched: string) {
+export function rebaser(manifest: any, fetched: string) {
   const own = String(manifest.id).replace(/[^/]*$/, "");
   const here = fetched.replace(/[^/]*$/, "");
   // The site the manifest sits in, too, so a link to a page of it works wherever it is.
@@ -479,10 +482,10 @@ const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(re
 const REST = 1.1;
 
 /**
- * The paper a slip keeps round its type, in page widths: PAD in prepare.py, 14 of
- * the photograph's 2880 pixels across.
+ * How far into its cell, in characters, a typed letter's ink begins: a slip is cut
+ * on the typewriter's grid, so its type starts this far in from its left edge.
  */
-const MARGIN = (14 / 2880) * 100;
+const BEARING = 0.1;
 
 // ---------------------------------------------------------------------------
 // The clock
@@ -691,7 +694,9 @@ function arrange(score: Score, z: number): Places {
   const right = Math.max(...score.actions.map((p) => p.x + p.w));
   const top = Math.min(...score.actions.map((p) => p.y));
   const bottom = Math.max(...score.actions.map((p) => p.y + p.h));
-  const lines = (p: Piece) => p.text.split("\n").length;
+  // A slip is cut a whole number of lines high, which is how many it was typed on
+  // (its text may wrap otherwise).
+  const lines = (p: Piece) => Math.max(1, Math.round(p.h / grid.line));
   const spare = Math.max(0, Math.floor((bottom - top) / grid.line) - actions.reduce((n, p) => n + lines(p), 0));
   // Each spare line goes to a place picked at random, so blanks come singly
   // and in runs, as they do on the page.
@@ -711,6 +716,142 @@ function arrange(score: Score, z: number): Places {
 
 const settles = (places: Places) =>
   Math.max(...Object.values(places).map((p) => p.delay + p.dur)) + 150;
+
+// ---------------------------------------------------------------------------
+// The marker
+// ---------------------------------------------------------------------------
+
+type Point = [number, number];
+
+/** A stream of random numbers that is the same for the same text, so a line is drawn the same way every time. */
+function seeded(text: string): () => number {
+  let h = 2166136261;
+  for (const c of text) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  return () => {
+    h = (h + 0x6d2b79f5) | 0;
+    let t = Math.imul(h ^ (h >>> 15), 1 | h);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Points along a straight line from a to b, a few pixels apart: close enough for
+ * the marker to bend smoothly where the line turns, far enough apart for its rough
+ * edge to be its texture rather than noise.
+ */
+function straight(a: Point, b: Point): Point[] {
+  const n = Math.max(1, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 4));
+  return Array.from({length: n + 1}, (_, i) => [a[0] + ((b[0] - a[0]) * i) / n, a[1] + ((b[1] - a[1]) * i) / n]);
+}
+
+/** Points along a cubic curve from a to d. */
+function curve(a: Point, b: Point, c: Point, d: Point, n: number): Point[] {
+  return Array.from({length: n + 1}, (_, i) => {
+    const t = i / n;
+    const u = 1 - t;
+    const k = [u * u * u, 3 * u * u * t, 3 * u * t * t, t * t * t];
+    return [k[0] * a[0] + k[1] * b[0] + k[2] * c[0] + k[3] * d[0], k[0] * a[1] + k[1] * b[1] + k[2] * c[1] + k[3] * d[1]];
+  });
+}
+
+/**
+ * Points along straight runs from point to point, turning at each point between
+ * round a short curve, as a hand turns, rather than at a sharp corner. A turn begins
+ * `round` pixels before its point and ends as far after it, or less where a run is short.
+ */
+function rounded(points: Point[], round: number): Point[] {
+  const run = (a: Point, b: Point) => Math.hypot(b[0] - a[0], b[1] - a[1]);
+  const toward = (a: Point, b: Point, d: number): Point => [a[0] + ((b[0] - a[0]) * d) / (run(a, b) || 1), a[1] + ((b[1] - a[1]) * d) / (run(a, b) || 1)];
+  const path: Point[] = [points[0]];
+  let from = points[0];
+  points.slice(1, -1).forEach((at, i) => {
+    const [before, after] = [points[i], points[i + 2]];
+    const r = Math.min(round, run(before, at) / 2, run(at, after) / 2);
+    const [enter, leave] = [toward(at, before, r), toward(at, after, r)];
+    // The cubic that is the quadratic curve from enter to leave, bending toward the point.
+    const pull = (p: Point): Point => [p[0] + ((at[0] - p[0]) * 2) / 3, p[1] + ((at[1] - p[1]) * 2) / 3];
+    path.push(...straight(from, enter).slice(1), ...curve(enter, pull(enter), pull(leave), leave, Math.max(4, Math.round(r / 2))).slice(1));
+    from = leave;
+  });
+  path.push(...straight(from, points[points.length - 1]).slice(1));
+  // No point twice, where a run was too short to leave any of it straight.
+  return path.filter((p, i) => i === 0 || run(path[i - 1], p) > 0.5);
+}
+
+/**
+ * A curly brace as a hand draws one, as the middle line of its stroke: its point at
+ * `tip`, about `height` tall and no wider than `width`, curling right at both ends.
+ * It has the general shape of a brace and is never exactly one: its halves are of
+ * different lengths, their backs bowed and the whole leaning a little, its ends
+ * curled more or less, and each brace differently, as `random` has it.
+ */
+function brace(tip: Point, height: number, width: number, n: number, random: () => number): Point[] {
+  const between = (lo: number, hi: number) => lo + (hi - lo) * random();
+  const sharp = between(0.12, 0.34); // how much of each half the point takes
+  const back = between(0.35, 0.65); // how far the back stands from the point, as a part of the width
+  const lean = between(-0.25, 0.25); // how far the ends lean across, as a part of the width
+  const halves = [0, 1].map(() => ({
+    long: between(0.82, 1.16), // the half's length, as a part of half the height
+    from: between(0.55, 0.82), // how far along it its end begins to curl
+    curl: between(0.25, 0.75), // how far its end curls, as a part of the width
+    // How far its back bows, as a part of the width: either way, but never back past the point.
+    bow: between(Math.max(-0.3, 0.1 + Math.abs(lean) - back), 0.3),
+  }));
+  const points = Array.from({length: n + 1}, (_, i): Point => {
+    const s = (i / n) * 2 - 1;
+    const a = Math.abs(s);
+    const half = halves[s < 0 ? 0 : 1];
+    const point = a < sharp ? (1 - a / sharp) ** 2 : 0;
+    const curl = a > half.from ? ((a - half.from) / (1 - half.from)) ** 2 : 0;
+    const bow = a > sharp && a < half.from ? Math.sin((Math.PI * (a - sharp)) / (half.from - sharp)) ** 2 : 0;
+    return [back * (1 - point) + half.curl * curl + half.bow * bow + lean * s, (s * half.long) / 2];
+  });
+  // No wider than the room it has, and its point still where the line meets it.
+  const fit = Math.min(1, 1 / Math.max(...points.map(([x]) => x)));
+  return points.map(([x, y]) => [tip[0] + x * fit * width, tip[1] + y * height]);
+}
+
+/**
+ * A marker stroke along a line of points, as the outline of its ink: fuller in the
+ * middle than where the pen came down and where it lifted, swelling and thinning a
+ * little as the hand presses, its course not quite steady and its edges a little
+ * rough, as a hand draws it. A `pinned` stroke is steady where the pen comes down
+ * and where it lifts, so that it starts and ends exactly at its first and last points.
+ */
+function marker(points: Point[], width: number, random: () => number, pinned = false): string {
+  // A few slow waves of random phase, for the hand's unsteadiness.
+  const waves = (amount: number) => {
+    const parts = [1, 2, 3].map((k) => [(amount * (random() - 0.5)) / k, random() * 2 * Math.PI, k]);
+    return (t: number) => parts.reduce((sum, [a, phase, k]) => sum + a * Math.sin(2 * Math.PI * k * t + phase), 0);
+  };
+  const last = points.length - 1;
+  const length = points.slice(1).reduce((sum, [x, y], i) => sum + Math.hypot(x - points[i][0], y - points[i][1]), 0);
+  // Unsteady by less than the stroke is wide, and by little of a short one, so a small brace stays a brace.
+  const drift = waves(Math.min(width * 0.9, length * 0.025));
+  const settle = (t: number) => (pinned ? Math.min(1, (t * length) / 40, ((1 - t) * length) / 20) : 1);
+  const swell = waves(0.7);
+  const left: Point[] = [];
+  const right: Point[] = [];
+  points.forEach(([x, y], i) => {
+    const t = i / last;
+    const [x0, y0] = points[Math.max(i - 1, 0)];
+    const [x1, y1] = points[Math.min(i + 1, last)];
+    const along = Math.hypot(x1 - x0, y1 - y0) || 1;
+    const [nx, ny] = [-(y1 - y0) / along, (x1 - x0) / along];
+    const half = (width / 2) * (0.45 + 0.55 * Math.sin(Math.PI * t) ** 0.4) * (1 + 0.25 * swell(t)) * (0.94 + 0.12 * random());
+    const off = drift(t) * settle(t);
+    left.push([x + nx * (off + half), y + ny * (off + half)]);
+    right.push([x + nx * (off - half), y + ny * (off - half)]);
+  });
+  const at = ([x, y]: Point) => `${x.toFixed(1)} ${y.toFixed(1)}`;
+  // Each edge as a smooth curve: through the middle of each pair of points, bending at the points.
+  const smooth = (edge: Point[]) =>
+    edge.slice(1, -1).map((p, i) => `Q${at(p)} ${at([(p[0] + edge[i + 2][0]) / 2, (p[1] + edge[i + 2][1]) / 2])}`).join("") + `L${at(edge[edge.length - 1])}`;
+  const cap = ((width / 2) * 0.45).toFixed(1);
+  const back = right.slice().reverse();
+  return `M${at(left[0])}${smooth(left)}A${cap} ${cap} 0 0 0 ${at(back[0])}${smooth(back)}A${cap} ${cap} 0 0 0 ${at(left[0])}Z`;
+}
 
 // ---------------------------------------------------------------------------
 // The exhibit
@@ -741,7 +882,19 @@ export default function LaStrada({
   // The action pointed at, or reached with the keyboard, on the seek bar or on the
   // sheet, whose block and type a line ties together.
   const [pointing, setPointing] = useState<string | null>(null);
-  const unpoint = (id: string) => setPointing((was) => (was === id ? null : was));
+  // Let go of, the pointing goes back to whatever the keyboard is on, if it is a block or a slip.
+  const unpoint = (id: string) =>
+    setPointing((was) => {
+      if (was !== id) return was;
+      const focused = document.activeElement as HTMLElement | null;
+      const keyed = focused && section.current?.contains(focused) && focused.matches(":focus-visible");
+      return (keyed && (focused.dataset.chapter ?? focused.dataset.action)) || null;
+    });
+  // What the marker draws between them, in the page's pixels: a line from the block
+  // to the action, and a brace at the action's type, where the line ends.
+  const sketch = useRef<SVGSVGElement>(null);
+  const [drawn, setDrawn] = useState<{line: string; brace: string; rough: number} | null>(null);
+  const [resized, setResized] = useState(0);
   // Which of the three arrangements the sheet is in, as typed, as it fell (or as the
   // visitor has since put it) or shuffled, and which of them is being performed.
   const [mode, setMode] = useState<Mode>("original");
@@ -829,12 +982,14 @@ export default function LaStrada({
     [score, arranged]
   );
 
-  // ...and announced once the slip being moved is let go.
+  // ...and announced once the slip being moved is let go: the page, and the
+  // manifest that carries it with its chapters.
   useEffect(() => {
-    if (page && !lifted) {
-      section.current?.dispatchEvent(new CustomEvent("la-strada:arrangement", {detail: page, bubbles: true}));
+    if (arranged && !lifted) {
+      section.current?.dispatchEvent(new CustomEvent("la-strada:arrangement", {detail: arranged.page, bubbles: true}));
+      section.current?.dispatchEvent(new CustomEvent("la-strada:manifest", {detail: arranged.manifest, bubbles: true}));
     }
-  }, [page, lifted]);
+  }, [arranged, lifted]);
 
   useEffect(
     () => () => {
@@ -866,6 +1021,50 @@ export default function LaStrada({
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
   }, [lifted, score, floor]);
+
+  useEffect(() => {
+    const resize = () => setResized((n) => n + 1);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  // Draw the line and the brace for the action pointed at, from where its block and
+  // its slip stand now. The slip's place is read from its own, not from the page, so
+  // that its growing a little while it is pointed at does not move the brace.
+  useLayoutEffect(() => {
+    const block = pointing && section.current?.querySelector(`.fx-strada__chapters [data-chapter="${pointing}"]`);
+    const piece = pointing ? score?.actions.find((p) => p.id === pointing) : undefined;
+    const at = pointing ? places[pointing] : undefined;
+    if (!score || !block || !piece || !at || lifted || !sketch.current || !board.current) return void setDrawn(null);
+    const frame = sketch.current.getBoundingClientRect();
+    const sheet = board.current.getBoundingClientRect();
+    const from = block.getBoundingClientRect();
+    const unit = sheet.width / 100;
+    const line = score.grid.line * unit; // one typed line, in pixels
+    const ink = Math.max(3, 0.3 * line);
+    const wide = Math.max(4, 0.4 * line);
+    const top = sheet.top - frame.top + at.y * unit;
+    const tall = Math.max(piece.h * unit * 0.95, line * 1.05);
+    // The brace stands just left of the type, its point toward the bar.
+    const tip: Point = [sheet.left - frame.left + (at.x + score.grid.char * BEARING) * unit - ink * 0.6 - wide, top + (piece.h * unit) / 2];
+    // The line starts in the middle of the block and comes straight out of it, about
+    // 100px, angles straight across to the brace's height, and runs straight again for
+    // the last 50px into its point (both shorter if the brace is near the bar), turning
+    // into and out of the angle round a short curve.
+    const start: Point = [from.left - frame.left + from.width / 2, from.top - frame.top + from.height / 2];
+    const across = tip[0] - start[0];
+    const out: Point = [start[0] + Math.min(100, 0.4 * across), start[1]];
+    const into: Point = [tip[0] - Math.min(50, 0.2 * across), tip[1]];
+    const path = rounded([start, out, into, tip], 20);
+    // The line leaves the middle of the block and meets the brace at its point. The
+    // brace has a hand of its own, so it is drawn the same way wherever its slip stands.
+    const hand = seeded(`${pointing} {`);
+    setDrawn({
+      line: marker(path, ink, seeded(pointing), true),
+      brace: marker(brace(tip, tall, wide, Math.max(12, Math.min(120, Math.round((tall + 2 * wide) / 2))), hand), ink * 0.9, hand),
+      rough: ink * 0.35,
+    });
+  }, [pointing, lifted, places, score, resized]);
 
   if (failed) return <p className="fx-strada__caption">{text.failed}</p>;
   if (!score) return null;
@@ -1261,8 +1460,9 @@ export default function LaStrada({
                 everything is on the sheet it reaches from the first typed line to the
                 last; with less it is shorter, and with nothing, nothing but its time.
                 The blocks fill black as they are heard; the time it all takes is
-                written at the foot of the last. A line ties a block to its action on
-                the sheet while either is pointed at. */}
+                written at the foot of the last. While a block or its action is pointed
+                at, the marker draws a line from one to the other (see the sketch,
+                below). */}
             {(() => {
               const length = (p: Piece) => p.length + REST;
               const [top, bottom] = score.span;
@@ -1325,19 +1525,6 @@ export default function LaStrada({
                   <span className="fx-strada__total" style={{"--y": Math.max(at, top)} as React.CSSProperties}>
                     {clock(total)}
                   </span>
-                  {pointed && spot && (
-                    <span
-                      className="fx-strada__pointer"
-                      style={
-                        {
-                          "--at": (pointed.from + pointed.to) / 2,
-                          "--x": spot.x + MARGIN,
-                          "--y": spot.y + pointed.piece.h / 2,
-                        } as React.CSSProperties
-                      }
-                      aria-hidden="true"
-                    />
-                  )}
                 </>
               );
             })()}
@@ -1348,7 +1535,8 @@ export default function LaStrada({
               <button
                 key={piece.id}
                 type="button"
-                className={`fx-slip${lifted === piece.id ? " is-lifted" : ""}`}
+                className={`fx-slip${lifted === piece.id ? " is-lifted" : ""}${pointing === piece.id && !lifted ? " is-pointed" : ""}`}
+                data-action={piece.id}
                 style={
                   {
                     "--x": at.x,
@@ -1377,6 +1565,22 @@ export default function LaStrada({
               />
             );
           })}
+          {/* The marker's line and brace between the pointed block and its action,
+              their edges roughened a little, as felt-tip is on paper. */}
+          <svg ref={sketch} className="fx-strada__sketch" aria-hidden="true" focusable="false">
+            {drawn && (
+              <>
+                <filter id="fx-strada-marker" x="-5%" y="-20%" width="110%" height="140%">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="1964" />
+                  <feDisplacementMap in="SourceGraphic" scale={drawn.rough} xChannelSelector="R" yChannelSelector="G" />
+                </filter>
+                <g filter="url(#fx-strada-marker)">
+                  <path d={drawn.line} />
+                  <path d={drawn.brace} />
+                </g>
+              </>
+            )}
+          </svg>
         </div>
       </div>
 

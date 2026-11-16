@@ -202,14 +202,14 @@
   display: block;
   width: 100%;
   height: calc(var(--page-h) * 1cqw);
-  /* The sheet is cut out of its photograph, so the shadow follows its edge. */
+  /* The sheet is cut out of its scan, so the shadow follows its edge. */
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.16)) drop-shadow(0 8px 24px rgb(0 0 0 / 0.1));
   -webkit-user-drag: none;
 }
 
 /* A slip is a window onto the scan: the whole sheet, drawn at page width and
  * shifted so that only its own region shows. It has two faces. Sitting on the
- * sheet it shows the photograph, which is exactly what is under it, so it is
+ * sheet it shows the scan, which is exactly what is under it, so it is
  * invisible. Once it has fallen it shows only the type, on transparency, so the
  * words lie on the page like ink with no paper behind them. */
 .fx-slip {
@@ -258,23 +258,43 @@
 .fx-strada[data-phase="intact"] .fx-slip {
   pointer-events: auto;
   cursor: grab;
+  transition: transform 120ms ease-out, opacity 160ms ease-out;
 }
 
 .fx-strada[data-phase="free"] .fx-slip {
   pointer-events: auto;
   cursor: grab;
-  transition: transform 120ms ease-out, filter 120ms ease-out;
+  transition: transform 120ms ease-out, filter 120ms ease-out, opacity 160ms ease-out;
 }
 
 /* Let go of, a slip settles onto its place on the grid; held, it follows the pointer. */
 .fx-strada[data-phase="free"] .fx-slip:not(.is-lifted) {
-  transition: transform 120ms ease-out, filter 120ms ease-out, left 140ms ease-out, top 140ms ease-out;
+  transition: transform 120ms ease-out, filter 120ms ease-out, opacity 160ms ease-out, left 140ms ease-out, top 140ms ease-out;
 }
 
 .fx-slip.is-lifted {
   cursor: grabbing;
   transform: scale(1.04);
   filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.22));
+}
+
+/* Pointed at, here or by its block on the seek bar, or reached with the keyboard:
+ * the slip stands a little larger, from its left edge, where the marker's brace is
+ * drawn beside it (see .fx-strada__sketch), which is its focus ring too. */
+.fx-slip.is-pointed {
+  z-index: 99999;
+  transform: scale(1.06);
+  transform-origin: 0 50%;
+}
+
+.fx-slip.is-pointed:focus-visible {
+  outline: none;
+}
+
+/* And the other actions recede a little meanwhile. On the sheet as typed a slip
+ * shows the scan over the erased paper, so fading it pales only its type. */
+.fx-strada:is([data-phase="intact"], [data-phase="free"]) .fx-strada__board:has(.fx-slip.is-pointed) .fx-slip:not(.is-pointed) {
+  opacity: 0.7;
 }
 
 /* The seek bar runs down the rail to the left of the sheet, level with its typed
@@ -333,16 +353,17 @@
  * block's top corners and the last's bottom ones (--round); Canopy squares every
  * corner, so the rounding is asked for through its variable.
  *
- * The strip comes from below the sheet's horizontal crease, which would otherwise
- * cross the bar as a black line, stretched so that a bar of everything reaches from
- * the first typed line to the last (--length, from --top). Where, in page widths,
- * measured on the 1964 photograph: across, the margin (--margin); down, just under
- * the crease (--below), for as much clean paper as there is above the sheet's
- * shadowed foot (--span). Measure again for a new scan. */
+ * The strip comes from the sheet's left margin below its horizontal fold, which
+ * would otherwise cross the bar as a line, stretched so that a bar of everything
+ * reaches from the first typed line to the last (--length, from --top). Where, in
+ * page widths, measured on Northwestern's scan: across, the margin (--margin), left
+ * of the first column; down, below the fold and a mark under it (--below), for as
+ * much clean paper as there is above the sheet's foot (--span). Measure again for
+ * a new scan. */
 .fx-strada__chapters {
-  --margin: 5.25;
-  --below: 67.3;
-  --span: 61.5;
+  --margin: 9.5;
+  --below: 74.9;
+  --span: 54.5;
   --stretch: calc(var(--length) / var(--span));
   position: absolute;
   top: 0;
@@ -406,11 +427,11 @@
   cursor: default;
 }
 
-/* The block at the end of the line (see .fx-strada__pointer) is pink, boxed in pink
- * marker: paint-frame-pink.svg as a 9-slice border image, drawn round the block.
- * Its stroke lies about 7.5 to 20.5 units into the image's 24-unit corner, 2.5 to
- * 6.8px into the 8px border, so standing the box 6px out lays the stroke's inner
- * edge just over the block's edge. It stands over the blocks either side. */
+/* The block the marker's line starts from (see .fx-strada__sketch) is pink, boxed
+ * in pink marker: paint-frame-pink.svg as a 9-slice border image, drawn round the
+ * block. Its stroke lies about 7.5 to 20.5 units into the image's 24-unit corner,
+ * 2.5 to 6.8px into the 8px border, so standing the box 6px out lays the stroke's
+ * inner edge just over the block's edge. It stands over the blocks either side. */
 .fx-strada__chapters button.is-pointed {
   position: relative;
   background: var(--fx-pink);
@@ -427,28 +448,20 @@
   pointer-events: none;
 }
 
-/* A line between a block and its action on the sheet, while either is pointed at
- * (or reached with the keyboard), at the middle of the left edge of the type: from
- * the block's edge (--at, down the rail) to the type (--x, --y, on the sheet,
- * which starts a rail's width to the right). It is painted, in the pink marker
- * stroke the site's menu underlines with, stretched along it (--stroke thick). It
+/* While a block or its action is pointed at (or reached with the keyboard), the
+ * marker draws a line from the middle of the block, out, across and in again, to a
+ * brace at the action's type, both in pink and by hand (marker() in LaStrada.client.tsx).
+ * The drawing covers the rail and the sheet and is drawn in its own pixels. It
  * stands above every slip, which are stacked from 1 up as they are picked up. */
-.fx-strada__pointer {
-  --x0: calc(var(--rail) / 2 + 0.5rem);
-  --y0: calc(var(--at) * 1cqw);
-  --dx: calc(var(--rail) + var(--x) * 1cqw - var(--x0));
-  --dy: calc(var(--y) * 1cqw - var(--y0));
-  --stroke: 0.6rem;
+.fx-strada__sketch {
   position: absolute;
-  top: var(--y0);
-  left: var(--x0);
+  top: 0;
+  left: calc(-1 * var(--rail));
   z-index: 100000;
-  width: hypot(var(--dx), var(--dy));
-  height: var(--stroke);
-  margin-top: calc(var(--stroke) / -2);
-  background: url("../images/marker/paint-pink.svg") center / 100% 100% no-repeat;
-  transform-origin: 0 50%;
-  rotate: atan2(var(--dy), var(--dx));
+  width: calc(100% + var(--rail));
+  height: 100%;
+  overflow: visible;
+  fill: var(--fx-pink);
   pointer-events: none;
 }
 
@@ -561,4 +574,30 @@
   .fx-strada__credit {
     transition: none !important;
   }
+}
+
+/* Debugging only, not part of the exhibit: LaStradaDebug.client.tsx, Clover 4's
+ * viewer showing the arrangement as it is made. */
+.fx-strada-debug {
+  margin-block: 3rem 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--fx-ink-50);
+}
+
+.fx-strada-debug__note {
+  margin: 0 0 1rem;
+  color: var(--fx-ink-80);
+  font: 0.8rem / 1.5 var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.fx-strada-debug__note strong {
+  margin-right: 0.5em;
+  color: var(--fx-pink);
+  text-transform: uppercase;
+}
+
+.fx-strada-debug__viewer {
+  display: block;
+  height: 80vh;
 }
