@@ -2,28 +2,30 @@
 
 Build-time tools for the La Strada exhibit (`<LaStrada>` in `app/components/LaStrada.client.tsx`). Their output goes in `assets/la-strada/`.
 
-## Rebuild from a photograph or scan
+## Rebuild from the scan
 
 ```bash
 python3 -m venv ~/.venvs/chiari-glyphs && ~/.venvs/chiari-glyphs/bin/pip install -r app/scripts/glyphs/requirements.txt
-~/.venvs/chiari-glyphs/bin/python app/scripts/la-strada/prepare.py "Chiari, La Strada.jpg"
+~/.venvs/chiari-glyphs/bin/python app/scripts/la-strada/prepare.py default.tif
 ```
 
-This writes `score.jpg`, `score-ground.webp` (the sheet with every action erased, and cut out of its background so it lies on the page as paper), `score-ink.png` (the actions' type alone, on transparency, which is what a slip becomes once it has fallen) and `manifest.json`. Pull the JPEG out of a PDF with `pdfimages -j`.
+`default.tif` is Northwestern's scan of the typescript: 8380 × 11071 px at 600 ppi, sRGB, the sheet on a black board. This writes `score.jpg`, `score-ground.webp` (the sheet with every action erased, and cut out of the board so it lies on the page as paper), `score-ink.png` (the actions' type alone, on transparency, which is what a slip becomes once it has fallen) and `manifest.json`. It takes a couple of minutes and prints what it measured, phrase by phrase.
 
 ## phrases.json
 
 The source of truth. Edit it, then rebuild; don't edit `manifest.json` by hand.
 
-- `crop` is the sheet's rectangle in the photo (x, y, width, height). `canvas` is the size it is scaled to.
+- `crop` is the sheet's rectangle in the scan (x, y, width, height), with some of the board showing all round.
+- `canvas.pitch` is how many canvas units a typed character is wide; the canvas is scaled to it. `images.pitch` is how many pixels a character is in the images, which can be fewer (see the grid, below).
 - `actions` fall off the sheet. `frame` (the instructions and title) stays on it.
-- `box` is a rough rectangle around a phrase, in the cropped photo's pixels. It has to enclose the phrase and stay clear of its neighbours; the script fits the region to the ink inside it and leaves out the creases.
+- `columns` are the columns of a phrase's first and last characters, counted from the typing's left margin (column 0), and `lines` how many lines it was typed on (1 if left out). They are the typescript's own, so a phrase's slip is exactly that many characters and lines of the typewriter's grid. Count them from the typing, typos and all: "A door bangd" is twelve characters.
+- `box` is a rough rectangle round a phrase, in the cropped scan's pixels, that the script finds its baseline in. It only has to enclose the phrase's lines and keep clear of the lines above and below.
 - `text` is the transcription, reconciled against the cut-up version of the score, so the typist's slips are corrected. It is what the exhibit announces and lists; add `speech` where a voice would get it wrong (`3′ 22″`).
 - `audio` is a path under `assets/la-strada/`, such as `audio/oboe.mp3`, or a list of parts that sound one after another. A part is a path, or a list of paths to choose between: alternative takes, of which the exhibit plays one, never the same twice running. Each becomes a `Sound` body (a `Choice` of them for takes), and that action is performed rather than announced. Add `format` if it isn't `audio/mpeg`. An action with no `audio` is announced, unless it has `silent`, a number of seconds of silence to perform instead. Lengths are read from the files with `afinfo` or `ffprobe`.
-- A phrase typed on one line can still be several actions: give each its own `box`, cut in the gap between them.
-- Several lines can also be one action, with one `box` round them all. The silence of a room where someone is playing cards and the noise of the cards being shuffled are one recording, which begins with that silence.
+- A phrase typed on one line can still be several actions: give each its own `columns`. "A hand laid on a table." stands in columns 48–70 and "Playing with a pencil held flabbily" in 72–106, with the space between them belonging to neither.
+- Several lines can also be one action, with `lines` saying how many. The silence of a room where someone is playing cards and the noise of the cards being shuffled are one recording, which begins with that silence.
 
-A scan with different framing needs a new `crop` and new boxes, nothing else.
+Another scan of the sheet needs a new `crop` and new `box`es, nothing else: the `columns` and `lines` belong to the typescript.
 
 ## The clock
 
@@ -31,7 +33,11 @@ The sheet is the clock. The piece lasts `duration` seconds (the score's 30′); 
 
 ## The cutout
 
-The sheet is cut from its background by following its outer edge in from each side of the crop, so the crop must leave some of the surface showing all the way round (about 40 pixels is enough). That edge is the outermost paper in the photograph, torn ledges and bent corners included. If an edge is missed on a scan with a lower-contrast background, lower `STEEP` in `prepare.py`; if it picks up noise, raise it.
+The sheet is the one large shape brighter than the board it was scanned on, and its outline is where the brightness is halfway between the board's (read from the crop's border) and the paper's. Fibres standing off the edge are shed and the outline drawn in by two pixels, so no fringe of the board comes along, and under the transparent board the ground is painted the colour of the paper at the sheet's edge, so scaling it down never darkens the edge. The outline is the paper's own: the bent top-right corner, the whitened top-left and the stained bottom-left edge come through as they are. The crop must leave some board showing all the way round (the 40 pixels it leaves is plenty).
+
+## Erasing
+
+The ground is the sheet with every action's type painted out, so that slips can fall off it and leave paper behind. The type tints the paper round it for about 10 pixels at 600 ppi (the ribbon's ink spreads into the fibres, and the scan stores colour at half the resolution of brightness, which leaves a bluish fringe round every stroke), so that much is painted over too, fading into the paper at its edge, though never outside the slip's own cell. The colour is borrowed from the paper nearby that is well clear of any type; the grain from the same paper a few lines or characters away, so that the erased lines are no smoother than the sheet. What is not the phrase's stays: the folds, the specks along them, grit, a stain, the scribble under "Voice".
 
 ## The arrangement
 
@@ -53,9 +59,15 @@ A `la-strada:manifest` event follows it each time, with the manifest that carrie
 
 ## The typewriter's grid
 
-`prepare.py` measures the grid from the typing itself and writes it to the manifest as a `TypewriterGrid` service on the sheet's canvas: `characterWidth`, `lineHeight`, `skew` (the tilt of the typing in the photograph, so that columns and lines are measured along and across it) and `originX`/`originY` (where a slip's corner stands at the left margin's first column and the first typed line). The exhibit settles dropped slips onto it, moves slips a column or a line with the arrow keys (Shift for five), and puts the shuffle's actions on it.
+Slips are cut on the typewriter's grid, as the machine set the type. The carriage moves a whole character at a time, so the columns are one grid across the sheet: `prepare.py` measures their pitch from the actions' type and finds column 0 from the phrases that begin at the left margin. The lines are not. Chiari turned the platen freely between blocks, so a block's lines keep to the line spacing, but the blocks lie at any height: Churchill and the oboe stand half a line off the lines of the cards, the door and the cello a third. Each phrase's own baseline places it, found where its lines, a line apart, stop most sharply together.
 
-It prints what it found. On the 1964 photograph that is 20.4 px a character and 42.6 px a line (a ratio of 2.1, which is a 12-pitch face at six lines to the inch), tilted 0.86 degrees, with first characters within 0.19 of a column and first lines within 0.20 of a row. It also reports Chiari's indents. They recur at a few places (a margin shared by several actions, and one by two or three others) but not at any regular interval: only 11 of the 20 distinct indents fall on every fourth column, against about five by chance, and every other interval does worse. So the evidence is for no regular tab stop, but phrases.json sets `"grid": {"tab": 4}` anyway, as a house style: slips, the arrow keys and the shuffle land only on every fourth column, counting from the left margin. Remove `tab` to snap to every column; it is carried in the manifest as the grid's `tab`.
+So every slip is a whole number of characters wide and of lines high, and a one-line slip is as high as every other. The cell stands the same height above its baseline in every slip, centred on the type's height (between where its tall letters reach and where its descenders end), so a slip's text sits in it as every other slip's does. Across, a slip stands on the columns unless its own first or last letter needs it moved to be held whole: the registration of a line wanders by a few pixels, so a few slips are nudged, by 3.5 px at most. Ink belongs to a phrase if it lies in its cells and is type: a dark-cored stroke more than a speck, and the pieces of a letter struck unevenly, like the faint tails of "very far away". The specks along the folds, a pencil tick beside a line and the scribble under "Voice" stay on the paper.
+
+It prints what it found. On Northwestern's scan that is 61.28 px a character (9.79 to the inch, a 2.6 mm pitch) and 117.45 px a line (5 mm), with the actions' typing level to within 0.03 degrees, so there is no tilt to correct; tall letters reach 74 px above the baseline and descenders 22 px below, so a cell's top is 84.4 px above it. The line is 1.9165 characters, which makes a character 24 canvas units and a line 46 (45.994): every cell is a whole number of units. The images are drawn at 18 px a character (2445 × 3237), which is enough for a 6K display and keeps the three images to 1.7 MB; the canvas is 3260 × 4316 units.
+
+The grid goes into the manifest as a `TypewriterGrid` service on the sheet's canvas: `characterWidth` and `lineHeight` in canvas units, `skew` (0: the typing is level), and `originX`/`originY` (column 0, and the top of the first action's cell). The exhibit settles dropped slips onto it, moves slips a column or a line with the arrow keys (Shift for five), and puts the shuffle's actions on it.
+
+It also reports Chiari's indents. They recur at a few places (a margin shared by several actions, and one by two or three others) but not at any regular interval: only 8 of the 19 distinct indents fall on every fourth column, against about five by chance, and 10 on every third, against about six. So the evidence is for no regular tab stop, but phrases.json sets `"grid": {"tab": 4}` anyway, as a house style: slips, the arrow keys and the shuffle land only on every fourth column, counting from the left margin. Remove `tab` to snap to every column; it is carried in the manifest as the grid's `tab`.
 
 ## Chapters, and Clover 4
 

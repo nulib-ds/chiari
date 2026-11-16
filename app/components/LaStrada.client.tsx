@@ -29,9 +29,10 @@ import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from "reac
  *
  * Things snap to the typewriter's grid. The manifest carries it as a service on
  * the canvas (see app/scripts/la-strada): the width of a character, the height
- * of a line, and the tilt of the typing in the photograph, measured from the
- * typing itself. Slips settle on a column and a line; the arrow keys move one
- * of each, and a tab stop, if the manifest names one, is the step along.
+ * of a line, and the tilt of the typing in the scan, measured from the typing
+ * itself. Slips are cut on the grid, and settle on a column and a line; the
+ * arrow keys move one of each, and a tab stop, if the manifest names one, is
+ * the step along.
  *
  * The arrangement is also read as chapters: the same actions, as Ranges that name
  * a place and a time, which Clover 4's helpers (`chaptersOf`, via ./clover)
@@ -106,7 +107,7 @@ type Piece = {
 
 /**
  * The typewriter's grid, in page widths. Columns run along the typing and lines
- * across it, which is tilted a little in the photograph: u = x + skew*y runs
+ * across it, which may be tilted a little in a scan: u = x + skew*y runs
  * along a line and v = y - skew*x across, and a slip's corner stands where
  * (u0 + column*char, v0 + line*height) says.
  */
@@ -693,7 +694,9 @@ function arrange(score: Score, z: number): Places {
   const right = Math.max(...score.actions.map((p) => p.x + p.w));
   const top = Math.min(...score.actions.map((p) => p.y));
   const bottom = Math.max(...score.actions.map((p) => p.y + p.h));
-  const lines = (p: Piece) => p.text.split("\n").length;
+  // A slip is cut a whole number of lines high, which is how many it was typed on
+  // (its text may wrap otherwise).
+  const lines = (p: Piece) => Math.max(1, Math.round(p.h / grid.line));
   const spare = Math.max(0, Math.floor((bottom - top) / grid.line) - actions.reduce((n, p) => n + lines(p), 0));
   // Each spare line goes to a place picked at random, so blanks come singly
   // and in runs, as they do on the page.

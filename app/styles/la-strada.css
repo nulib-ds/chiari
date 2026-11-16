@@ -202,14 +202,14 @@
   display: block;
   width: 100%;
   height: calc(var(--page-h) * 1cqw);
-  /* The sheet is cut out of its photograph, so the shadow follows its edge. */
+  /* The sheet is cut out of its scan, so the shadow follows its edge. */
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.16)) drop-shadow(0 8px 24px rgb(0 0 0 / 0.1));
   -webkit-user-drag: none;
 }
 
 /* A slip is a window onto the scan: the whole sheet, drawn at page width and
  * shifted so that only its own region shows. It has two faces. Sitting on the
- * sheet it shows the photograph, which is exactly what is under it, so it is
+ * sheet it shows the scan, which is exactly what is under it, so it is
  * invisible. Once it has fallen it shows only the type, on transparency, so the
  * words lie on the page like ink with no paper behind them. */
 .fx-slip {
@@ -333,16 +333,17 @@
  * block's top corners and the last's bottom ones (--round); Canopy squares every
  * corner, so the rounding is asked for through its variable.
  *
- * The strip comes from below the sheet's horizontal crease, which would otherwise
- * cross the bar as a black line, stretched so that a bar of everything reaches from
- * the first typed line to the last (--length, from --top). Where, in page widths,
- * measured on the 1964 photograph: across, the margin (--margin); down, just under
- * the crease (--below), for as much clean paper as there is above the sheet's
- * shadowed foot (--span). Measure again for a new scan. */
+ * The strip comes from the sheet's left margin below its horizontal fold, which
+ * would otherwise cross the bar as a line, stretched so that a bar of everything
+ * reaches from the first typed line to the last (--length, from --top). Where, in
+ * page widths, measured on Northwestern's scan: across, the margin (--margin), left
+ * of the first column; down, below the fold and a mark under it (--below), for as
+ * much clean paper as there is above the sheet's foot (--span). Measure again for
+ * a new scan. */
 .fx-strada__chapters {
-  --margin: 5.25;
-  --below: 67.3;
-  --span: 61.5;
+  --margin: 9.5;
+  --below: 74.9;
+  --span: 54.5;
   --stretch: calc(var(--length) / var(--span));
   position: absolute;
   top: 0;
