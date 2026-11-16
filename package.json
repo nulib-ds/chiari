@@ -14,11 +14,13 @@
     "@samvera/clover-iiif": "^3.16.2",
     "embla-carousel": "^8.6.0",
     "esbuild": "^0.21.4",
+    "pixi.js": "^8.23.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.13",
+    "@types/web": "^0.0.366",
     "tailwindcss": "^4.1.13",
     "tsx": "^4.19.1"
   },

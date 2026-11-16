@@ -19,4 +19,5 @@ export const clientComponents = {
   ExampleClient: './Example.client.tsx',
   StoryMapJS: './StoryMapJS.client.tsx',
   LaStrada: './LaStrada.client.tsx',
+  SuonareLaCitta: './SuonareLaCitta.client.tsx'
 };
