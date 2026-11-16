@@ -8,6 +8,8 @@ export const components = {
   Example: './Example.tsx',
   Mark: './Mark.tsx',
   FeaturedWorks: './FeaturedWorks.tsx',
+  FeaturedWork: './FeaturedWork.tsx',
+  Plate: './Plate.tsx',
   Hand: './Hand.tsx',
   Palette: './Palette.tsx',
 };

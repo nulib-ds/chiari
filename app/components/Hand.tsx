@@ -69,7 +69,7 @@ export default function Hand({
   /** A heading only: an annotation drawn to its right, by gesture name (as in the lookbook) or number. */
   annotate?: string | number;
   /** Paint color of that annotation. */
-  annotateColor?: "red" | "blue" | "green" | "yellow" | "pink" | "black";
+  annotateColor?: "blue" | "green" | "yellow" | "pink" | "black";
   children?: React.ReactNode;
 }) {
   const text = textOf(children).trim();

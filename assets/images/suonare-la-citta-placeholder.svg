@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1350" width="1920" height="1350" role="img" aria-label="Placeholder for a screengrab of Suonare la città">
+  <rect width="1920" height="1350" fill="#eeece7"/>
+  <rect x="40" y="40" width="1840" height="1270" fill="none" stroke="#8a8a8a" stroke-width="4" stroke-dasharray="24 18"/>
+  <line x1="40" y1="40" x2="1880" y2="1310" stroke="#c9c6bf" stroke-width="3"/>
+  <line x1="1880" y1="40" x2="40" y2="1310" stroke="#c9c6bf" stroke-width="3"/>
+  <rect x="460" y="555" width="1000" height="240" fill="#eeece7"/>
+  <text x="960" y="655" text-anchor="middle" font-family="'Courier New', Courier, monospace" font-size="72" fill="#333">Suonare la città</text>
+  <text x="960" y="740" text-anchor="middle" font-family="'Courier New', Courier, monospace" font-size="40" fill="#666">Placeholder: screengrab to come</text>
+</svg>

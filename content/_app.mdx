@@ -84,7 +84,7 @@ export const SEARCH_LABEL_TAGS =
   // except black, which would swallow black text; each maps to a token via
   // [data-fx-ann-color] in custom.css.
   var ANNOTATIONS = 20;
-  var colors = ["red", "blue", "green", "yellow", "pink"];
+  var colors = ["pink", "blue", "green", "yellow"];
   function tag() {
     var labels = document.querySelectorAll(".canopy-search-teaser__label:not([data-fx-label])");
     for (var i = 0; i < labels.length; i++) {
@@ -247,7 +247,7 @@ export function LanguageToggle({page, site}) {
 
 export const MENU_PAINT =
   // Paint color for each main section, in navigation.yml order.
-  ["red", "blue", "green", "yellow"];
+  ["pink", "blue", "green", "yellow"];
 
 export function paintShape(color) {
   // The stroke's filled outline, read from its SVG so the file stays the
