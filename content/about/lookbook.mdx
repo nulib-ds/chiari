@@ -13,7 +13,7 @@ The site reads as printed black-and-white paper that someone has marked up by ha
 
 ### Print
 
-Everything that reads as printing is black on the paper, with two steps of Rich Black for quieter text, from Northwestern's primary palette. The paper is almost white, with a soft sheen like film. It is made with gradients only, and they only ever lighten it, so quiet text keeps its contrast everywhere.
+Everything that reads as printing is one ink, 100% black, on the paper: text, headings, menus, captions and links alike. There are no grays, just as a typewriter has one ribbon. The paper is almost white, with a soft sheen like film. It is made with gradients only, and they only ever lighten it.
 
 <Palette group="print" />
 
@@ -21,7 +21,7 @@ Everything that reads as printing is black on the paper, with two steps of Rich 
 
 The paint colors are sampled from the markers on Chiari's own marked-up scores: blue, green, yellow and pink. Each is nudged to a midtone so it reads as a mark on the paper or on black. Blue, green and pink hold at least 4.0:1 against both, enough for a mark that shows state. Yellow stays light by nature (1.4:1 on paper), so it is decorative only and never the only signal of anything. The paint is for marks, never for text.
 
-The four main sections each own one: Watch pink, Play blue, Write green, Collaborate yellow. A section's stroke appears under its menu label on hover and stays under the current section. Pink underlines the current page in the secondary menu and sidebar, and circles the current language; active links themselves stay black. Black paint marks the search field. In copy, `<Mark>` uses the same strokes, sparingly.
+The main menu borrows the annotations below: on each load every section gets a random gesture in a random paint, drawn under its label on hover and kept under the current section. The current page in About and Works gets one too. Pink underlines the current page in the sidebar, and circles the current language; active links themselves stay black. Black paint marks the search field. In copy, `<Mark>` uses the same strokes, sparingly.
 
 <Palette group="paint" />
 
@@ -70,42 +70,34 @@ There is one typeface, Courier Prime. Everything else is drawn: Chiari's hand fo
 
 ### Courier Prime
 
-Loaded from Google Fonts. Body, menus, headings and captions are all Courier Prime, in one weight, Regular 400, with its italic.
+Loaded from Google Fonts. Body, menus, headings and captions are all Courier Prime, and all of it follows typewriter rules: one size, the body's 1rem, because a typewriter can't change size. Regular 400 is the one weight, and nothing is lighter. Bold 700 is the key hammered hard, kept for punctuating text: a `<strong>` word and h1. Italics are rare; emphasis and titles are underlined, as they were typed. Space does the rest, in whole lines down the page and 4-character tabs across it.
 
 <div className="fx-specimens">
   <div className="fx-specimen">
-    <span className="fx-specimen__label">Main menu · Regular 400 · 1.35–1.85rem</span>
-    <p className="fx-specimen__sample fx-specimen--menu">Watch Play Write Collaborate</p>
-  </div>
-  <div className="fx-specimen">
-    <span className="fx-specimen__label">Heading 1 · Regular 400 · 2rem</span>
+    <span className="fx-specimen__label">Heading 1 · Bold 700 · capitals · two blank lines below</span>
     <p className="fx-specimen__sample fx-specimen--h1">Gesti sul piano</p>
   </div>
   <div className="fx-specimen">
-    <span className="fx-specimen__label">Heading 2 · Regular 400 · 1.618rem</span>
+    <span className="fx-specimen__label">Heading 2 · capitals · three blank lines above, one below</span>
     <p className="fx-specimen__sample fx-specimen--h2">Chiari and Fluxus</p>
   </div>
   <div className="fx-specimen">
-    <span className="fx-specimen__label">Heading 3 · Regular 400 · 1.382rem</span>
+    <span className="fx-specimen__label">Heading 3 · underlined · two blank lines above</span>
     <p className="fx-specimen__sample fx-specimen--h3">Per Arco</p>
   </div>
   <div className="fx-specimen">
-    <span className="fx-specimen__label">Tagline · Regular 400 · 1.05rem</span>
-    <p className="fx-specimen__sample fx-specimen--tagline">Giuseppe Chiari at 100</p>
+    <span className="fx-specimen__label">Body · Regular 400 · 17.6px, line height 1.7 · a blank line between paragraphs</span>
+    <p className="fx-specimen__sample fx-specimen--body">Scores, photographs, letters and recordings from Giuseppe Chiari's work, gathered and set in plain print so the material can speak for itself. A word struck <strong>hard</strong> for emphasis; a title, <em>Musica senza contrappunto</em>, underlined.</p>
   </div>
   <div className="fx-specimen">
-    <span className="fx-specimen__label">Body · Regular 400 · 17.6px, line height 1.7</span>
-    <p className="fx-specimen__sample fx-specimen--body">Scores, photographs, letters and recordings from Giuseppe Chiari's work, gathered and set in plain print so the material can speak for itself.</p>
-  </div>
-  <div className="fx-specimen">
-    <span className="fx-specimen__label">Caption and metadata · Regular 400 · 0.9rem · Rich Black 50%</span>
-    <p className="fx-specimen__sample fx-specimen--caption">Object type, medium, date. Holding institution.</p>
+    <span className="fx-specimen__label">Quotation or caption · indented one tab</span>
+    <p className="fx-specimen__sample fx-specimen--indent">Object type, medium, date. Holding institution.</p>
   </div>
 </div>
 
 ### Chiari's hand
 
-Traced from the bold uppercase passages in *Musica senza contrappunto*. J, K, W and Y never appear there, so they are built from his strokes. Set it with `<Hand>`, for a short heading or a short quotation, and never for every one.
+Traced from the bold uppercase passages in *Musica senza contrappunto*. J, K, W and Y never appear there, so they are built from his strokes. Set it with `<Hand>`, for a short heading or a short quotation, and never for every one. The header's main menu and language toggle are drawn in it too, at one small size.
 
 <div className="fx-specimens">
   <div className="fx-specimen">
