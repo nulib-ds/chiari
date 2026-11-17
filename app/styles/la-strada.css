@@ -289,14 +289,12 @@
   filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.22));
 }
 
-/* Pointed at, here or by its block on the seek bar, or focused: the slip stands a
- * little larger, from its left edge, where the marker's line ends (see
+/* Pointed at, here or by its block on the seek bar, or focused: the slip stands
+ * over the others, as it is, and the marker's line ends at its left edge (see
  * .fx-strada__sketch). Focused, it is braced either side as well, and the braces are
  * its focus ring. */
 .fx-slip.is-pointed {
   z-index: 99999;
-  transform: scale(1.06); /* GROWN in LaStrada.client.tsx, where the right brace allows for it */
-  transform-origin: 0 50%;
 }
 
 .fx-slip.is-pointed:focus-visible {

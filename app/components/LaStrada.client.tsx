@@ -445,9 +445,6 @@ const REST = 1.1;
  */
 const BEARING = 0.1;
 
-/** How much larger a slip stands, from its left edge, while it is pointed at (.fx-slip.is-pointed). */
-const GROWN = 1.06;
-
 // ---------------------------------------------------------------------------
 // The clock
 // ---------------------------------------------------------------------------
@@ -1000,9 +997,7 @@ export default function LaStrada({
   }, []);
 
   // Draw the line for the action pointed at, and its braces if it has focus, from
-  // where its block and its slip stand now. The slip's place is read from its own,
-  // not from the page, so that its growing a little while it is pointed at does not
-  // move the marks.
+  // where its block and its slip stand now.
   useLayoutEffect(() => {
     const block = pointing && section.current?.querySelector(`.fx-strada__chapters [data-chapter="${pointing}"]`);
     const piece = pointing ? score?.actions.find((p) => p.id === pointing) : undefined;
@@ -1038,13 +1033,12 @@ export default function LaStrada({
       const braces: string[] = [];
       if (braced) {
         // Each brace has a hand of its own, so it is drawn the same way wherever its
-        // slip stands. The right one stands just past the end of the type as it stands
-        // grown (it grows from its left edge), its point away from the type: a brace
-        // drawn as the left one is, and turned about its point.
+        // slip stands. The right one stands just past the end of the type, its point
+        // away from it: a brace drawn as the left one is, and turned about its point.
         const n = Math.max(12, Math.min(120, Math.round((tall + 2 * wide) / 2)));
         const hand = seeded(`${pointing} {`);
         braces.push(marker(brace(tip, tall, wide, n, hand), ink * 0.9, hand));
-        const stop = (at.x + score.grid.char * BEARING + (piece.w - 2 * score.grid.char * BEARING) * GROWN) * unit;
+        const stop = (at.x + score.grid.char * BEARING + (piece.w - 2 * score.grid.char * BEARING)) * unit;
         const point: Point = [sheet.left - box.left + stop + ink * 0.6 + wide, tip[1]];
         const other = seeded(`${pointing} }`);
         braces.push(marker(brace(point, tall, wide, n, other).map(([x, y]): Point => [2 * point[0] - x, y]), ink * 0.9, other));
