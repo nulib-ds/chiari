@@ -38,7 +38,8 @@
   border-radius: var(--fx-pill);
   background: var(--fx-ink);
   color: var(--fx-paper);
-  font: 0.95rem/1 var(--font-sans);
+  font: inherit;
+  line-height: 1;
   cursor: pointer;
 }
 
@@ -113,8 +114,7 @@
   flex: 1 1 14rem;
   min-height: 1.5rem;
   margin: 0;
-  color: var(--fx-ink-80);
-  font-size: 0.95rem;
+  color: var(--fx-ink);
   line-height: 1.5;
 }
 
@@ -136,7 +136,7 @@
 
 .fx-strada__caption em {
   margin-right: 0.5em;
-  color: var(--fx-ink-50);
+  color: var(--fx-ink);
   font-style: normal;
 }
 
@@ -176,8 +176,7 @@
   top: calc(var(--page-h) * 1cqw + 0.9rem);
   left: 0;
   width: 100%;
-  color: var(--fx-ink-80);
-  font-size: 0.8rem;
+  color: var(--fx-ink);
   line-height: 1.5;
   text-align: right;
   transition: opacity 300ms ease-out, visibility 300ms;
@@ -472,8 +471,9 @@
   top: calc(var(--y) * 1cqw + 0.45rem);
   left: 0;
   right: 0;
-  color: var(--fx-ink-80);
-  font: 0.7rem / 1 var(--font-sans);
+  color: var(--fx-ink);
+  font: inherit;
+  line-height: 1;
   text-align: center;
   white-space: nowrap;
 }
@@ -528,14 +528,13 @@
 .fx-strada__extract p {
   flex: 1 1 14rem;
   margin: 0;
-  color: var(--fx-ink-80);
-  font-size: 0.95rem;
+  color: var(--fx-ink);
 }
 
 .fx-strada__annotations {
   width: min(100%, 62rem);
   margin: 1.25rem auto 0;
-  color: var(--fx-ink-80);
+  color: var(--fx-ink);
 }
 
 .fx-strada__annotations summary {
@@ -548,14 +547,15 @@
   padding: 0;
   overflow: auto;
   background: none;
-  color: var(--fx-ink-80);
-  font: 0.75rem / 1.5 var(--font-mono);
+  color: var(--fx-ink);
+  font: inherit;
+  line-height: 1.5;
 }
 
 .fx-strada__transcription {
   width: min(100%, 62rem);
   margin: 2rem auto 0;
-  color: var(--fx-ink-80);
+  color: var(--fx-ink);
 }
 
 .fx-strada__transcription summary {
@@ -581,13 +581,14 @@
 .fx-strada-debug {
   margin-block: 3rem 4rem;
   padding-top: 1.5rem;
-  border-top: 1px dashed var(--fx-ink-50);
+  border-top: 1px dashed var(--fx-ink);
 }
 
 .fx-strada-debug__note {
   margin: 0 0 1rem;
-  color: var(--fx-ink-80);
-  font: 0.8rem / 1.5 var(--font-mono);
+  color: var(--fx-ink);
+  font: inherit;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 

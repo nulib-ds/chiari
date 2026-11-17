@@ -29,18 +29,15 @@
     --fx-yellow: #fad000;
     --fx-pink: #e5199a;
     /* Paper: almost white, the darkest point of the page. The sheen in
-     * body's background only ever lightens it, so Rich Black 50% captions
-     * stay at 5.0:1 or better everywhere. */
+     * body's background only ever lightens it, so black type holds 20:1. */
     --fx-paper: #fbfbf9;
 
-    /* Print: Rich Black, with Rich Black 80% / 50% for muted copy. */
+    /* Print: one ink, 100% black, for every letter on the page. */
     --fx-ink: #000000;
-    --fx-ink-80: var(--nu-rich-black-80);
-    --fx-ink-50: var(--nu-rich-black-50);
     --fx-highlight: color-mix(in srgb, var(--fx-yellow) 60%, white);
 
-    /* One typeface: Courier Prime (loaded in _app.mdx, Regular 400 and its
-     * italic only) replaces Akkurat Pro, Poppins and Noto Serif for body,
+    /* One typeface: Courier Prime (loaded in _app.mdx: Regular 400, Bold 700
+     * and the Regular italic) replaces Akkurat Pro, Poppins and Noto Serif for body,
      * display and serif roles, and Tailwind's monospace stack for code. */
     --font-sans: "Courier Prime", "Courier New", Courier, monospace;
     --font-display: var(--font-sans);
@@ -49,6 +46,14 @@
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-sans);
     --canopy-font-sans: var(--font-sans);
+
+    /* Typewriter measures. Every letter is set at body size, so a line and
+     * a tab are fixed distances: space comes in whole lines down the page
+     * and 4-character tabs across it. */
+    --fx-line: 1.7rem;
+    --fx-tab: 4ch;
+    /* Space above the drawn main menu and language toggle: one line. */
+    --fx-nav-top: var(--fx-line);
 
     /* One container site-wide, matching the search results: 1200px with a
      * 1.618rem inset, so every page's content edge lines up with the masthead. */
@@ -76,24 +81,64 @@
 
     --color-gray-900: var(--fx-ink);
     --color-gray-default: var(--fx-ink);
-    --color-gray-muted: var(--fx-ink-50);
+    --color-gray-muted: var(--fx-ink);
   }
 }
 
 :root {
-  --clover-color-accent-alt: var(--fx-ink-80);
+  --clover-color-accent-alt: var(--fx-ink);
 }
 
-/* One weight: Courier Prime Regular, the only one loaded. Canopy's components,
- * the brand layer and the browser's own defaults (headings, strong, th) ask for
- * others; none is drawn, real or synthesized. In the base layer because an
- * important declaration in an earlier layer beats one in a later layer (Canopy's
- * components force some to 300) and any outside the layers. */
+/* Typewriter rules (DESIGN.md, "Typewriter type"). A typewriter has one size
+ * of type, one ink, and a key struck either normally or hard. So:
+ *   - every element is set at body size (1rem). Drawn SVG is exempt, since
+ *     it's drawing, not type, and so is an annotated <Hand>, whose margin
+ *     mark is sized in ems of the hand's size;
+ *   - Regular 400 is the floor. Nothing is lighter (Canopy's components force
+ *     some text to 300), and the only other weight is Bold 700, for <strong>
+ *     and h1: a key hammered hard;
+ *   - no letter-spacing, which would break the monospace grid;
+ *   - no italics, except <i>. Emphasis and titles (<em>, <cite>) are
+ *     underlined, as they were when typed.
+ * In the base layer because an important declaration in an earlier layer
+ * beats one in a later layer, and any outside the layers. */
 @layer base {
+  body,
+  body :not(svg, svg *, .fx-hand[data-fx-ann]) {
+    font-size: 1rem !important;
+    letter-spacing: 0 !important;
+  }
+
   *,
   *::before,
   *::after {
     font-weight: 400 !important;
+    font-synthesis: none;
+  }
+
+  strong,
+  b,
+  h1,
+  .fx-specimen--h1 {
+    font-weight: 700 !important;
+  }
+
+  *:not(i) {
+    font-style: normal !important;
+  }
+
+  em,
+  cite {
+    text-decoration: underline;
+  }
+
+  u,
+  em,
+  cite,
+  ins,
+  h3 {
+    text-decoration-thickness: 0.07em;
+    text-underline-offset: 0.18em;
   }
 }
 
@@ -198,6 +243,10 @@ body {
   background: transparent;
 }
 
+/* Headings, typed: one size and one line height, set apart by case, the
+ * hard key, an underline and blank lines.
+ *   h1  BOLD CAPITALS      h2  CAPITALS
+ *   h3  underlined         h4–h6  plain, a blank line above */
 h1,
 h2,
 h3,
@@ -205,10 +254,21 @@ h4,
 h5,
 h6 {
   color: var(--fx-ink);
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+
+h1,
+h2 {
+  text-transform: uppercase;
+}
+
+h3 {
+  text-decoration-line: underline;
 }
 
 main h1 {
-  margin-bottom: 3rem;
+  margin-bottom: calc(2 * var(--fx-line));
 }
 
 /* <Hand> headings: the drawn SVG carries the look, the visually hidden
@@ -267,17 +327,31 @@ main blockquote.fx-hand--quote {
 
 .fx-hand__cite {
   margin-top: 1.25rem;
-  font-size: 0.9rem;
-  color: var(--fx-ink-50);
+  color: var(--fx-ink);
 }
 
 main h2 {
-  margin-top: 6rem;
-  margin-bottom: 1.5rem;
+  margin-top: calc(3 * var(--fx-line));
+  margin-bottom: var(--fx-line);
 }
 
 main h3 {
-  margin-top: 4rem;
+  margin-top: calc(2 * var(--fx-line));
+  margin-bottom: var(--fx-line);
+}
+
+main :is(h4, h5, h6) {
+  margin-top: var(--fx-line);
+  margin-bottom: 0;
+}
+
+/* Indents are tab stops. */
+main :is(ul, ol) {
+  padding-left: var(--fx-tab);
+}
+
+main li + li {
+  margin-top: 0;
 }
 
 main p,
@@ -285,19 +359,33 @@ main li {
   color: var(--fx-ink);
 }
 
+/* Prose is typed on the line grid: line height 1.7 (one --fx-line; Canopy's
+ * prose uses 1.618), a blank line between paragraphs. */
+main :is(p, li, blockquote, dd, dt, figcaption) {
+  line-height: 1.7;
+}
+
+/* Canopy pads paragraphs half a line top and bottom; space comes only from
+ * whole-line margins here. */
+main p {
+  padding-block: 0;
+}
+
 main p + p {
-  margin-top: 1.75em;
+  margin-top: var(--fx-line);
 }
 
 main small,
 main figcaption {
-  color: var(--fx-ink-50);
+  color: var(--fx-ink);
 }
 
+/* A typed quotation: indented one tab, a blank line above and below, no rule. */
 main blockquote {
-  border-left: 2px solid var(--nu-rich-black-20);
-  padding: 0.25rem 0 0.25rem 1.5rem;
-  color: var(--fx-ink-80);
+  margin-block: var(--fx-line);
+  border-left: none;
+  padding: 0 0 0 var(--fx-tab);
+  color: var(--fx-ink);
 }
 
 /* Marker strokes are reserved for the main menu. In-copy links keep a plain
@@ -308,7 +396,7 @@ main li a,
 main dd a,
 main blockquote a {
   color: var(--fx-ink);
-  text-decoration-color: var(--fx-ink-50);
+  text-decoration-color: var(--fx-ink);
   text-decoration-thickness: 1px;
 }
 
@@ -363,9 +451,10 @@ main blockquote a:hover {
  * contents). */
 .fx-subbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-  gap: 2rem;
+  gap: var(--fx-line) 2rem;
   padding: 0.6rem var(--fx-gutter);
 }
 
@@ -373,23 +462,56 @@ main blockquote a:hover {
   display: flex;
   justify-content: flex-end;
   gap: 1.5rem;
-  font-size: 0.9rem;
 }
 
-/* Rich Black 50% (5.3:1 on white) keeps these quieter than the main nav. */
+/* Typed and always underlined, in the same black ink. The current page gets
+ * an annotation drawn under it, a random gesture in a random paint color on
+ * each load (the head script in _app.mdx sets data-fx-ann and
+ * data-fx-ann-color; annotations.css maps the gesture to the mask). It keeps
+ * the mark's 280 × 50 shape. Before the script runs, or without it, a
+ * yellow wave (annotate-16) stands in. */
 .fx-secondary-nav a {
-  color: var(--fx-ink-50);
-  text-decoration: none;
+  position: relative;
+  color: var(--fx-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 0.07em;
+  text-underline-offset: 0.18em;
+  /* Room for the current page's mark on every link, so the current one
+   * doesn't ride up in the centred row. */
+  padding-bottom: 0.3em;
+  white-space: nowrap;
 }
 
 .fx-secondary-nav a:hover {
   color: var(--fx-ink);
 }
 
-/* Current pages stay black and are underlined in pink paint. The sidebar
- * selector matches Canopy's own `.canopy-sub-navigation__tree …is-active`
+.fx-secondary-nav a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: calc(100% - 0.35em);
+  width: max(100%, 4.5em);
+  aspect-ratio: 280 / 50;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background-color: var(--fx-ann, var(--fx-yellow));
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.fx-secondary-nav a[aria-current="page"]:not([data-fx-ann])::after {
+  -webkit-mask-image: url("../images/marks/annotate-16.svg");
+  mask-image: url("../images/marks/annotate-16.svg");
+}
+
+/* Current pages in the sidebar stay black and are underlined in pink
+ * paint. The sidebar selector matches Canopy's own `.canopy-sub-navigation__tree …is-active`
  * rule. */
-.fx-secondary-nav a[aria-current="page"],
 .canopy-sub-navigation__tree .canopy-nav-tree__link[aria-current="page"],
 .canopy-sub-navigation__tree .canopy-nav-tree__link.is-active {
   color: var(--fx-ink);
@@ -412,13 +534,12 @@ main blockquote a:hover {
     display: contents;
   }
 
-  /* Vertically centred on the main nav labels (top inset 0.4rem, line box
-   * 1.3 × the nav font size). */
+  /* Level with the main nav labels: the same drawn hand at the same size,
+   * below the same top inset. */
   .fx-lang {
     position: absolute;
     right: var(--fx-gutter);
-    top: calc(var(--fx-masthead-row) + 0.4rem);
-    height: calc(1.3 * clamp(1.35rem, 1rem + 0.9vw, 1.85rem));
+    top: calc(var(--fx-masthead-row) + var(--fx-nav-top));
     z-index: 2;
   }
 
@@ -447,15 +568,13 @@ main blockquote a:hover {
  * The two SVGs share a cap height, baseline and viewBox height, and the
  * Italian is spaced like the English, so at one CSS height (--fx-mast-h)
  * their letters match and the Italian runs about a tenth wider. The header
- * keeps its height when the language changes. On desktop ART IS EASY is
- * three-fifths as wide as the English main nav row. The row is the four
- * labels' text width (12.842 × the nav font size, measured for Watch, Play,
- * Write, Collaborate) plus three link-to-link steps of 2 × 1.4rem inset +
- * 0.25rem gap. 1214 / 278 and 1347 / 278 are the marks' viewBox sizes. */
+ * keeps its height when the language changes. The mark is drawing, not type,
+ * so the typewriter rule's single size doesn't bind it: its height is fixed
+ * here, growing a little with the window (1.2 × the size it had when the
+ * main nav was large type and set it). 1214 / 278 and 1347 / 278 are the marks'
+ * viewBox sizes. */
 .canopy-header .canopy-logo {
-  --fx-nav-size: clamp(1.35rem, 1rem + 0.9vw, 1.85rem);
-  --fx-nav-text: 12.842;
-  --fx-mast-h: calc(0.6 * (var(--fx-nav-text) * var(--fx-nav-size) + 3 * 3.05rem) * 278 / 1214);
+  --fx-mast-h: calc(1.2 * 0.6 * (12.842 * clamp(1.35rem, 1rem + 0.9vw, 1.85rem) + 9.15rem) * 278 / 1214);
   display: block;
   width: fit-content;
   max-width: 100%;
@@ -486,22 +605,18 @@ main blockquote a:hover {
 .canopy-header .canopy-logo span {
   display: block;
   font-family: var(--font-sans);
-  font-size: 1.05rem;
-  letter-spacing: 0.01em;
   text-transform: none;
   line-height: 1.2;
+  /* One typed line, even where the masthead image is narrower than it. */
+  white-space: nowrap;
 }
 
 /* Below 70rem the brand shares its row with the search and menu buttons,
  * about 10rem with the gutters; the Italian line fills what is left, up to
- * 2.75rem tall. */
+ * 3.3rem tall. */
 @media (max-width: 70rem) {
   .canopy-header .canopy-logo {
-    --fx-mast-h: min(2.75rem, (100vw - 10rem) * 278 / 1347);
-  }
-
-  .canopy-header .canopy-logo span {
-    font-size: 0.85rem;
+    --fx-mast-h: min(3.3rem, (100vw - 10rem) * 278 / 1347);
   }
 }
 
@@ -529,51 +644,48 @@ main blockquote a:hover {
   .canopy-header .canopy-logo,
   .canopy-modal .canopy-logo {
     color: var(--fx-ink) !important;
-    letter-spacing: 0.04em;
   }
 }
 
 .canopy-nav-links.canopy-header__desktop-nav {
   border-top: none;
-  gap: 0.25rem;
+  gap: 0;
   padding-bottom: 2.75rem;
 }
 
-/* The four main sections are the loudest type in the header. Each owns a
- * paint-marker color (pink, blue, green, yellow). Hovering writes a thick
- * opaque stroke under the word: <PaintStroke> in _app.mdx masks the paint
- * with a round-capped line along its centreline, and moving that line's
- * dash makes the brush tip travel point to point. Leaving removes the
- * stroke at once, with no fade and no un-writing. The current section
- * keeps its stroke. */
+/* The four main sections are drawn in Chiari's hand (<Hand> in ChiariHeader,
+ * _app.mdx), at the language toggle's size, one tab (4ch: a 2ch inset each
+ * side) apart. Each gets a random annotation in a random paint color on
+ * each load (the head script in _app.mdx), drawn under the word on hover
+ * and kept under the current section. */
 .canopy-header .canopy-nav-links a {
-  --fx-nav-inset: 1.4rem;
+  --fx-nav-inset: calc(var(--fx-tab) / 2);
   position: relative;
-  padding: 0.4rem var(--fx-nav-inset) 0.75rem;
+  padding: var(--fx-nav-top) var(--fx-nav-inset) 0.75rem;
   font-family: var(--font-sans);
-  font-size: clamp(1.35rem, 1rem + 0.9vw, 1.85rem);
-  letter-spacing: -0.01em;
+  line-height: var(--fx-line);
   color: var(--fx-ink);
   background: none;
 }
 
 .canopy-nav-links.canopy-header__desktop-nav {
-  margin-left: -1.4rem;
+  margin-left: calc(var(--fx-tab) / -2);
 }
 
-.fx-paint {
-  position: absolute;
-  left: calc(var(--fx-nav-inset) - 0.15em);
-  bottom: 0.2rem;
-  width: calc(100% - 2 * (var(--fx-nav-inset) - 0.15em));
-  height: 0.42em;
-  overflow: visible;
-  pointer-events: none;
+.canopy-nav-links .fx-hand {
+  display: block;
+  margin: 0;
 }
 
-.fx-paint__tip {
-  stroke-dasharray: 1 2;
-  stroke-dashoffset: 1.05;
+/* Chiari's hand is always bold, the hand's way: the drawn outlines are traced
+ * again with a round stroke in the same ink, as if pressed harder (glyph
+ * units: cap = 100, so it scales with the size). word.py draws the same
+ * stroke into the static label SVGs. */
+.fx-hand__svg > g {
+  stroke: currentColor;
+  stroke-width: 5;
+  stroke-linejoin: round;
+  paint-order: stroke;
 }
 
 .canopy-header .canopy-nav-links a:hover,
@@ -582,22 +694,39 @@ main blockquote a:hover {
   background: none;
 }
 
-/* The tip lands slowly, sweeps through the middle and slows to lift off. */
-.canopy-header .canopy-nav-links a:hover .fx-paint__tip,
-.canopy-header .canopy-nav-links a[aria-current="page"] .fx-paint__tip .fx-paint__tip .fx-paint__tip {
-  stroke-dashoffset: 0;
-  transition: stroke-dashoffset 300ms cubic-bezier(0.55, 0.05, 0.3, 1);
+/* The annotation sits under the word, behind it and free to cross its
+ * lower edge, at the mark's drawn 280 × 50 shape: a little wider than the
+ * word, within 6–10.5em. Shown at once, with no fade. The phone menu modal
+ * lists the same labels without marks. */
+.canopy-header__desktop-nav > a {
+  isolation: isolate;
 }
 
-/* The menu modal lists the same labels; strokes are for the desktop row. */
-.canopy-modal .fx-paint {
-  display: none;
+.canopy-header__desktop-nav > a[data-fx-ann]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  /* Mostly below the drawn word: the mark starts three-quarters of the way
+   * down the letters (HAND_LABEL_SIZE × 1.12 is the drawn line's height) and
+   * hangs below them. */
+  top: calc(var(--fx-nav-top) + 0.75 * 1.1rem * 1.12);
+  z-index: -1;
+  width: clamp(6em, 100% - 2 * var(--fx-nav-inset) + 1em, 10.5em);
+  aspect-ratio: 280 / 50;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background-color: var(--fx-ann, var(--fx-yellow));
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  visibility: hidden;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .canopy-header .canopy-nav-links a:hover .fx-paint__tip {
-    transition: none;
-  }
+.canopy-header__desktop-nav > a[data-fx-ann]:is(:hover, [aria-current="page"])::after {
+  visibility: visible;
 }
 
 .canopy-header .canopy-nav-links a:focus-visible {
@@ -1008,11 +1137,9 @@ main blockquote a:hover {
 }
 
 .canopy-header .canopy-search-teaser__title {
-  font-size: 1rem;
 }
 
 .canopy-header .canopy-search-teaser__meta {
-  font-size: 0.8rem;
 }
 
 .canopy-search-teaser__label[data-fx-label="works"],
@@ -1041,7 +1168,7 @@ main blockquote a:hover {
 }
 
 .canopy-header .canopy-search-form__input::placeholder {
-  color: var(--fx-ink-50);
+  color: var(--fx-ink);
 }
 
 /* While search is in use, the header comes forward so its results panel
@@ -1061,18 +1188,18 @@ main blockquote a:hover {
 }
 
 /* Language toggle (LanguageToggle in _app.mdx): ENGLISH / ITALIANO drawn in
- * Chiari's hand. The current language prints in full black, the other in
- * Rich Black 50% until hovered. On desktop it sits at the right end of the
+ * Chiari's hand, both in black; the current one is circled. On desktop it sits at the right end of the
  * main nav row; below 70rem it shares the small row with About / Works. */
 .fx-lang {
   display: flex;
+  flex: none;
   align-items: center;
   gap: 1.75rem;
 }
 
 .fx-lang a {
   display: block;
-  color: var(--fx-ink-50);
+  color: var(--fx-ink);
   text-decoration: none;
   transition: color 150ms ease;
 }
@@ -1119,8 +1246,7 @@ main blockquote a:hover {
 }
 
 .fx-spread p {
-  font-size: 1.05rem;
-  color: var(--fx-ink-80);
+  color: var(--fx-ink);
 }
 
 /* Plates sit between paragraphs, so they need air above as well as below. */
@@ -1242,9 +1368,7 @@ main blockquote a:hover {
   display: inline-flex;
   align-items: center;
   gap: 0.9rem;
-  font-size: 0.85rem;
-  letter-spacing: 0.1em;
-  color: var(--fx-ink-50);
+  color: var(--fx-ink);
 }
 
 .fx-plate__flip button {
@@ -1261,7 +1385,6 @@ main blockquote a:hover {
 .fx-plate__flip button {
   width: 2rem;
   height: 2rem;
-  font-size: 1.2rem;
 }
 
 .fx-plate__flip button:hover {
@@ -1270,7 +1393,6 @@ main blockquote a:hover {
 }
 
 .fx-plate__title {
-  font-size: 1rem;
   color: var(--fx-ink);
   text-decoration: none;
 }
@@ -1296,7 +1418,7 @@ main blockquote a:hover {
 }
 
 .fx-plate--framed .fx-plate__media img {
-  border: 1px solid var(--fx-ink-50);
+  border: 1px solid var(--fx-ink);
 }
 
 .fx-plate--framed .fx-plate__caption {
@@ -1310,16 +1432,14 @@ main blockquote a:hover {
 .fx-plate__note {
   padding-left: 0.9rem;
   border-left: 2px solid var(--fx-pink);
-  font-size: 0.85rem;
   line-height: 1.5;
-  color: var(--fx-ink-50);
+  color: var(--fx-ink);
 }
 
 /* MDX wraps the caption in a paragraph, which would otherwise take the
  * spread's body-text size and color. */
 .fx-spread .fx-plate__note p {
   margin: 0;
-  font-size: inherit;
   line-height: inherit;
   color: inherit;
 }
@@ -1331,8 +1451,7 @@ main blockquote a:hover {
 }
 
 .fx-intro p {
-  font-size: 1.1rem;
-  color: var(--fx-ink-80);
+  color: var(--fx-ink);
 }
 
 .fx-intro .canopy-button-wrapper,
@@ -1361,7 +1480,6 @@ main .fx-palette li {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  font-size: 0.9rem;
   line-height: 1.4;
 }
 
@@ -1370,7 +1488,7 @@ main .fx-palette li {
   display: block;
   aspect-ratio: 4 / 3;
   margin-bottom: 0.6rem;
-  box-shadow: inset 0 0 0 1px var(--nu-rich-black-10);
+  box-shadow: inset 0 0 0 1px var(--fx-ink);
 }
 
 /* Paint swatches show the stroke itself rather than a flat chip. */
@@ -1386,17 +1504,15 @@ main .fx-palette li {
 }
 
 .fx-swatch__use {
-  color: var(--fx-ink-80);
+  color: var(--fx-ink);
 }
 
 .fx-swatch__meta {
-  font-size: 0.8rem;
-  color: var(--fx-ink-50);
+  color: var(--fx-ink);
 }
 
 .fx-swatch code {
   font-family: inherit;
-  font-size: inherit;
   background: none;
   padding: 0;
 }
@@ -1439,13 +1555,12 @@ main .fx-palette li {
   margin: 1.5rem 0 0;
   padding: 0;
   border: none;
-  font-size: 0.85rem;
 }
 
 .fx-ann-colors legend {
   float: left;
   margin-right: 0.5rem;
-  color: var(--fx-ink-50);
+  color: var(--fx-ink);
 }
 
 .fx-ann-colors label {
@@ -1469,9 +1584,7 @@ main .fx-palette li {
 
 .fx-ann-cell figcaption {
   margin-top: 0.4rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  color: var(--fx-ink-50);
+  color: var(--fx-ink);
 }
 
 .fx-specimens {
@@ -1483,10 +1596,8 @@ main .fx-palette li {
 .fx-specimen__label {
   display: block;
   margin-bottom: 0.5rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--fx-ink-50);
+  color: var(--fx-ink);
 }
 
 main .fx-specimen__sample {
@@ -1499,18 +1610,13 @@ main .fx-specimen p + p {
   margin-top: 0;
 }
 
-.fx-specimen--menu {
-  font-size: clamp(1.35rem, 1rem + 0.9vw, 1.85rem);
-  letter-spacing: -0.01em;
-  word-spacing: 0.6em;
-}
-
-.fx-specimen--h1 { font-size: 2rem; line-height: 1.2; }
-.fx-specimen--h2 { font-size: 1.618rem; line-height: 1.25; }
-.fx-specimen--h3 { font-size: 1.382rem; line-height: 1.3; }
-.fx-specimen--tagline { font-size: 1.05rem; }
-.fx-specimen--body { max-width: 40rem; font-size: 1rem; line-height: 1.7; }
-main .fx-specimen--caption { font-size: 0.9rem; color: var(--fx-ink-50); }
+/* The specimens show the typewriter rules: one size, set apart by case, the
+ * hard key, underlines and tabs. */
+.fx-specimen--h1 { text-transform: uppercase; }
+.fx-specimen--h2 { text-transform: uppercase; }
+.fx-specimen--h3 { text-decoration: underline; text-decoration-thickness: 0.07em; text-underline-offset: 0.18em; }
+.fx-specimen--body { max-width: 40rem; line-height: 1.7; }
+.fx-specimen--indent { padding-left: var(--fx-tab); }
 
 .fx-specimen .fx-hand {
   margin: 0.4rem 0 0;
@@ -1625,12 +1731,10 @@ main .fx-specimen--caption { font-size: 0.9rem; color: var(--fx-ink-50); }
 
 .canopy-search-results [data-canopy-search-summary] {
   margin-bottom: 1rem;
-  font-size: 0.875rem;
 }
 
 .canopy-search-results [data-canopy-search-summary] > div {
-  font-size: inherit;
-  color: var(--fx-ink-50);
+  color: var(--fx-ink);
 }
 
 /* -------------------------------------------------------------------------
@@ -1654,8 +1758,8 @@ main {
 
 .canopy-footer {
   background: transparent;
-  color: var(--fx-ink-80);
-  border-top: 1px solid var(--nu-rich-black-10);
+  color: var(--fx-ink);
+  border-top: none;
   margin-top: var(--fx-section-space);
 }
 
@@ -1666,7 +1770,7 @@ main:has(.fx-spread) ~ .canopy-footer {
 
 .canopy-footer a {
   color: var(--fx-ink);
-  text-decoration-color: var(--fx-ink-50);
+  text-decoration-color: var(--fx-ink);
   text-decoration-thickness: 1px;
 }
 
