@@ -439,6 +439,9 @@ const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(re
 /** The rest, in seconds, after each action of a performance. */
 const REST = 1.1;
 
+/** The marker paints the play button is marked in, as on the search page (content/_app.mdx). */
+const PAINTS = ["pink", "blue", "green", "yellow"];
+
 /**
  * How far into its cell, in characters, a typed letter's ink begins: a slip is cut
  * on the typewriter's grid, so its type starts this far in from its left edge.
@@ -868,6 +871,15 @@ export default function LaStrada({
   const [mode, setMode] = useState<Mode>("original");
   const [performing, setPerforming] = useState<Mode | null>(null);
   const [paused, setPaused] = useState(false);
+
+  // The paint play and pause is marked in when hovered or focused: a fresh one each
+  // time, never the one it had just before, as the search page's Filter button has.
+  const [playPaint, setPlayPaint] = useState("pink");
+  const repaint = () =>
+    setPlayPaint((was) => {
+      const others = PAINTS.filter((c) => c !== was);
+      return others[Math.floor(Math.random() * others.length)];
+    });
 
   const [copied, setCopied] = useState(false);
   // How tall the caption under the sheet is, in page widths: the floor starts below it.
@@ -1506,6 +1518,10 @@ export default function LaStrada({
               title={performing && !paused ? text.pause : text.play}
               disabled={!ready}
               onClick={playPause}
+              data-fx-ann="7"
+              data-fx-ann-color={playPaint}
+              onPointerEnter={repaint}
+              onFocus={repaint}
             >
               <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                 {performing && !paused ? <path d="M4 3h3v10H4zM9 3h3v10H9z" /> : <path d="M5 2.5v11l9-5.5z" />}

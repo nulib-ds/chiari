@@ -311,7 +311,7 @@
  * lines. Play and pause head the rail and stay in reach under the controls as the
  * sheet scrolls. --gap is the room between the bar's blocks. */
 .fx-strada__rail {
-  --gap: 2px;
+  --gap: 5px;
   position: absolute;
   top: 0;
   right: 100%;
@@ -323,15 +323,20 @@
   position: sticky;
   top: 7rem;
   z-index: 2;
+  isolation: isolate;
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.75rem;
+  height: 2.25rem;
   margin: 0.25rem auto 0;
   padding: 0;
   border: 0;
-  border-radius: var(--fx-pill);
-  background: var(--fx-ink);
+  overflow: visible;
+  /* Painted, as the search page's Filter button is: a hand-painted black block
+   * (paint-block.svg) rather than a pill, the paper showing through as the icon. */
+  --canopy-radius-none: 0;
+  border-radius: 0;
+  background: url("../images/marker/paint-block.svg") center / 100% 100% no-repeat;
   color: var(--fx-paper);
   cursor: pointer;
 }
@@ -342,11 +347,51 @@
   fill: currentColor;
 }
 
+/* Hovered or focused, the tangle (gesture 7) in a fresh paint color is drawn just
+ * above the block, centered on it and nudged down and right, and a marker stroke in
+ * the same color runs under the icon, as on Filter. The color is picked each time
+ * (data-fx-ann-color, set in LaStrada.client.tsx). */
+.fx-strada__play::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: calc(100% - 0.6rem);
+  width: 6rem;
+  aspect-ratio: 280 / 50;
+  transform: translateX(calc(-50% + 0.6rem));
+  pointer-events: none;
+  background-color: var(--fx-ann, var(--fx-pink));
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  visibility: hidden;
+}
+
+.fx-strada__play::before {
+  content: "";
+  position: absolute;
+  left: 0.7rem;
+  right: 0.7rem;
+  bottom: 0.35rem;
+  height: 0.3rem;
+  pointer-events: none;
+  background: var(--fx-ann-paint, none) center / 100% 100% no-repeat;
+  visibility: hidden;
+}
+
+.fx-strada__play:not(:disabled):is(:hover, :focus-visible)::after,
+.fx-strada__play:not(:disabled):is(:hover, :focus-visible)::before {
+  visibility: visible;
+}
+
 .fx-strada__play:disabled {
   opacity: 0.35;
   cursor: default;
 }
 
+/* Some paint colors are too light to show focus alone. */
 .fx-strada__play:focus-visible {
   outline: 2px solid var(--fx-ink);
   outline-offset: 3px;
@@ -379,7 +424,7 @@
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 1rem;
+  width: 0.6rem;
   margin: 0;
   padding: 0;
   list-style: none;
