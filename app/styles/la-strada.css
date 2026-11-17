@@ -126,6 +126,18 @@
   visibility: hidden;
 }
 
+/* What a screen reader is told of the arrangement, out of sight. */
+.fx-strada__said {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* An action being heard may be three lines long; two is all the bar keeps. */
 .fx-strada__caption > :first-child {
   display: -webkit-box;
