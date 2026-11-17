@@ -65,8 +65,8 @@ const LABELS = {
   original: "Original",
   reset: "Reset",
   shuffle: "Shuffle",
-  intro: "A typescript sent to George Maciunas, 1964. Touch a line to hear it, or drag it.",
-  fallen: "Drag them onto the sheet, then press play. Touch one to hear it.",
+  intro: "A typescript sent to George Maciunas, 1964. Drag a line, or move it with the arrow keys.",
+  fallen: "Drag them onto the sheet, then press play.",
   arranged: "In a new order. Move them as you like.",
   silent: "silence",
   performed: "performed",
@@ -444,6 +444,9 @@ const REST = 1.1;
  * on the typewriter's grid, so its type starts this far in from its left edge.
  */
 const BEARING = 0.1;
+
+/** How much larger a slip stands, from its left edge, while it is pointed at (.fx-slip.is-pointed). */
+const GROWN = 1.06;
 
 // ---------------------------------------------------------------------------
 // The clock
@@ -844,18 +847,24 @@ export default function LaStrada({
   // The action pointed at, or reached with the keyboard, on the seek bar or on the
   // sheet, whose block and type a line ties together.
   const [pointing, setPointing] = useState<string | null>(null);
-  // Let go of, the pointing goes back to whatever the keyboard is on, if it is a block or a slip.
+  // Let go of, the pointing goes back to the slip that has focus, or the block the keyboard is on.
   const unpoint = (id: string) =>
     setPointing((was) => {
       if (was !== id) return was;
       const focused = document.activeElement as HTMLElement | null;
-      const keyed = focused && section.current?.contains(focused) && focused.matches(":focus-visible");
-      return (keyed && (focused.dataset.chapter ?? focused.dataset.action)) || null;
+      if (!focused || !section.current?.contains(focused)) return null;
+      // A slip keeps its marks while it has focus, however it got it; a block on the
+      // seek bar only when the keyboard brought it there.
+      if (focused.dataset.action) return focused.dataset.action;
+      return (focused.matches(":focus-visible") && focused.dataset.chapter) || null;
     });
   // What the marker draws between them, in the page's pixels: a line from the block
   // to the action, and a brace at the action's type, where the line ends.
   const sketch = useRef<SVGSVGElement>(null);
-  const [drawn, setDrawn] = useState<{line: string; brace: string; rough: number} | null>(null);
+  const [drawn, setDrawn] = useState<{line: string; braces: string[]; rough: number} | null>(null);
+  // The slip that has focus, reached by Tab or by a press: only it is braced, either
+  // side of its type; pointed at otherwise, a slip gets only the line.
+  const [focused, setFocused] = useState<string | null>(null);
   const [resized, setResized] = useState(0);
   // Which of the three arrangements the sheet is in, as typed, as it fell (or as the
   // visitor has since put it) or shuffled, and which of them is being performed.
@@ -990,43 +999,78 @@ export default function LaStrada({
     return () => window.removeEventListener("resize", resize);
   }, []);
 
-  // Draw the line and the brace for the action pointed at, from where its block and
-  // its slip stand now. The slip's place is read from its own, not from the page, so
-  // that its growing a little while it is pointed at does not move the brace.
+  // Draw the line for the action pointed at, and its braces if it has focus, from
+  // where its block and its slip stand now. The slip's place is read from its own,
+  // not from the page, so that its growing a little while it is pointed at does not
+  // move the marks.
   useLayoutEffect(() => {
     const block = pointing && section.current?.querySelector(`.fx-strada__chapters [data-chapter="${pointing}"]`);
     const piece = pointing ? score?.actions.find((p) => p.id === pointing) : undefined;
     const at = pointing ? places[pointing] : undefined;
     if (!score || !block || !piece || !at || lifted || !sketch.current || !board.current) return void setDrawn(null);
-    const frame = sketch.current.getBoundingClientRect();
+    const box = sketch.current.getBoundingClientRect();
     const sheet = board.current.getBoundingClientRect();
     const from = block.getBoundingClientRect();
     const unit = sheet.width / 100;
     const line = score.grid.line * unit; // one typed line, in pixels
     const ink = Math.max(3, 0.3 * line);
     const wide = Math.max(4, 0.4 * line);
-    const top = sheet.top - frame.top + at.y * unit;
-    const tall = Math.max(piece.h * unit * 0.95, line * 1.05);
-    // The brace stands just left of the type, its point toward the bar.
-    const tip: Point = [sheet.left - frame.left + (at.x + score.grid.char * BEARING) * unit - ink * 0.6 - wide, top + (piece.h * unit) / 2];
-    // The line starts in the middle of the block and comes straight out of it, about
-    // 100px, angles straight across to the brace's height, and runs straight again for
-    // the last 50px into its point (both shorter if the brace is near the bar), turning
-    // into and out of the angle round a short curve.
-    const start: Point = [from.left - frame.left + from.width / 2, from.top - frame.top + from.height / 2];
-    const across = tip[0] - start[0];
-    const out: Point = [start[0] + Math.min(100, 0.4 * across), start[1]];
-    const into: Point = [tip[0] - Math.min(50, 0.2 * across), tip[1]];
-    const path = rounded([start, out, into, tip], 20);
-    // The line leaves the middle of the block and meets the brace at its point. The
-    // brace has a hand of its own, so it is drawn the same way wherever its slip stands.
-    const hand = seeded(`${pointing} {`);
-    setDrawn({
-      line: marker(path, ink, seeded(pointing), true),
-      brace: marker(brace(tip, tall, wide, Math.max(12, Math.min(120, Math.round((tall + 2 * wide) / 2))), hand), ink * 0.9, hand),
-      rough: ink * 0.35,
-    });
-  }, [pointing, lifted, places, score, resized]);
+    const slip = board.current.querySelector<HTMLElement>(`[data-action="${pointing}"]`);
+    const drawAt = (at: {x: number; y: number}) => {
+      const top = sheet.top - box.top + at.y * unit;
+      const tall = Math.max(piece.h * unit * 0.95, line * 1.05);
+      // The brace stands just left of the type, its point toward the bar.
+      const tip: Point = [sheet.left - box.left + (at.x + score.grid.char * BEARING) * unit - ink * 0.6 - wide, top + (piece.h * unit) / 2];
+      // The line starts in the middle of the block and comes straight out of it, about
+      // 100px, angles straight across to the brace's height, and runs straight again for
+      // the last 50px into its point (both shorter if the brace is near the bar), turning
+      // into and out of the angle round a short curve.
+      const start: Point = [from.left - box.left + from.width / 2, from.top - box.top + from.height / 2];
+      const across = tip[0] - start[0];
+      const out: Point = [start[0] + Math.min(100, 0.4 * across), start[1]];
+      const into: Point = [tip[0] - Math.min(50, 0.2 * across), tip[1]];
+      // Focused, the slip is braced, and the line meets the left brace at its point;
+      // only pointed at, the line runs on to where the brace's back would be, just
+      // short of the type.
+      const braced = focused === pointing;
+      const end: Point = braced ? tip : [tip[0] + wide * 0.5, tip[1]];
+      const path = rounded([start, out, into, end], 20);
+      const braces: string[] = [];
+      if (braced) {
+        // Each brace has a hand of its own, so it is drawn the same way wherever its
+        // slip stands. The right one stands just past the end of the type as it stands
+        // grown (it grows from its left edge), its point away from the type: a brace
+        // drawn as the left one is, and turned about its point.
+        const n = Math.max(12, Math.min(120, Math.round((tall + 2 * wide) / 2)));
+        const hand = seeded(`${pointing} {`);
+        braces.push(marker(brace(tip, tall, wide, n, hand), ink * 0.9, hand));
+        const stop = (at.x + score.grid.char * BEARING + (piece.w - 2 * score.grid.char * BEARING) * GROWN) * unit;
+        const point: Point = [sheet.left - box.left + stop + ink * 0.6 + wide, tip[1]];
+        const other = seeded(`${pointing} }`);
+        braces.push(marker(brace(point, tall, wide, n, other).map(([x, y]): Point => [2 * point[0] - x, y]), ink * 0.9, other));
+      }
+      setDrawn({line: marker(path, ink, seeded(pointing), true), braces, rough: ink * 0.35});
+    };
+    // A slip nudged by the keys slides to its new place (left and top, 140ms): the
+    // marker goes with it, drawn each frame from where the slip stands on the way.
+    const standing = () => {
+      if (!slip) return at;
+      const style = getComputedStyle(slip);
+      return {x: parseFloat(style.left) / unit, y: parseFloat(style.top) / unit};
+    };
+    const began = performance.now();
+    let frame = 0;
+    const tick = () => {
+      const now = standing();
+      const moving = Math.abs(now.x - at.x) > 0.001 || Math.abs(now.y - at.y) > 0.001;
+      if (moving && performance.now() - began < 400) {
+        drawAt(now);
+        frame = requestAnimationFrame(tick);
+      } else drawAt(at);
+    };
+    tick();
+    return () => cancelAnimationFrame(frame);
+  }, [pointing, focused, lifted, places, score, resized]);
 
   if (failed) return <p className="fx-strada__caption">{text.failed}</p>;
   if (!score) return null;
@@ -1278,7 +1322,7 @@ export default function LaStrada({
       from: [e.clientX, e.clientY],
       moved: false,
     };
-    // On the sheet as typed, a line is lifted only once it is carried: a touch hears it.
+    // On the sheet as typed, a line is lifted only once it is carried.
     if (phase === "intact") return;
     raise(piece);
     setLifted(piece.id);
@@ -1309,10 +1353,9 @@ export default function LaStrada({
     const d = drag.current;
     drag.current = null;
     setLifted(null);
-    // A touch that goes nowhere is a request to hear the action; a slip that
+    // A press that goes nowhere only focuses the slip (Enter or Space plays it); a slip that
     // has been carried somewhere settles onto the grid.
-    if (d && !d.moved && touched) hear(piece);
-    else if (d?.moved && touched) {
+    if (d?.moved && touched) {
       const at = settle(piece, places[piece.id].x, places[piece.id].y);
       move(piece, at.x, at.y);
       moved();
@@ -1580,8 +1623,14 @@ export default function LaStrada({
                 onKeyDown={(e) => key(e, piece)}
                 onPointerEnter={() => setPointing(piece.id)}
                 onPointerLeave={() => unpoint(piece.id)}
-                onFocus={() => setPointing(piece.id)}
-                onBlur={() => unpoint(piece.id)}
+                onFocus={() => {
+                  setFocused(piece.id);
+                  setPointing(piece.id);
+                }}
+                onBlur={() => {
+                  setFocused((was) => (was === piece.id ? null : was));
+                  unpoint(piece.id);
+                }}
               />
             );
           })}
@@ -1596,7 +1645,9 @@ export default function LaStrada({
                 </filter>
                 <g filter="url(#fx-strada-marker)">
                   <path d={drawn.line} />
-                  <path d={drawn.brace} />
+                  {drawn.braces.map((d, i) => (
+                    <path key={i} d={d} />
+                  ))}
                 </g>
               </>
             )}
