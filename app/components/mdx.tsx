@@ -8,6 +8,8 @@ export const components = {
   Example: './Example.tsx',
   Mark: './Mark.tsx',
   FeaturedWorks: './FeaturedWorks.tsx',
+  FeaturedWork: './FeaturedWork.tsx',
+  Plate: './Plate.tsx',
   Hand: './Hand.tsx',
   Palette: './Palette.tsx',
 };
@@ -19,5 +21,6 @@ export const clientComponents = {
   ExampleClient: './Example.client.tsx',
   StoryMapJS: './StoryMapJS.client.tsx',
   LaStrada: './LaStrada.client.tsx',
+  LaStradaDebug: './LaStradaDebug.client.tsx',
   SuonareLaCitta: './SuonareLaCitta.client.tsx'
 };

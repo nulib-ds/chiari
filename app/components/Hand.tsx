@@ -26,6 +26,9 @@ const GLYPH_DIR = path.resolve("app/scripts/glyphs/glyphs");
 const CAP = 100; // glyph units per cap height
 const SPACE = 32;
 const PAD = 6;
+// Pair kerning, in glyph units, for pairs whose drawn shapes leave a gap the
+// advances don't: A's right leg slants away from B's left spur.
+const KERN: Record<string, number> = {AB: -16};
 
 let cache: Record<string, Glyph | null> = {};
 function glyph(ch: string): Glyph | null {
@@ -46,7 +49,7 @@ function textOf(node: React.ReactNode): string {
 
 export default function Hand({
   as: Tag = "h1",
-  size = "1em",
+  size = "2rem",
   tracking = 6,
   paint = true,
   id,
@@ -57,7 +60,7 @@ export default function Hand({
   children,
 }: {
   as?: "h1" | "h2" | "h3" | "h4" | "blockquote" | "p" | "span";
-  /** Cap height of the drawn letters, as any CSS length. */
+  /** Cap height of the drawn letters, as any CSS length. Defaults to 2rem: headings are all body size now, so the hand sets its own. */
   size?: string;
   /** Space between letters, in glyph units (cap height = 100). */
   tracking?: number;
@@ -69,15 +72,18 @@ export default function Hand({
   /** A heading only: an annotation drawn to its right, by gesture name (as in the lookbook) or number. */
   annotate?: string | number;
   /** Paint color of that annotation. */
-  annotateColor?: "red" | "blue" | "green" | "yellow" | "pink" | "black";
+  annotateColor?: "blue" | "green" | "yellow" | "pink" | "black";
   children?: React.ReactNode;
 }) {
   const text = textOf(children).trim();
   const parts: React.ReactNode[] = [];
   let x = 0;
   let descent = 0;
+  let prev = "";
   for (const raw of text) {
     const ch = raw.toUpperCase();
+    x += KERN[prev + ch] || 0;
+    prev = ch;
     if (ch === " ") {
       x += SPACE;
       continue;

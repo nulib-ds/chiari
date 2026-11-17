@@ -58,10 +58,20 @@ To swap a letter:
 Keeps the press texture: pinholes, chips, soft counters.
 
 ```bash
-extract.py flyer.jpg 80 300 2740 680 assets/images/glyphs/art-is-easy.svg --label "Art is easy" --void 92 --turd 1
+extract.py flyer.jpg 80 300 2740 680 out.svg --label "Art is easy" --void 92 --turd 1
 ```
 
-`art-is-easy.svg` came from the "Art is Easy" flyer at IIIF `full/max` (2770×990).
+That box is ART IS EASY on the 1974 "Art is Easy" flyer at IIIF `full/max` (2770×990).
+
+## Masthead (`masthead.py`)
+
+Builds both masthead marks from Chiari's handwriting: `art-is-easy.svg` (the first, underlined ART IS EASY on page 1 of the "Art is Easy" text pieces, felt pen, grown slightly bolder) and `l-arte-e-facile.svg` (L'ARTE / È / FACILE from the "Art is Easy" bag, reset on one line with ART IS EASY's letter and word spacing). Both are scaled to one cap height and share a viewBox height and baseline, so they match at the same CSS height. Download the two IIIF `full/max` images named in the script's docstring, then:
+
+```bash
+python app/scripts/glyphs/masthead.py letter.jpg bag.jpg
+```
+
+`--grow` sets how much the English pen stroke is thickened, in source pixels (default 1). It prints both viewBoxes; if their sizes change, update the ratios (`1214 / 278`, `1347 / 278`) in the masthead rules in `app/styles/custom.css`.
 
 ## Marks and annotations
 

@@ -12,18 +12,6 @@
       "Typescript score by Giuseppe Chiari, 1964, dedicated to George Maciunas."
     ]
   },
-  "requiredStatement": {
-    "label": {
-      "en": [
-        "Note"
-      ]
-    },
-    "value": {
-      "en": [
-        "Provisional photograph used to prototype the exhibit. It is not the final digitization."
-      ]
-    }
-  },
   "metadata": [
     {
       "label": {
@@ -105,7 +93,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=168,332,662,63&t=0.0,38.1",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=336,551,1224,92&t=0.0,38.1",
               "type": "Canvas"
             }
           ]
@@ -120,7 +108,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=169,395,347,23&t=90.6,106.6",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=337,644,624,46&t=72.6,88.6",
               "type": "Canvas"
             }
           ]
@@ -135,7 +123,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=171,418,598,38&t=124.1,163.3",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=337,691,1104,46&t=109.3,148.5",
               "type": "Canvas"
             }
           ]
@@ -150,7 +138,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1046,450,350,65&t=170.3,277.5",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1993,805,624,46&t=198.4,305.5",
               "type": "Canvas"
             }
           ]
@@ -165,7 +153,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=730,514,358,35&t=262.7,292.9",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1393,896,648,46&t=269.4,299.6",
               "type": "Canvas"
             }
           ]
@@ -180,7 +168,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=415,579,204,36&t=357.8,370.8",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=793,1011,360,46&t=359.2,372.2",
               "type": "Canvas"
             }
           ]
@@ -195,7 +183,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=922,591,270,40&t=375.0,396.6",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1753,1058,480,46&t=395.9,417.5",
               "type": "Canvas"
             }
           ]
@@ -210,7 +198,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=263,634,1071,63&t=437.5,475.5",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=505,1152,1992,46&t=469.3,507.3",
               "type": "Canvas"
             }
           ]
@@ -225,7 +213,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=518,784,168,34&t=655.0,659.8",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=985,1402,288,46&t=664.6,669.4",
               "type": "Canvas"
             }
           ]
@@ -240,7 +228,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1026,794,378,40&t=668.5,692.2",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1945,1452,672,46&t=703.6,727.2",
               "type": "Canvas"
             }
           ]
@@ -255,7 +243,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=226,866,206,34&t=772.7,783.9",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=433,1552,360,46&t=781.7,792.9",
               "type": "Canvas"
             }
           ]
@@ -270,7 +258,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=481,897,91,31&t=818.0,883.8",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=913,1613,144,46&t=829.3,895.2",
               "type": "Canvas"
             }
           ]
@@ -285,7 +273,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=756,903,835,94&t=827.1,895.6",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1442,1659,1512,138&t=865.2,933.8",
               "type": "Canvas"
             }
           ]
@@ -300,22 +288,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1250,1018,118,24&t=992.9,1020.1",
-              "type": "Canvas"
-            }
-          ]
-        },
-        {
-          "id": "https://nulib-ds.github.io/chiari/la-strada/range/pen",
-          "type": "Range",
-          "label": {
-            "en": [
-              "Noise of pen flying on paper"
-            ]
-          },
-          "items": [
-            {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1251,1042,383,28&t=1029.1,1055.3",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=2353,1869,192,46&t=1029.2,1056.5",
               "type": "Canvas"
             }
           ]
@@ -330,7 +303,22 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=227,1056,501,36&t=1049.0,1057.5",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=433,1914,912,46&t=1064.4,1072.8",
+              "type": "Canvas"
+            }
+          ]
+        },
+        {
+          "id": "https://nulib-ds.github.io/chiari/la-strada/range/pen",
+          "type": "Range",
+          "label": {
+            "en": [
+              "Noise of pen flying on paper"
+            ]
+          },
+          "items": [
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=2354,1915,672,46&t=1065.2,1091.4",
               "type": "Canvas"
             }
           ]
@@ -345,7 +333,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=329,1103,728,36&t=1117.0,1145.4",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=625,2007,1344,46&t=1137.0,1165.4",
               "type": "Canvas"
             }
           ]
@@ -360,7 +348,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=906,1147,669,39&t=1180.4,1190.0",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1705,2122,1200,46&t=1226.8,1236.4",
               "type": "Canvas"
             }
           ]
@@ -375,7 +363,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=438,1203,215,30&t=1261.9,1278.0",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=841,2189,360,46&t=1279.1,1295.3",
               "type": "Canvas"
             }
           ]
@@ -390,7 +378,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=792,1256,308,45&t=1338.9,1342.8",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1489,2328,552,46&t=1387.7,1391.6",
               "type": "Canvas"
             }
           ]
@@ -405,7 +393,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1100,1256,473,43&t=1338.9,1376.2",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=2065,2328,840,46&t=1387.7,1425.0",
               "type": "Canvas"
             }
           ]
@@ -420,7 +408,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=236,1298,314,65&t=1398.7,1416.3",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=458,2373,552,92&t=1422.8,1440.4",
               "type": "Canvas"
             }
           ]
@@ -435,7 +423,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=793,1344,610,45&t=1465.7,1480.9",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1489,2489,1104,46&t=1513.4,1528.6",
               "type": "Canvas"
             }
           ]
@@ -450,7 +438,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=703,1456,591,45&t=1628.8,1656.1",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1321,2696,1056,46&t=1675.1,1702.4",
               "type": "Canvas"
             }
           ]
@@ -465,7 +453,7 @@
           },
           "items": [
             {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=225,1531,839,43&t=1737.5,1797.2",
+              "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=433,2810,1512,46&t=1764.1,1800.0",
               "type": "Canvas"
             }
           ]
@@ -482,8 +470,8 @@
           "La strada"
         ]
       },
-      "width": 1800,
-      "height": 2400,
+      "width": 3260,
+      "height": 4316,
       "duration": 1800,
       "items": [
         {
@@ -498,8 +486,8 @@
                 "id": "https://nulib-ds.github.io/chiari/la-strada/score.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
-                "width": 1800,
-                "height": 2400
+                "width": 2445,
+                "height": 3237
               },
               "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score"
             }
@@ -510,11 +498,11 @@
         {
           "id": "https://nulib-ds.github.io/chiari/la-strada/canvas/score/grid",
           "type": "TypewriterGrid",
-          "characterWidth": 12.747,
-          "lineHeight": 26.606,
-          "skew": -0.01499,
-          "originX": 162.459,
-          "originY": 341.542,
+          "characterWidth": 24,
+          "lineHeight": 45.994,
+          "skew": 0,
+          "originX": 337,
+          "originY": 551,
           "tab": 4
         }
       ],
@@ -541,7 +529,7 @@
                   "duration": 38.11
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=168,332,662,63&t=0.0,38.1"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=336,551,1224,92&t=0.0,38.1"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/object-put-down",
@@ -561,7 +549,7 @@
                   "duration": 15.99
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=169,395,347,23&t=90.6,106.6"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=337,644,624,46&t=72.6,88.6"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/people-upstairs",
@@ -581,7 +569,7 @@
                   "duration": 39.18
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=171,418,598,38&t=124.1,163.3"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=337,691,1104,46&t=109.3,148.5"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/churchill",
@@ -601,7 +589,7 @@
                   "duration": 107.18
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1046,450,350,65&t=170.3,277.5"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1993,805,624,46&t=198.4,305.5"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/oboe",
@@ -621,7 +609,7 @@
                   "duration": 30.22
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=730,514,358,35&t=262.7,292.9"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1393,896,648,46&t=269.4,299.6"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/confused-noises-a",
@@ -641,7 +629,7 @@
                   "duration": 12.98
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=415,579,204,36&t=357.8,370.8"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=793,1011,360,46&t=359.2,372.2"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/pulse",
@@ -661,7 +649,7 @@
                   "duration": 21.58
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=922,591,270,40&t=375.0,396.6"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1753,1058,480,46&t=395.9,417.5"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/radio",
@@ -681,7 +669,7 @@
                   "duration": 37.94
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=263,634,1071,63&t=437.5,475.5"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=505,1152,1992,46&t=469.3,507.3"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/door",
@@ -701,7 +689,7 @@
                   "duration": 4.88
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=518,784,168,34&t=655.0,659.8"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=985,1402,288,46&t=664.6,669.4"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/cello",
@@ -721,7 +709,7 @@
                   "duration": 23.64
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1026,794,378,40&t=668.5,692.2"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1945,1452,672,46&t=703.6,727.2"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/confused-noises-b",
@@ -741,7 +729,7 @@
                   "duration": 11.21
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=226,866,206,34&t=772.7,783.9"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=433,1552,360,46&t=781.7,792.9"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/cheers",
@@ -761,7 +749,7 @@
                   "duration": 65.83
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=481,897,91,31&t=818.0,883.8"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=913,1613,144,46&t=829.3,895.2"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/piano",
@@ -781,7 +769,7 @@
                   "duration": 68.55
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=756,903,835,94&t=827.1,895.6"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1442,1659,1512,138&t=865.2,933.8"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/writing",
@@ -801,27 +789,7 @@
                   "duration": 27.27
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1250,1018,118,24&t=992.9,1020.1"
-            },
-            {
-              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/pen",
-              "type": "Annotation",
-              "motivation": "supplementing",
-              "body": [
-                {
-                  "type": "TextualBody",
-                  "value": "Noise of pen flying on paper",
-                  "format": "text/plain",
-                  "language": "en"
-                },
-                {
-                  "type": "Sound",
-                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/pen.mp3",
-                  "format": "audio/mpeg",
-                  "duration": 26.25
-                }
-              ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1251,1042,383,28&t=1029.1,1055.3"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=2353,1869,192,46&t=1029.2,1056.5"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/raincoat",
@@ -841,7 +809,27 @@
                   "duration": 8.44
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=227,1056,501,36&t=1049.0,1057.5"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=433,1914,912,46&t=1064.4,1072.8"
+            },
+            {
+              "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/pen",
+              "type": "Annotation",
+              "motivation": "supplementing",
+              "body": [
+                {
+                  "type": "TextualBody",
+                  "value": "Noise of pen flying on paper",
+                  "format": "text/plain",
+                  "language": "en"
+                },
+                {
+                  "type": "Sound",
+                  "id": "https://nulib-ds.github.io/chiari/la-strada/audio/pen.mp3",
+                  "format": "audio/mpeg",
+                  "duration": 26.25
+                }
+              ],
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=2354,1915,672,46&t=1065.2,1091.4"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/detective-story",
@@ -867,7 +855,7 @@
                   "duration": 28.44
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=329,1103,728,36&t=1117.0,1145.4"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=625,2007,1344,46&t=1137.0,1165.4"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/strap",
@@ -887,7 +875,7 @@
                   "duration": 9.6
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=906,1147,669,39&t=1180.4,1190.0"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1705,2122,1200,46&t=1226.8,1236.4"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/confused-noises-c",
@@ -907,7 +895,7 @@
                   "duration": 16.14
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=438,1203,215,30&t=1261.9,1278.0"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=841,2189,360,46&t=1279.1,1295.3"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/hand-on-table",
@@ -927,7 +915,7 @@
                   "duration": 3.89
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=792,1256,308,45&t=1338.9,1342.8"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1489,2328,552,46&t=1387.7,1391.6"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/pencil",
@@ -947,7 +935,7 @@
                   "duration": 37.28
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1100,1256,473,43&t=1338.9,1376.2"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=2065,2328,840,46&t=1387.7,1425.0"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/football-crowd",
@@ -984,7 +972,7 @@
                   ]
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=236,1298,314,65&t=1398.7,1416.3"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=458,2373,552,92&t=1422.8,1440.4"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/square-wave",
@@ -1004,7 +992,7 @@
                   "duration": 15.17
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=793,1344,610,45&t=1465.7,1480.9"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1489,2489,1104,46&t=1513.4,1528.6"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/water-drop",
@@ -1024,7 +1012,7 @@
                   "duration": 27.3
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=703,1456,591,45&t=1628.8,1656.1"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1321,2696,1056,46&t=1675.1,1702.4"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/distant-speech",
@@ -1044,7 +1032,7 @@
                   "duration": 59.74
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=225,1531,839,43&t=1737.5,1797.2"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=433,2810,1512,46&t=1764.1,1800.0"
             }
           ]
         },
@@ -1064,7 +1052,7 @@
                   "language": "en"
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=225,1725,733,264&t=0.0,1800.0"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=433,3156,1320,460&t=0.0,1800.0"
             },
             {
               "id": "https://nulib-ds.github.io/chiari/la-strada/annotation/title",
@@ -1078,7 +1066,7 @@
                   "language": "en"
                 }
               ],
-              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=1162,1942,262,116&t=0.0,1800.0"
+              "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score#xywh=2161,3572,432,184&t=0.0,1800.0"
             }
           ]
         }
@@ -1092,8 +1080,8 @@
           "La strada, with its actions lifted off"
         ]
       },
-      "width": 1800,
-      "height": 2400,
+      "width": 3260,
+      "height": 4316,
       "items": [
         {
           "id": "https://nulib-ds.github.io/chiari/la-strada/page/paint/score-ground",
@@ -1107,8 +1095,8 @@
                 "id": "https://nulib-ds.github.io/chiari/la-strada/score-ground.webp",
                 "type": "Image",
                 "format": "image/webp",
-                "width": 1800,
-                "height": 2400
+                "width": 2445,
+                "height": 3237
               },
               "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score-ground"
             }
@@ -1124,8 +1112,8 @@
           "La strada, the actions alone"
         ]
       },
-      "width": 1800,
-      "height": 2400,
+      "width": 3260,
+      "height": 4316,
       "items": [
         {
           "id": "https://nulib-ds.github.io/chiari/la-strada/page/paint/score-ink",
@@ -1139,8 +1127,8 @@
                 "id": "https://nulib-ds.github.io/chiari/la-strada/score-ink.png",
                 "type": "Image",
                 "format": "image/png",
-                "width": 1800,
-                "height": 2400
+                "width": 2445,
+                "height": 3237
               },
               "target": "https://nulib-ds.github.io/chiari/la-strada/canvas/score-ink"
             }

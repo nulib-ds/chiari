@@ -84,7 +84,7 @@ export const SEARCH_LABEL_TAGS =
   // except black, which would swallow black text; each maps to a token via
   // [data-fx-ann-color] in custom.css.
   var ANNOTATIONS = 20;
-  var colors = ["red", "blue", "green", "yellow", "pink"];
+  var colors = ["pink", "blue", "green", "yellow"];
   function tag() {
     var labels = document.querySelectorAll(".canopy-search-teaser__label:not([data-fx-label])");
     for (var i = 0; i < labels.length; i++) {
@@ -130,6 +130,47 @@ export const SEARCH_LABEL_TAGS =
       titles[t].setAttribute("data-fx-ann", 1 + Math.floor(Math.random() * ANNOTATIONS));
       titles[t].setAttribute("data-fx-ann-color", colors[Math.floor(Math.random() * colors.length)]);
     }
+    /* The current page in the secondary menu (About, Works) takes a random
+       gesture under it in a random color, fresh on each load. */
+    var current = document.querySelectorAll(".fx-secondary-nav a[aria-current='page']:not([data-fx-ann])");
+    for (var p = 0; p < current.length; p++) {
+      current[p].setAttribute("data-fx-ann", 1 + Math.floor(Math.random() * ANNOTATIONS));
+      current[p].setAttribute("data-fx-ann-color", colors[Math.floor(Math.random() * colors.length)]);
+    }
+    /* Each main menu item takes its own random gesture and color, fresh on
+       each load: no gesture repeats across the row, and neighbors never
+       share a color. CSS draws it on hover and for the current section.
+       The mark that was under an item when it was clicked carries over to
+       the page it opens (sessionStorage, see keep below), so the current
+       section keeps the gesture and color it had on hover. */
+    var menu = document.querySelectorAll(".canopy-header__desktop-nav > a:not([data-fx-ann])");
+    if (menu.length) {
+      var kept = null;
+      try {
+        kept = JSON.parse(sessionStorage.getItem("fx-menu-mark") || "null");
+        sessionStorage.removeItem("fx-menu-mark");
+      } catch (err) {}
+      var marks = [];
+      for (var n = 0; n < menu.length; n++) {
+        var held = kept && menu[n].getAttribute("aria-current") === "page" &&
+          menu[n].getAttribute("href") === kept.href;
+        marks.push(held ? {ann: String(kept.ann), color: kept.color} : null);
+      }
+      var menuUsed = marks.filter(Boolean).map(function (m) { return m.ann; });
+      for (var n = 0; n < menu.length; n++) {
+        if (!marks[n]) {
+          var mg = pick(gestures, menuUsed);
+          menuUsed.push(mg);
+          var near = [marks[n - 1], marks[n + 1]].filter(Boolean).map(function (m) { return m.color; });
+          var tints = colors.filter(function (c) { return near.indexOf(c) < 0; });
+          marks[n] = {ann: mg, color: tints[Math.floor(Math.random() * tints.length)]};
+        }
+      }
+      for (var n = 0; n < menu.length; n++) {
+        menu[n].setAttribute("data-fx-ann", marks[n].ann);
+        menu[n].setAttribute("data-fx-ann-color", marks[n].color);
+      }
+    }
     /* "Related Items" takes a smaller mark beside it, a different gesture
        and color from the title's. */
     var lead = document.querySelector(".canopy-work--secondary header h1[data-fx-ann]");
@@ -157,6 +198,19 @@ export const SEARCH_LABEL_TAGS =
     b.setAttribute("data-fx-ann", "7");
     b.setAttribute("data-fx-ann-color", colors[Math.floor(Math.random() * colors.length)]);
   }
+  /* Remember the clicked main menu item's mark for the page it opens. */
+  function keep(e) {
+    var a = e.target.closest && e.target.closest(".canopy-header__desktop-nav > a[data-fx-ann]");
+    if (!a) return;
+    try {
+      sessionStorage.setItem("fx-menu-mark", JSON.stringify({
+        href: a.getAttribute("href"),
+        ann: a.getAttribute("data-fx-ann"),
+        color: a.getAttribute("data-fx-ann-color"),
+      }));
+    } catch (err) {}
+  }
+  document.addEventListener("click", keep);
   document.addEventListener("mouseover", shuffle);
   document.addEventListener("focusin", shuffle);
   new MutationObserver(tag).observe(document.documentElement, {childList: true, subtree: true});
@@ -173,7 +227,7 @@ export function Head() {
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital@0;1&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap"
       />
       <Stylesheet />
       <script dangerouslySetInnerHTML={{__html: IIIF_SIZE_FALLBACK}} />
@@ -216,8 +270,8 @@ export function counterpartHref(pathname, locale, locales) {
 }
 
 export function LanguageToggle({page, site}) {
-  // English / Italiano drawn in Chiari's hand. The current language is full
-  // black; the other is Rich Black 50% and links to the same page there.
+  // English / Italiano drawn in Chiari's hand, both black; the current one is
+  // circled, and the other links to the same page there.
   const {Hand} = useMDXComponents();
   const locales = (site && site.languageToggle && site.languageToggle.locales) || [];
   if (locales.length < 2) return null;
@@ -237,7 +291,7 @@ export function LanguageToggle({page, site}) {
             lang={locale.lang}
             aria-current={current ? "true" : undefined}
           >
-            {Hand ? <Hand as="span" size="0.95rem" tracking={8}>{label}</Hand> : label}
+            {Hand ? <Hand as="span" size={HAND_LABEL_SIZE} tracking={8}>{label}</Hand> : label}
           </a>
         );
       })}
@@ -245,42 +299,10 @@ export function LanguageToggle({page, site}) {
   );
 }
 
-export const MENU_PAINT =
-  // Paint color for each main section, in navigation.yml order.
-  ["red", "blue", "green", "yellow"];
-
-export function paintShape(color) {
-  // The stroke's filled outline, read from its SVG so the file stays the
-  // single source for each color.
-  const svg = fs.readFileSync(`assets/images/marker/paint-${color}.svg`, "utf8");
-  return {fill: svg.match(/<g fill="([^"]+)"/)[1], paths: svg.match(/<g[^>]*>([\s\S]*)<\/g>/)[1]};
-}
-
-export function PaintStroke({color, id}) {
-  // A menu stroke that is written rather than revealed: a round-capped line
-  // along the stroke's centreline (the brush tip) masks the paint shape, so
-  // paint appears only where the tip has passed. CSS animates the tip with
-  // stroke-dashoffset; the bristle fibres at the tail arrive last.
-  const {fill, paths} = paintShape(color);
-  return (
-    <svg className="fx-paint" viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-      <defs>
-        <mask id={id} maskUnits="userSpaceOnUse" x="-12" y="-2" width="224" height="28">
-          <path
-            className="fx-paint__tip"
-            d="M3 12.5C50 10 110 11 160 10.5S190 11 198 11"
-            fill="none"
-            stroke="#fff"
-            strokeWidth="22"
-            strokeLinecap="round"
-            pathLength="1"
-          />
-        </mask>
-      </defs>
-      <g fill={fill} mask={`url(#${id})`} dangerouslySetInnerHTML={{__html: paths}} />
-    </svg>
-  );
-}
+export const HAND_LABEL_SIZE =
+  // Cap height of the drawn header labels: the main menu and the language
+  // toggle share it.
+  "1.1rem";
 
 export function ChiariHeader() {
   // Canopy's header with navigation.yml split in two: Watch, Play, Write and
@@ -301,21 +323,24 @@ export function ChiariHeader() {
   }));
   const isSecondary = (link) => SECONDARY_SECTIONS.includes(navSection(link.href));
   const secondary = links.filter(isSecondary);
-  // Each main label carries its own paint stroke; Canopy renders the label
-  // as given inside its link.
+  // Each main label is drawn in Chiari's hand at the language toggle's size
+  // (falling back to type if <Hand> is unavailable); Canopy renders the label
+  // as given inside its link. The head script gives each a random annotation
+  // and color, drawn under it on hover and for the current section.
+  const {Hand} = useMDXComponents();
   const main = links.filter((link) => !isSecondary(link)).map((link, i) => ({
     ...link,
     label: (
       <>
-        {link.label || link.href}
-        <PaintStroke color={MENU_PAINT[i % MENU_PAINT.length]} id={`fx-paint-${navSection(link.href)}`} />
+        {Hand ? <Hand as="span" size={HAND_LABEL_SIZE} tracking={8}>{link.label || link.href}</Hand> : link.label || link.href}
       </>
     ),
   }));
   return (
     <div className="fx-masthead">
-      {/* The header brand shows ART IS EASY (an image, via CSS) over this
-          line of text; the page <title> keeps canopy.yml's "Chiari". */}
+      {/* The header brand shows ART IS EASY, or L’ARTE È FACILE on Italian
+          pages (an image, via CSS), over this line of text; the page <title>
+          keeps canopy.yml's "Chiari". */}
       <CanopyHeader
         title={HEADER_TAGLINE}
         navigation={main}
