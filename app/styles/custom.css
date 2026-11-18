@@ -451,6 +451,19 @@ main blockquote a:hover {
   box-shadow: none;
 }
 
+/* The masthead is drawing with its own underline; Canopy 2's swoosh under
+ * the brand on hover and focus would double it. Focus keeps its outline. */
+.canopy-header .canopy-logo span::after {
+  content: none;
+}
+
+/* The search field's underline is the black paint stroke alone: no ruled
+ * line under it on focus (northwestern.css, Canopy 2). The input keeps its
+ * focus outline. */
+.canopy-header .canopy-search-form:focus-within {
+  box-shadow: none;
+}
+
 /* The search field's ⌘K hint is a printed key cap, which the masthead
  * doesn't draw; the shortcut still works. */
 .canopy-search-form__hotkey {
@@ -1211,8 +1224,12 @@ main blockquote a:hover {
 
 /* While search is in use, the header comes forward so its results panel
  * opens above the secondary menu and language toggle (z-index 2). The rest
- * of the time it stays at Canopy's z-index 1, so its transparent box never
- * covers those links. */
+ * of the time it stays at z-index 1, so its transparent box never covers
+ * those links (Canopy 2 raises it to 20). */
+.fx-masthead .canopy-header {
+  z-index: 1;
+}
+
 .fx-masthead .canopy-header:focus-within,
 .fx-masthead .canopy-header:has([data-canopy-search-form-panel]:not([hidden])) {
   z-index: 3;
