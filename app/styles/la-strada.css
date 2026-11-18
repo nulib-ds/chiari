@@ -334,7 +334,6 @@
   overflow: visible;
   /* Painted, as the search page's Filter button is: a hand-painted black block
    * (paint-block.svg) rather than a pill, the paper showing through as the icon. */
-  --canopy-radius-none: 0;
   border-radius: 0;
   background: url("../images/marker/paint-block.svg") center / 100% 100% no-repeat;
   color: var(--fx-paper);
@@ -446,7 +445,6 @@
 
 .fx-strada__chapters button {
   --round: 0;
-  --canopy-radius-none: var(--round);
   --fill: max(var(--done, 0), var(--progress, 0));
   display: block;
   width: 100%;

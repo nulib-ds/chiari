@@ -1,5 +1,5 @@
 import type { Application, FederatedPointerEvent, Sprite, Texture } from 'pixi.js';
-//import {withBasePath} from "@canopy-iiif/app/base-path";
+//import {withBasePath} from "@nulib/canopy/base-path";
 import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import { createAudioManager, type AudioManager } from "./SuonareLaCittaAudio";
 // ---------------------------------------------------------------------------

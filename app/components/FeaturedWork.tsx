@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 // Canopy's own resolver for `featured:` in canopy.yml: reads the IIIF cache
 // at build time and returns title, work-page href, image and its dimensions.
-import {readFeaturedFromCacheSync} from "@canopy-iiif/app/lib/components/featured.js";
+import {readFeaturedFromCacheSync} from "@nulib/canopy/lib/components/featured.js";
 
 type FeaturedRecord = {
   title?: string;
