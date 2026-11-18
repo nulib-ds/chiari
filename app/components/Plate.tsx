@@ -1,5 +1,5 @@
 import React from "react";
-import {withBasePath} from "@canopy-iiif/app/base-path";
+import {withBasePath} from "@nulib/canopy/base-path";
 
 /**
  * A captioned picture from `assets/`, set like the featured plates. Use it

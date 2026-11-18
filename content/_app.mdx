@@ -1,9 +1,9 @@
-import {Meta, Stylesheet} from "@canopy-iiif/app/head";
+import {Meta, Stylesheet} from "@nulib/canopy/head";
 import fs from "node:fs";
 import React from "react";
 import {useMDXComponents} from "@mdx-js/react";
-import {withBasePath} from "@canopy-iiif/app/base-path";
-import {CanopyHeader, CanopyFooter} from "@canopy-iiif/app/ui";
+import {withBasePath} from "@nulib/canopy/base-path";
+import {CanopyHeader, CanopyFooter} from "@nulib/canopy/ui";
 
 export const NU_CDN = "https://common.northwestern.edu/v8/css";
 
@@ -310,7 +310,7 @@ export function ChiariHeader() {
   // secondary menu next to search. Every link stays in navigation.yml, so
   // Canopy still resolves locale labels, /it/ routes and the current page.
   // The page context is shared on globalThis (see getSafePageContext in
-  // @canopy-iiif/app/ui).
+  // @nulib/canopy/ui).
   const PageContext = globalThis[Symbol.for("__CANOPY_PAGE_CONTEXT__")];
   const context = PageContext ? React.useContext(PageContext) : null;
   // Canopy leaves isActive unset on primary links, so mark the section the

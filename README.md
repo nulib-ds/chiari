@@ -10,7 +10,7 @@ Template source: commit `be437611c9639dcc37e505bf57841aedbb04d56a` (integrated O
 
 ## Run locally
 
-Use Node 24 (`nvm use`), run `npm install`, then `npm run dev`. Open http://localhost:5001. Run `npm run build` to generate the production site in `site/`; do not edit that generated directory. Development and production builds need network access to fetch IIIF resources. This project does not currently define automated test or lint scripts.
+Use Node 24 (`nvm use`), run `npm install`, then `npm run dev` (Canopy's `canopy dev`). Open http://localhost:5001. Run `npm run build` (`canopy build`) to generate the production site in `site/`; do not edit that generated directory. Development and production builds need network access to fetch IIIF resources. This project does not currently define automated test or lint scripts.
 
 The existing homepages use a featured hero, but `canopy.yml` has no `featured` list, so the hero currently renders no content. Add selected Chiari manifest IDs under `featured` to enable it. The original homepage text and configuration have been preserved.
 
@@ -22,13 +22,9 @@ View status of tasks at `./TASKS.md` [here](./TASKS.md).
 
 Walk through the [Quick Start guide](https://nulib-ds.github.io/canopy/docs/user-guides/canopy-get-started.html) to stand up your new digital project, configure `canopy.yml` using IIIF collections and manifests, and add pages and layouts under `content/`.
 
-## Preview from the monorepo
-
-Working inside `nulib-ds/canopy`? Run `npm run preview:template` to stage this starter into `.template-preview/`, install its dependencies, and launch `npm run dev`. Stop the script with `Ctrl+C` when you are done.
-
 ## Updates
 
-Keep your project current by running `npm install @canopy-iiif/app@latest @samvera/clover-iiif@latest` whenever a new release ships, or trigger the _Update Canopy App_ GitHub action (Actions tab → _Update Canopy App_ → _Run workflow_) and let it open a pull request that bumps both dependencies for you. Read the [Developer documentation](https://nulib-ds.github.io/canopy/docs/developers) for more information.
+The site runs on [`@nulib/canopy`](https://www.npmjs.com/package/@nulib/canopy) 2.x, the package Canopy has been published as since 2.0 (formerly `@canopy-iiif/app`). Keep it current by triggering the _Update Canopy App_ GitHub action (Actions tab → _Update Canopy App_ → _Run workflow_), which opens a pull request that bumps it. To update by hand, run `npm install @nulib/canopy@latest`, then install `@nulib/clover` at the range `@nulib/canopy` lists for it, so the site keeps a single Clover (La Strada imports Clover's helpers directly). Read the [Developer documentation](https://nulib-ds.github.io/canopy/docs/developers) for more information.
 
 ## Contributing
 

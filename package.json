@@ -1,36 +1,27 @@
 {
-  "name": "@canopy-iiif/app-root",
-  "version": "1.13.1",
-  "description": "An open-source static site generator designed for fast creation, contextualization, and customization of a discovery-focused digital scholarship and collections website using IIIF APIs.",
+  "name": "chiari",
+  "description": "Giuseppe Chiari at 100: a Canopy IIIF exhibition from Northwestern University Libraries.",
   "private": true,
-  "main": "app/scripts/canopy-build.mjs",
   "scripts": {
-    "build": "tsx app/scripts/canopy-build.mts",
-    "dev": "tsx app/scripts/canopy-build.mts"
+    "build": "canopy build",
+    "dev": "canopy dev"
   },
   "dependencies": {
-    "@canopy-iiif/app": "^1.14.1",
-    "@nulib/clover": "^4.1.0",
-    "@samvera/clover-iiif": "^3.16.2",
-    "embla-carousel": "^8.6.0",
-    "esbuild": "^0.21.4",
+    "@nulib/canopy": "^2.0.1",
+    "@nulib/clover": "~4.10.2",
     "pixi.js": "^8.23.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tone": "^15.1.22"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.13",
-    "@types/web": "^0.0.366",
-    "tailwindcss": "^4.1.13",
-    "tsx": "^4.19.1"
+    "@types/web": "^0.0.366"
   },
   "author": "Mat Jordan <mat@northwestern.edu>",
-  "homepage": "https://nulib-ds.github.io/canopy/",
+  "homepage": "https://nulib-ds.github.io/chiari/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nulib-ds/canopy.git",
-    "directory": "packages/app"
+    "url": "git+https://github.com/nulib-ds/chiari.git"
   },
   "license": "MIT",
   "engines": {

@@ -1,4 +1,4 @@
-import {withBasePath} from "@canopy-iiif/app/base-path";
+import {withBasePath} from "@nulib/canopy/base-path";
 import {chaptersOf} from "./clover";
 import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 

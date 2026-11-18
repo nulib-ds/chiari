@@ -1,4 +1,4 @@
-import {withBasePath} from "@canopy-iiif/app/base-path";
+import {withBasePath} from "@nulib/canopy/base-path";
 import React, {useEffect, useRef, useState} from "react";
 import {rebaser} from "./LaStrada.client";
 
@@ -13,13 +13,13 @@ import {rebaser} from "./LaStrada.client";
  * where the site is published; they are given to the viewer from wherever this
  * page is served, as the exhibit plays them, so it works on localhost too.
  *
- * Clover's React parts cannot be bundled with Canopy's React shim (see
- * app/components/clover.ts), so this uses its <clover-viewer> web component,
- * which brings its own React. It is loaded from jsDelivr at the version in
- * package.json. Remove <LaStradaDebug /> from the page to take it away.
+ * It uses Clover's <clover-viewer> web component, which brings its own React,
+ * so the exhibit's bundle stays the helpers' size (see app/components/clover.ts).
+ * It is loaded from jsDelivr at the version in package.json. Remove
+ * <LaStradaDebug /> from the page to take it away.
  */
 
-const CLOVER = "https://cdn.jsdelivr.net/npm/@nulib/clover@4.1.0/dist/web-components/viewer/index.umd.js";
+const CLOVER = "https://cdn.jsdelivr.net/npm/@nulib/clover@4.10.2/dist/web-components/viewer/index.umd.js";
 
 type Arrangement = {items: any[]; [key: string]: unknown};
 
