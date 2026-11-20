@@ -7,7 +7,7 @@
     "dev": "canopy dev"
   },
   "dependencies": {
-    "@nulib/canopy": "^2.0.1",
+    "@nulib/canopy": "^2.0.2",
     "@nulib/clover": "~4.10.2",
     "pixi.js": "^8.23.0",
     "react": "^19.0.0",

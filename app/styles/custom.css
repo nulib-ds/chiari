@@ -1783,9 +1783,11 @@ main .fx-specimen p + p {
  * Related items (<RelatedItems>): a strip of printed thumbnails per facet.
  * Canopy 2 draws them with Clover 4's Items, as raised cards with round
  * arrow buttons over the pictures. Here they keep the layout Clover 3's
- * slider gave them: the facet value over its field, the arrows and a black
- * View all at the right of that header, and square pictures cropped to fill,
- * captioned underneath, with no card around them.
+ * slider gave them: the facet value over its field, the arrows at the right
+ * of that header, and square pictures cropped to fill, captioned underneath,
+ * with no card around them. Since Canopy 2.0.2 the facet value is the link
+ * to its works (its "View all" is for screen readers), so there is no
+ * separate View all.
  * ---------------------------------------------------------------------- */
 
 /* Canopy puts the class on its wrapper and on Clover's section; one margin. */
@@ -1793,69 +1795,41 @@ main .fx-specimen p + p {
   margin-top: 0;
 }
 
+/* The arrows are drawn in the strip below, not in the header, and rise into
+ * its last line; the header's end padding keeps its words out from under
+ * them. */
 .canopy-slider .clover-items-header {
+  --fx-items-arrows: calc(2 * 35px + 10px);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "title homepage"
-    "description homepage";
+  grid-template-columns: minmax(0, 1fr);
   align-items: end;
-  gap: 10px 0;
+  gap: 10px;
   margin: 0;
-  padding-bottom: 20px;
+  padding: 0 calc(var(--fx-items-arrows) + 25px) 20px 0;
   text-align: start;
   line-height: 1.4;
 }
 
 .canopy-slider .clover-items-title {
-  grid-area: title;
   margin: 0;
   line-height: inherit;
   text-transform: none;
 }
 
 .canopy-slider .clover-items-description {
-  grid-area: description;
   line-height: inherit;
   color: var(--fx-ink);
 }
 
-/* View all is a fixed width, so the arrows can stand at a fixed distance
- * to its left (they are drawn in the strip below, not in the header); its
- * left margin keeps the header's words out from under them. */
-.canopy-slider .clover-items-homepage {
-  --fx-items-view-all: calc(8ch + 30px);
-  grid-area: homepage;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--fx-items-view-all);
-  height: 35px;
-  margin: 0 20px 0 calc(25px + 2 * (35px + 10px));
-  background: var(--fx-ink);
-  color: var(--nu-white);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-/* On a phone, the arrows and View all take their own line under the field. */
+/* On a phone, the arrows take their own line under the field. */
 @media (max-width: 40rem) {
   .canopy-slider .clover-items-header {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "title"
-      "description"
-      "homepage";
-  }
-
-  .canopy-slider .clover-items-homepage {
-    justify-self: end;
-    margin-left: 0;
+    padding: 0 0 calc(20px + 35px + 10px);
   }
 }
 
 .canopy-slider :is(button.clover-items-scroll-prev, button.clover-items-scroll-next) {
-  --fx-items-arrow-end: calc(20px + 8ch + 30px + 10px);
+  --fx-items-arrow-end: 0px;
   display: grid;
   place-items: center;
   top: -55px;
@@ -1878,6 +1852,13 @@ main .fx-specimen p + p {
 
 .canopy-slider :is(button.clover-items-scroll-prev, button.clover-items-scroll-next):is(:hover, :focus-visible) {
   background: transparent;
+}
+
+/* The arrows stand at the column's end, so their tips open toward its
+ * start: from a button's start they would run past the window's edge and
+ * scroll the page sideways on a phone. */
+.canopy-slider :is(button.clover-items-scroll-prev, button.clover-items-scroll-next) > .clover-tip {
+  inset-inline: auto 0;
 }
 
 /* With nothing more to show, an arrow does nothing but stays printed. */
