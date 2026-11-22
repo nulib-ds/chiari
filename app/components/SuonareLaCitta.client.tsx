@@ -2,6 +2,7 @@ import type { Application, FederatedPointerEvent, Sprite, Texture } from 'pixi.j
 //import {withBasePath} from "@nulib/canopy/base-path";
 import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import { createAudioManager, type AudioManager } from "./SuonareLaCittaAudio";
+import { withBasePath } from "@nulib/canopy/base-path";
 // ---------------------------------------------------------------------------
 // The exhibit
 // ---------------------------------------------------------------------------
@@ -37,6 +38,24 @@ function mountApplication(container: HTMLElement): () => void {
   let audio: AudioManager | null = null;
 
   const unlockAudio = (): void => { void audio?.start(); };
+  const audioFilesPath: string = "/suonarelacitta/audio/";
+  const audioFiles: string[] = [
+    "airshow.mp3",
+    "beethovencarspeaker.mp3",
+    "birdsbugsplanes.mp3",
+    "churchbellsflorence.mp3",
+    "classicaloutdoors.mp3",
+    "comedyclub.mp3",
+    "construction.mp3",
+    "ctabrownline.mp3",
+    "folkfestival.mp3",
+    "lakemichiganwaves.mp3",
+    "percussion.mp3",
+    "policesirens.mp3",
+    "radioad.mp3",
+    "sirenchicago.mp3",
+    "streetnoises.mp3"
+  ];
 
   void (async (): Promise<void> => {
     // Dynamic Import
@@ -113,7 +132,6 @@ function mountApplication(container: HTMLElement): () => void {
     }
 
     // Create Object
-    // Default audio: ../../assets/suonarelacitta/audio/lakemichiganwaves.mp3
     function createSonicObject(x: number, y: number, texture: Texture, audioPath: string): void {
       const sonicObject: Sprite = new Sprite({
         texture,
@@ -140,20 +158,22 @@ function mountApplication(container: HTMLElement): () => void {
     app.stage.on('pointerup', onDragEnd); // release dragging
     app.stage.on('pointerupoutside', onDragEnd); // release dragging when cursor leaves app area.
 
-    // Generate the Sonic Objects, randomly assign positions.
-    createSonicObject(
-      Math.floor(Math.random() * app.screen.width), // x pos
-      Math.floor(Math.random() * app.screen.height), // y pos
-      await Assets.load('https://images-understory.dc.library.northwestern.edu/iiif/3/image/5d574442-d2bc-445e-a4ac-f22eb155c414/cd7cc255-0b4e-444c-811a-ba5f96ecd3a5/0,0,2048,990/512,247/0/default.jpg'),
-      "https://cdn.freesound.org/previews/880/880644_5828667-lq.mp3"
+    // Load the shared sprite texture once, then create one SonicObject per audio file.
+    const sonicTexture: Texture = await Assets.load(
+      'https://images-understory.dc.library.northwestern.edu/iiif/3/image/5d574442-d2bc-445e-a4ac-f22eb155c414/cd7cc255-0b4e-444c-811a-ba5f96ecd3a5/0,0,2048,990/512,247/0/default.jpg'
     );
 
-    createSonicObject(
-      Math.floor(Math.random() * app.screen.width), // x pos
-      Math.floor(Math.random() * app.screen.height), // y pos
-      await Assets.load('https://images-understory.dc.library.northwestern.edu/iiif/3/image/5d574442-d2bc-445e-a4ac-f22eb155c414/cd7cc255-0b4e-444c-811a-ba5f96ecd3a5/0,0,2048,990/512,247/0/default.jpg'),
-      "https://cdn.freesound.org/previews/879/879869_17398983-lq.mp3"
-    );
+    if (disposed) return;
+
+    for (const audioFile of audioFiles) {
+      createSonicObject(
+        Math.floor(Math.random() * app.screen.width),
+        // Math.floor(Math.random() * app.screen.height),
+        app.screen.height,
+        sonicTexture,
+        withBasePath(`${audioFilesPath}${audioFile}`)
+      );
+    }
 
     // On 'Update', update audio
     app.ticker.add(() => audio?.updateAudio(app!.screen.height, app!.screen.width));
