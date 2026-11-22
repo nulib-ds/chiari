@@ -6,6 +6,7 @@ import { createAudioManager, type AudioManager } from "./SuonareLaCittaAudio";
 // The exhibit
 // ---------------------------------------------------------------------------
 // TODO
+// Rework ../scripts/glyphs/annotations.py to accept a "aspect ratio" param, allowing generated of 1x1 images.
 // Implement 'dock' threshold of 0 volume
 // Test out effects for making audio sound 'far' away or through a wall at low volume
 // Test out blur as a visual indicator of the volume level
