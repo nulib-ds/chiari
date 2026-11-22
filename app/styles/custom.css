@@ -65,6 +65,10 @@
     --fx-pill: 999px;
     --fx-section-space: clamp(6rem, 14vw, 11rem);
 
+    /* Prose runs the container's width, as typescript runs the sheet's:
+     * Canopy 2 sets its paragraphs to a 70ch measure. */
+    --canopy-measure: none;
+
     /* Canopy accent ramp → ink and paper grays, so Canopy's own accent
      * colors print in black like everything else. */
     --color-accent-50: var(--nu-white);
@@ -147,16 +151,19 @@
   color: var(--fx-ink);
 }
 
-/* Canopy squares every corner with `border-radius:
- * var(--canopy-radius-none) !important` on `*`. Rather than fight the
- * !important, rounded elements redefine that variable for themselves. */
+/* Corners are square: Canopy's radius tokens are zero (northwestern.css),
+ * and the few rounded things round themselves. A card rounds what it holds
+ * too, its picture and the paper tint that stands in for a missing one. */
 .canopy-button {
-  --canopy-radius-none: var(--fx-pill);
+  border-radius: var(--fx-pill);
 }
 
 .canopy-card,
+.canopy-card *,
+.canopy-card *::before,
+.canopy-card *::after,
 .fx-plate__media img {
-  --canopy-radius-none: var(--fx-radius);
+  border-radius: var(--fx-radius);
 }
 
 /* -------------------------------------------------------------------------
@@ -359,6 +366,13 @@ main li {
   color: var(--fx-ink);
 }
 
+/* Except on Clover 4's media player, which is dark and sets its title and
+ * source in its own light type. */
+main .clover-canvas-player :is(p, li) {
+  color: inherit;
+  line-height: revert-layer;
+}
+
 /* Prose is typed on the line grid: line height 1.7 (one --fx-line; Canopy's
  * prose uses 1.618), a blank line between paragraphs. */
 main :is(p, li, blockquote, dd, dt, figcaption) {
@@ -378,6 +392,20 @@ main p + p {
 main small,
 main figcaption {
   color: var(--fx-ink);
+}
+
+/* Code is typed like everything else: no chip around it in running text,
+ * and a code block is ink on the pale Off-White panel rather than Canopy 2's
+ * black one. */
+main code {
+  padding: 0;
+  background: none;
+}
+
+.canopy-code-block {
+  --canopy-code-background: var(--nu-offwhite);
+  --canopy-code-text: var(--fx-ink);
+  box-shadow: none;
 }
 
 /* A typed quotation: indented one tab, a blank line above and below, no rule. */
@@ -420,6 +448,26 @@ main blockquote a:hover {
 /* No rule between masthead and page: white space does the separating. */
 .canopy-header {
   border-bottom: none;
+  box-shadow: none;
+}
+
+/* The masthead is drawing with its own underline; Canopy 2's swoosh under
+ * the brand on hover and focus would double it. Focus keeps its outline. */
+.canopy-header .canopy-logo span::after {
+  content: none;
+}
+
+/* The search field's underline is the black paint stroke alone: no ruled
+ * line under it on focus (northwestern.css, Canopy 2). The input keeps its
+ * focus outline. */
+.canopy-header .canopy-search-form:focus-within {
+  box-shadow: none;
+}
+
+/* The search field's ⌘K hint is a printed key cap, which the masthead
+ * doesn't draw; the shortcut still works. */
+.canopy-search-form__hotkey {
+  display: none;
 }
 
 .canopy-header__brand {
@@ -1017,7 +1065,7 @@ main blockquote a:hover {
  * padding so the rough edge sits outside the label. */
 .canopy-button.canopy-search-tabs__filters-button,
 .canopy-button.canopy-search-tabs__filters-button:is(:hover, :focus-visible) {
-  --canopy-radius-none: 0;
+  border-radius: 0;
   background-color: transparent;
   background-image: url("../images/marker/paint-block.svg");
   background-size: 100% 100%;
@@ -1077,15 +1125,18 @@ main blockquote a:hover {
   background-image: var(--fx-ann-paint);
 }
 
+.canopy-header .canopy-search-teaser__item,
+.canopy-header .canopy-search-teaser__item * {
+  border-radius: var(--fx-radius);
+}
+
 .canopy-header .canopy-search-teaser__item {
-  --canopy-radius-none: var(--fx-radius);
   gap: 1.1rem;
   padding: 0.6rem 0.75rem;
   margin-inline: -0.75rem;
 }
 
 .canopy-header .canopy-search-teaser__thumb {
-  --canopy-radius-none: var(--fx-radius);
   flex-basis: 64px;
   height: 64px;
   /* Shows when a work has no image, or its image fails to load. */
@@ -1125,7 +1176,7 @@ main blockquote a:hover {
 /* Every result gets a square, even pages and works with no thumbnail, so
  * the rows line up. Same tint as image-less works on the search page. */
 .canopy-header .canopy-search-teaser__item:not(:has(.canopy-search-teaser__thumb))::before {
-  --canopy-radius-none: var(--fx-radius);
+  border-radius: var(--fx-radius);
   content: "";
   flex: 0 0 64px;
   height: 64px;
@@ -1173,8 +1224,12 @@ main blockquote a:hover {
 
 /* While search is in use, the header comes forward so its results panel
  * opens above the secondary menu and language toggle (z-index 2). The rest
- * of the time it stays at Canopy's z-index 1, so its transparent box never
- * covers those links. */
+ * of the time it stays at z-index 1, so its transparent box never covers
+ * those links (Canopy 2 raises it to 20). */
+.fx-masthead .canopy-header {
+  z-index: 1;
+}
+
 .fx-masthead .canopy-header:focus-within,
 .fx-masthead .canopy-header:has([data-canopy-search-form-panel]:not([hidden])) {
   z-index: 3;
@@ -1379,7 +1434,6 @@ main blockquote a:hover {
   border-radius: var(--fx-pill);
   background: transparent;
   color: var(--fx-ink);
-  --canopy-radius-none: var(--fx-pill);
 }
 
 .fx-plate__flip button {
@@ -1484,7 +1538,7 @@ main .fx-palette li {
 }
 
 .fx-swatch__chip {
-  --canopy-radius-none: var(--fx-radius);
+  border-radius: var(--fx-radius);
   display: block;
   aspect-ratio: 4 / 3;
   margin-bottom: 0.6rem;
@@ -1710,6 +1764,12 @@ main .fx-specimen p + p {
   color: var(--fx-ink);
 }
 
+/* Typed on the line grid like the rest: Canopy 2 sets a card's title
+ * tighter, at 1.5. */
+.canopy-card figcaption > span {
+  line-height: inherit;
+}
+
 
 /* Reserve a square paper surface when a search card has no thumbnail. */
 .canopy-search-results .canopy-card figure:has(> figcaption:first-child)::before {
@@ -1717,6 +1777,181 @@ main .fx-specimen p + p {
   display: block;
   aspect-ratio: 1;
   background: rgb(0 0 0 / 0.05);
+}
+
+/* -------------------------------------------------------------------------
+ * Related items (<RelatedItems>): a strip of printed thumbnails per facet.
+ * Canopy 2 draws them with Clover 4's Items, as raised cards with round
+ * arrow buttons over the pictures. Here they keep the layout Clover 3's
+ * slider gave them: the facet value over its field, the arrows at the right
+ * of that header, and square pictures cropped to fill, captioned underneath,
+ * with no card around them. Since Canopy 2.0.2 the facet value is the link
+ * to its works (its "View all" is for screen readers), so there is no
+ * separate View all.
+ * ---------------------------------------------------------------------- */
+
+/* Canopy puts the class on its wrapper and on Clover's section; one margin. */
+.canopy-slider .canopy-slider {
+  margin-top: 0;
+}
+
+/* The arrows are drawn in the strip below, not in the header, and rise into
+ * its last line; the header's end padding keeps its words out from under
+ * them. */
+.canopy-slider .clover-items-header {
+  --fx-items-arrows: calc(2 * 35px + 10px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: 10px;
+  margin: 0;
+  padding: 0 calc(var(--fx-items-arrows) + 25px) 20px 0;
+  text-align: start;
+  line-height: 1.4;
+}
+
+.canopy-slider .clover-items-title {
+  margin: 0;
+  line-height: inherit;
+  text-transform: none;
+}
+
+.canopy-slider .clover-items-description {
+  line-height: inherit;
+  color: var(--fx-ink);
+}
+
+/* On a phone, the arrows take their own line under the field. */
+@media (max-width: 40rem) {
+  .canopy-slider .clover-items-header {
+    padding: 0 0 calc(20px + 35px + 10px);
+  }
+}
+
+.canopy-slider :is(button.clover-items-scroll-prev, button.clover-items-scroll-next) {
+  --fx-items-arrow-end: 0px;
+  display: grid;
+  place-items: center;
+  top: -55px;
+  inset-inline-start: auto;
+  width: 35px;
+  height: 35px;
+  translate: none;
+  background: transparent;
+  color: var(--fx-ink);
+  box-shadow: none;
+}
+
+.canopy-slider button.clover-items-scroll-next {
+  inset-inline-end: var(--fx-items-arrow-end);
+}
+
+.canopy-slider button.clover-items-scroll-prev {
+  inset-inline-end: calc(var(--fx-items-arrow-end) + 45px);
+}
+
+.canopy-slider :is(button.clover-items-scroll-prev, button.clover-items-scroll-next):is(:hover, :focus-visible) {
+  background: transparent;
+}
+
+/* The arrows stand at the column's end, so their tips open toward its
+ * start: from a button's start they would run past the window's edge and
+ * scroll the page sideways on a phone. */
+.canopy-slider :is(button.clover-items-scroll-prev, button.clover-items-scroll-next) > .clover-tip {
+  inset-inline: auto 0;
+}
+
+/* With nothing more to show, an arrow does nothing but stays printed. */
+.canopy-slider :is(button.clover-items-scroll-prev, button.clover-items-scroll-next)[aria-disabled="true"] {
+  opacity: 1;
+}
+
+/* Clover 3's arrows, drawn in the button's color. */
+.canopy-slider :is(button.clover-items-scroll-prev, button.clover-items-scroll-next) > svg {
+  display: none;
+}
+
+.canopy-slider :is(button.clover-items-scroll-prev, button.clover-items-scroll-next)::before {
+  content: "";
+  width: 21px;
+  height: 21px;
+  background: currentColor;
+  mask: var(--fx-items-arrow) center / contain no-repeat;
+}
+
+.canopy-slider button.clover-items-scroll-prev {
+  --fx-items-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='45' d='M244 400L100 256l144-144M120 256h292'/%3E%3C/svg%3E");
+}
+
+.canopy-slider button.clover-items-scroll-next {
+  --fx-items-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='45' d='M268 112l144 144-144 144M392 256H100'/%3E%3C/svg%3E");
+}
+
+/* No shading at the strip's ends while it scrolls. */
+.canopy-slider .clover-items-frame::before,
+.canopy-slider .clover-items-frame::after {
+  display: none;
+}
+
+/* Clover 4's items are list items, which Canopy's base list style would
+ * give a bullet. */
+.canopy-slider .clover-items-item {
+  margin: 0;
+  padding: 0 0 10px;
+  list-style: none;
+}
+
+.canopy-slider .clover-items-figure {
+  gap: 0;
+}
+
+.canopy-slider .clover-items-link {
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+}
+
+.canopy-slider .clover-items-picture {
+  background: transparent;
+}
+
+.canopy-slider .clover-items-picture img {
+  object-fit: cover;
+}
+
+/* A work with no picture: a gray square, as Clover 3 left it. */
+.canopy-slider .clover-items-picture[data-empty] {
+  background: #716c6b;
+}
+
+.canopy-slider .clover-items-picture[data-empty] > svg {
+  display: none;
+}
+
+.canopy-slider .clover-items-caption {
+  padding: 1rem;
+  color: var(--fx-ink);
+}
+
+.canopy-slider .clover-items-label-text {
+  line-height: 1.38;
+}
+
+/* -------------------------------------------------------------------------
+ * Viewer (work pages, Clover 4)
+ * ---------------------------------------------------------------------- */
+
+/* The rail's thumbnails are narrower than a label at body size, which would
+ * break mid-word ("chiari_0 / 03"). The line above the rail already names the
+ * page in view and its number, so each thumbnail's label is kept for screen
+ * readers (it names the option) and not printed. */
+.clover-template-default-rail .clover-items-caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* -------------------------------------------------------------------------
@@ -1786,6 +2021,7 @@ main:has(.fx-spread) ~ .canopy-footer {
   max-width: var(--fx-container);
   padding-block: 3rem;
   padding-inline: var(--fx-inset);
+  text-align: center;
 }
 
 .fx-footer-sliver {

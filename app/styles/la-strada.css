@@ -126,6 +126,18 @@
   visibility: hidden;
 }
 
+/* What a screen reader is told of the arrangement, out of sight. */
+.fx-strada__said {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* An action being heard may be three lines long; two is all the bar keeps. */
 .fx-strada__caption > :first-child {
   display: -webkit-box;
@@ -277,13 +289,12 @@
   filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.22));
 }
 
-/* Pointed at, here or by its block on the seek bar, or reached with the keyboard:
- * the slip stands a little larger, from its left edge, where the marker's brace is
- * drawn beside it (see .fx-strada__sketch), which is its focus ring too. */
+/* Pointed at, here or by its block on the seek bar, or focused: the slip stands
+ * over the others, as it is, and the marker's line ends at its left edge (see
+ * .fx-strada__sketch). Focused, it is braced either side as well, and the braces are
+ * its focus ring. */
 .fx-slip.is-pointed {
   z-index: 99999;
-  transform: scale(1.06);
-  transform-origin: 0 50%;
 }
 
 .fx-slip.is-pointed:focus-visible {
@@ -300,7 +311,7 @@
  * lines. Play and pause head the rail and stay in reach under the controls as the
  * sheet scrolls. --gap is the room between the bar's blocks. */
 .fx-strada__rail {
-  --gap: 2px;
+  --gap: 5px;
   position: absolute;
   top: 0;
   right: 100%;
@@ -312,15 +323,19 @@
   position: sticky;
   top: 7rem;
   z-index: 2;
+  isolation: isolate;
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.75rem;
+  height: 2.25rem;
   margin: 0.25rem auto 0;
   padding: 0;
   border: 0;
-  border-radius: var(--fx-pill);
-  background: var(--fx-ink);
+  overflow: visible;
+  /* Painted, as the search page's Filter button is: a hand-painted black block
+   * (paint-block.svg) rather than a pill, the paper showing through as the icon. */
+  border-radius: 0;
+  background: url("../images/marker/paint-block.svg") center / 100% 100% no-repeat;
   color: var(--fx-paper);
   cursor: pointer;
 }
@@ -331,11 +346,51 @@
   fill: currentColor;
 }
 
+/* Hovered or focused, the tangle (gesture 7) in a fresh paint color is drawn just
+ * above the block, centered on it and nudged down and right, and a marker stroke in
+ * the same color runs under the icon, as on Filter. The color is picked each time
+ * (data-fx-ann-color, set in LaStrada.client.tsx). */
+.fx-strada__play::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: calc(100% - 0.6rem);
+  width: 6rem;
+  aspect-ratio: 280 / 50;
+  transform: translateX(calc(-50% + 0.6rem));
+  pointer-events: none;
+  background-color: var(--fx-ann, var(--fx-pink));
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  visibility: hidden;
+}
+
+.fx-strada__play::before {
+  content: "";
+  position: absolute;
+  left: 0.7rem;
+  right: 0.7rem;
+  bottom: 0.35rem;
+  height: 0.3rem;
+  pointer-events: none;
+  background: var(--fx-ann-paint, none) center / 100% 100% no-repeat;
+  visibility: hidden;
+}
+
+.fx-strada__play:not(:disabled):is(:hover, :focus-visible)::after,
+.fx-strada__play:not(:disabled):is(:hover, :focus-visible)::before {
+  visibility: visible;
+}
+
 .fx-strada__play:disabled {
   opacity: 0.35;
   cursor: default;
 }
 
+/* Some paint colors are too light to show focus alone. */
 .fx-strada__play:focus-visible {
   outline: 2px solid var(--fx-ink);
   outline-offset: 3px;
@@ -368,7 +423,7 @@
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 1rem;
+  width: 0.6rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -390,7 +445,6 @@
 
 .fx-strada__chapters button {
   --round: 0;
-  --canopy-radius-none: var(--round);
   --fill: max(var(--done, 0), var(--progress, 0));
   display: block;
   width: 100%;

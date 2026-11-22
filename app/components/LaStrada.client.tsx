@@ -1,4 +1,4 @@
-import {withBasePath} from "@canopy-iiif/app/base-path";
+import {withBasePath} from "@nulib/canopy/base-path";
 import {chaptersOf} from "./clover";
 import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 
@@ -20,9 +20,10 @@ import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from "reac
  * Original puts every action back where it was typed, Clear lets them fall,
  * and Shuffle lays them on the sheet at random; each plays its arrangement when
  * pressed, and says Stop while it does.
- * The annotation's text is what is announced; its Sound bodies, when it has
- * any, are what is performed instead, one after another, and a Choice among
- * them offers takes of which one is played. Annotations on the page whose id
+ * The annotation's Sound bodies are what is performed, one after another, and a
+ * Choice among them offers takes of which one is played; its text is what a
+ * screen reader says of the slip when it is reached, and nothing else says it
+ * aloud. An action with no sound keeps its time in silence. Annotations on the page whose id
  * ends in /frame (the instructions and title) stay on the sheet.
  *
  * <LaStrada manifest="/la-strada/manifest.json" />
@@ -31,8 +32,11 @@ import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from "reac
  * the canvas (see app/scripts/la-strada): the width of a character, the height
  * of a line, and the tilt of the typing in the scan, measured from the typing
  * itself. Slips are cut on the grid, and settle on a column and a line; the
- * arrow keys move one of each, and a tab stop, if the manifest names one, is
- * the step along.
+ * arrow keys move a slip a tab stop along (a column, if the manifest names
+ * none) or a line up or down. Type never lands on type: a slip put down over
+ * another, or over the title and instructions, goes to the nearest place on the
+ * grid that is clear, and one moved by the keys into another slides on past it
+ * to the next clear place that way.
  *
  * The arrangement is also read as chapters: the same actions, as Ranges that name
  * a place and a time, which Clover 4's helpers (`chaptersOf`, via ./clover)
@@ -61,10 +65,9 @@ const LABELS = {
   original: "Original",
   reset: "Reset",
   shuffle: "Shuffle",
-  intro: "A typescript sent to George Maciunas, 1964. Touch a line to hear it, or drag it.",
-  fallen: "Drag them onto the sheet, then press play. Touch one to hear it.",
+  intro: "A typescript sent to George Maciunas, 1964. Drag a line, or move it with the arrow keys.",
+  fallen: "Drag them onto the sheet, then press play.",
   arranged: "In a new order. Move them as you like.",
-  announced: "announced",
   silent: "silence",
   performed: "performed",
   by: "by",
@@ -85,8 +88,6 @@ type Labels = typeof LABELS;
 type Piece = {
   id: string;
   text: string;
-  /** What is said when the action is announced. */
-  speech: string;
   /** Seconds of silence to perform in place of a recording, when the action is silent. */
   silent?: number;
   /** How long it is heard for, in seconds: its recordings end to end, its silence, or its saying. */
@@ -208,7 +209,6 @@ function readScore(manifest: any, rebase: (url: string) => string): Score {
           {
             id: String(note.id).split("/").pop() as string,
             text: shown.value,
-            speech: sayable(spoken.value),
             note,
             silent,
             length: silent ?? (recorded || reading(sayable(spoken.value)) / 1000),
@@ -333,49 +333,8 @@ function countdown(ms: number, then: () => void) {
   };
 }
 
-/** About how long an action takes to say, in milliseconds. */
-const readingTime = (speech: string) => 900 + speech.length * 70;
-const reading = readingTime;
-
-/** The score prefers announcing, so this is the default: the action, said. */
-function announce(speech: string, lang: string): Playing {
-  return sounding((end) => {
-    const synth = window.speechSynthesis;
-    const reading = readingTime(speech);
-    // Some engines never report the end of an utterance, and a browser with
-    // no voice should still keep the time.
-    const limit = countdown(synth ? reading * 3 : reading, end);
-    const finish = () => {
-      limit.stop();
-      end();
-    };
-    if (synth) {
-      const voice = new SpeechSynthesisUtterance(speech);
-      voice.lang = lang;
-      voice.rate = 0.92;
-      voice.onend = finish;
-      voice.onerror = finish;
-      synth.cancel();
-      synth.speak(voice);
-    }
-    return {
-      stop: () => {
-        limit.stop();
-        synth?.cancel();
-      },
-      pause: () => {
-        limit.pause();
-        synth?.pause();
-      },
-      resume: () => {
-        synth?.resume();
-        limit.resume();
-      },
-      // Speech says nothing of how far it has got, so read it from the time it should take.
-      progress: () => limit.spent() / reading,
-    };
-  });
-}
+/** About how long an action takes to say, in milliseconds: the time one without a sound keeps. */
+const reading = (speech: string) => 900 + speech.length * 70;
 
 function recording(url: string): Playing {
   return sounding((end) => {
@@ -461,9 +420,8 @@ const isPerformed = (piece: Piece) => piece.sounds.length > 0;
 /** The take last heard in each part of each action, so that an action never repeats itself. */
 const lastTake = new Map<string, number>();
 
-function play(piece: Piece, lang: string): Playing {
-  if (piece.silent) return hush(piece.silent);
-  if (!piece.sounds.length) return announce(piece.speech, lang);
+function play(piece: Piece): Playing {
+  if (piece.silent || !piece.sounds.length) return hush(piece.length);
   // The parts come one after another; of the takes in a part, any but the one just heard.
   return sequence(
     piece.sounds.map((takes, part) => () => {
@@ -480,6 +438,9 @@ const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(re
 
 /** The rest, in seconds, after each action of a performance. */
 const REST = 1.1;
+
+/** The marker paints the play button is marked in, as on the search page (content/_app.mdx). */
+const PAINTS = ["pink", "blue", "green", "yellow"];
 
 /**
  * How far into its cell, in characters, a typed letter's ink begins: a slip is cut
@@ -543,6 +504,13 @@ function snap(grid: Grid, x: number, y: number): {x: number; y: number} {
 function nudge(grid: Grid, x: number, y: number, columns: number, lines: number): {x: number; y: number} {
   const at = nearest(grid, x, y);
   return cell(grid, at.column + columns * (grid.tab || 1), at.line + lines);
+}
+
+/** Whether two slips' type would overlap, allowing the half a character or line the scan's tilt may cost. */
+function overlaps(grid: Grid, a: {x: number; y: number; w: number; h: number}, b: {x: number; y: number; w: number; h: number}) {
+  const ex = grid.char / 2;
+  const ey = grid.line / 2;
+  return a.x < b.x + b.w - ex && b.x < a.x + a.w - ex && a.y < b.y + b.h - ey && b.y < a.y + a.h - ey;
 }
 
 /** The actions standing on the sheet, in the order of the times where they stand. */
@@ -859,13 +827,10 @@ function marker(points: Point[], width: number, random: () => number, pinned = f
 
 export default function LaStrada({
   manifest,
-  lang = "en-US",
   labels,
 }: {
   /** The exhibit's IIIF manifest. */
   manifest: string;
-  /** Language the actions are announced in. */
-  lang?: string;
   /** Interface text, to translate or reword. */
   labels?: Partial<Labels>;
 }) {
@@ -882,24 +847,39 @@ export default function LaStrada({
   // The action pointed at, or reached with the keyboard, on the seek bar or on the
   // sheet, whose block and type a line ties together.
   const [pointing, setPointing] = useState<string | null>(null);
-  // Let go of, the pointing goes back to whatever the keyboard is on, if it is a block or a slip.
+  // Let go of, the pointing goes back to the slip that has focus, or the block the keyboard is on.
   const unpoint = (id: string) =>
     setPointing((was) => {
       if (was !== id) return was;
       const focused = document.activeElement as HTMLElement | null;
-      const keyed = focused && section.current?.contains(focused) && focused.matches(":focus-visible");
-      return (keyed && (focused.dataset.chapter ?? focused.dataset.action)) || null;
+      if (!focused || !section.current?.contains(focused)) return null;
+      // A slip keeps its marks while it has focus, however it got it; a block on the
+      // seek bar only when the keyboard brought it there.
+      if (focused.dataset.action) return focused.dataset.action;
+      return (focused.matches(":focus-visible") && focused.dataset.chapter) || null;
     });
   // What the marker draws between them, in the page's pixels: a line from the block
   // to the action, and a brace at the action's type, where the line ends.
   const sketch = useRef<SVGSVGElement>(null);
-  const [drawn, setDrawn] = useState<{line: string; brace: string; rough: number} | null>(null);
+  const [drawn, setDrawn] = useState<{line: string; braces: string[]; rough: number} | null>(null);
+  // The slip that has focus, reached by Tab or by a press: only it is braced, either
+  // side of its type; pointed at otherwise, a slip gets only the line.
+  const [focused, setFocused] = useState<string | null>(null);
   const [resized, setResized] = useState(0);
   // Which of the three arrangements the sheet is in, as typed, as it fell (or as the
   // visitor has since put it) or shuffled, and which of them is being performed.
   const [mode, setMode] = useState<Mode>("original");
   const [performing, setPerforming] = useState<Mode | null>(null);
   const [paused, setPaused] = useState(false);
+
+  // The paint play and pause is marked in when hovered or focused: a fresh one each
+  // time, never the one it had just before, as the search page's Filter button has.
+  const [playPaint, setPlayPaint] = useState("pink");
+  const repaint = () =>
+    setPlayPaint((was) => {
+      const others = PAINTS.filter((c) => c !== was);
+      return others[Math.floor(Math.random() * others.length)];
+    });
 
   const [copied, setCopied] = useState(false);
   // How tall the caption under the sheet is, in page widths: the floor starts below it.
@@ -1028,43 +1008,75 @@ export default function LaStrada({
     return () => window.removeEventListener("resize", resize);
   }, []);
 
-  // Draw the line and the brace for the action pointed at, from where its block and
-  // its slip stand now. The slip's place is read from its own, not from the page, so
-  // that its growing a little while it is pointed at does not move the brace.
+  // Draw the line for the action pointed at, and its braces if it has focus, from
+  // where its block and its slip stand now.
   useLayoutEffect(() => {
     const block = pointing && section.current?.querySelector(`.fx-strada__chapters [data-chapter="${pointing}"]`);
     const piece = pointing ? score?.actions.find((p) => p.id === pointing) : undefined;
     const at = pointing ? places[pointing] : undefined;
     if (!score || !block || !piece || !at || lifted || !sketch.current || !board.current) return void setDrawn(null);
-    const frame = sketch.current.getBoundingClientRect();
+    const box = sketch.current.getBoundingClientRect();
     const sheet = board.current.getBoundingClientRect();
     const from = block.getBoundingClientRect();
     const unit = sheet.width / 100;
     const line = score.grid.line * unit; // one typed line, in pixels
     const ink = Math.max(3, 0.3 * line);
     const wide = Math.max(4, 0.4 * line);
-    const top = sheet.top - frame.top + at.y * unit;
-    const tall = Math.max(piece.h * unit * 0.95, line * 1.05);
-    // The brace stands just left of the type, its point toward the bar.
-    const tip: Point = [sheet.left - frame.left + (at.x + score.grid.char * BEARING) * unit - ink * 0.6 - wide, top + (piece.h * unit) / 2];
-    // The line starts in the middle of the block and comes straight out of it, about
-    // 100px, angles straight across to the brace's height, and runs straight again for
-    // the last 50px into its point (both shorter if the brace is near the bar), turning
-    // into and out of the angle round a short curve.
-    const start: Point = [from.left - frame.left + from.width / 2, from.top - frame.top + from.height / 2];
-    const across = tip[0] - start[0];
-    const out: Point = [start[0] + Math.min(100, 0.4 * across), start[1]];
-    const into: Point = [tip[0] - Math.min(50, 0.2 * across), tip[1]];
-    const path = rounded([start, out, into, tip], 20);
-    // The line leaves the middle of the block and meets the brace at its point. The
-    // brace has a hand of its own, so it is drawn the same way wherever its slip stands.
-    const hand = seeded(`${pointing} {`);
-    setDrawn({
-      line: marker(path, ink, seeded(pointing), true),
-      brace: marker(brace(tip, tall, wide, Math.max(12, Math.min(120, Math.round((tall + 2 * wide) / 2))), hand), ink * 0.9, hand),
-      rough: ink * 0.35,
-    });
-  }, [pointing, lifted, places, score, resized]);
+    const slip = board.current.querySelector<HTMLElement>(`[data-action="${pointing}"]`);
+    const drawAt = (at: {x: number; y: number}) => {
+      const top = sheet.top - box.top + at.y * unit;
+      const tall = Math.max(piece.h * unit * 0.95, line * 1.05);
+      // The brace stands just left of the type, its point toward the bar.
+      const tip: Point = [sheet.left - box.left + (at.x + score.grid.char * BEARING) * unit - ink * 0.6 - wide, top + (piece.h * unit) / 2];
+      // The line starts in the middle of the block and comes straight out of it, about
+      // 100px, angles straight across to the brace's height, and runs straight again for
+      // the last 50px into its point (both shorter if the brace is near the bar), turning
+      // into and out of the angle round a short curve.
+      const start: Point = [from.left - box.left + from.width / 2, from.top - box.top + from.height / 2];
+      const across = tip[0] - start[0];
+      const out: Point = [start[0] + Math.min(100, 0.4 * across), start[1]];
+      const into: Point = [tip[0] - Math.min(50, 0.2 * across), tip[1]];
+      // Focused, the slip is braced, and the line meets the left brace at its point;
+      // only pointed at, the line runs on to where the brace's back would be, just
+      // short of the type.
+      const braced = focused === pointing;
+      const end: Point = braced ? tip : [tip[0] + wide * 0.5, tip[1]];
+      const path = rounded([start, out, into, end], 20);
+      const braces: string[] = [];
+      if (braced) {
+        // Each brace has a hand of its own, so it is drawn the same way wherever its
+        // slip stands. The right one stands just past the end of the type, its point
+        // away from it: a brace drawn as the left one is, and turned about its point.
+        const n = Math.max(12, Math.min(120, Math.round((tall + 2 * wide) / 2)));
+        const hand = seeded(`${pointing} {`);
+        braces.push(marker(brace(tip, tall, wide, n, hand), ink * 0.9, hand));
+        const stop = (at.x + score.grid.char * BEARING + (piece.w - 2 * score.grid.char * BEARING)) * unit;
+        const point: Point = [sheet.left - box.left + stop + ink * 0.6 + wide, tip[1]];
+        const other = seeded(`${pointing} }`);
+        braces.push(marker(brace(point, tall, wide, n, other).map(([x, y]): Point => [2 * point[0] - x, y]), ink * 0.9, other));
+      }
+      setDrawn({line: marker(path, ink, seeded(pointing), true), braces, rough: ink * 0.35});
+    };
+    // A slip nudged by the keys slides to its new place (left and top, 140ms): the
+    // marker goes with it, drawn each frame from where the slip stands on the way.
+    const standing = () => {
+      if (!slip) return at;
+      const style = getComputedStyle(slip);
+      return {x: parseFloat(style.left) / unit, y: parseFloat(style.top) / unit};
+    };
+    const began = performance.now();
+    let frame = 0;
+    const tick = () => {
+      const now = standing();
+      const moving = Math.abs(now.x - at.x) > 0.001 || Math.abs(now.y - at.y) > 0.001;
+      if (moving && performance.now() - began < 400) {
+        drawAt(now);
+        frame = requestAnimationFrame(tick);
+      } else drawAt(at);
+    };
+    tick();
+    return () => cancelAnimationFrame(frame);
+  }, [pointing, focused, lifted, places, score, resized]);
 
   if (failed) return <p className="fx-strada__caption">{text.failed}</p>;
   if (!score) return null;
@@ -1080,6 +1092,50 @@ export default function LaStrada({
         y: Math.min(Math.max(y, 0), score.pageH + creditH + floor - piece.h),
       },
     }));
+
+  /** Whether a slip may stand here: on the board, and its type over no one else's. */
+  const fits = (piece: Piece, x: number, y: number) => {
+    const slack = 0.01;
+    if (x < -slack || x > 100 - piece.w + slack) return false;
+    if (y < -slack || y > score.pageH + creditH + floor - piece.h + slack) return false;
+    const box = {x, y, w: piece.w, h: piece.h};
+    return (
+      score.frame.every((f) => !overlaps(score.grid, box, f)) &&
+      score.actions.every((p) => p.id === piece.id || !places[p.id] || !overlaps(score.grid, box, {...places[p.id], w: p.w, h: p.h}))
+    );
+  };
+
+  /** Put down here, a slip settles on the grid; over other type, on the nearest clear place. */
+  const settle = (piece: Piece, x: number, y: number) => {
+    const {grid} = score;
+    const at = nearest(grid, x, y);
+    const stride = grid.tab || 1;
+    for (let ring = 0; ring <= 60; ring++) {
+      const around: {x: number; y: number; d: number}[] = [];
+      for (let c = -ring; c <= ring; c++) {
+        for (let l = -ring; l <= ring; l++) {
+          if (Math.max(Math.abs(c), Math.abs(l)) !== ring) continue;
+          const spot = cell(grid, at.column + c * stride, at.line + l);
+          around.push({...spot, d: Math.hypot(spot.x - x, spot.y - y)});
+        }
+      }
+      const clear = around.sort((a, b) => a.d - b.d).find((spot) => fits(piece, spot.x, spot.y));
+      if (clear) return clear;
+    }
+    return snap(grid, x, y);
+  };
+
+  /** Moved by the keys, a slip goes a step that way, or on past whatever is there to the next clear place. */
+  const step = (piece: Piece, columns: number, lines: number) => {
+    const from = places[piece.id];
+    for (let n = 1; n < 400; n++) {
+      const at = nudge(score.grid, from.x, from.y, columns * n, lines * n);
+      if (at.x < -0.01 || at.x > 100 - piece.w + 0.01) return null;
+      if (at.y < -0.01 || at.y > score.pageH + creditH + floor - piece.h + 0.01) return null;
+      if (fits(piece, at.x, at.y)) return at;
+    }
+    return null;
+  };
 
   const raise = (piece: Piece) =>
     setPlaces((prev) => ({...prev, [piece.id]: {...prev[piece.id], z: ++top.current}}));
@@ -1158,7 +1214,7 @@ export default function LaStrada({
 
   const hear = (piece: Piece) => {
     silence();
-    const voice = play(piece, lang);
+    const voice = play(piece);
     current.current = voice;
     setNow(piece.id);
     voice.done.then(() => {
@@ -1184,7 +1240,7 @@ export default function LaStrada({
       await gate.current.passed();
       if (run.current !== token) return;
       setNow(piece.id);
-      const voice = play(piece, lang);
+      const voice = play(piece);
       current.current = voice;
       await voice.done;
       if (run.current !== token) return;
@@ -1256,6 +1312,9 @@ export default function LaStrada({
   const grab = (e: React.PointerEvent<HTMLButtonElement>, piece: Piece) => {
     if (!touchable || e.button !== 0) return;
     e.preventDefault();
+    // Held back from the browser so it starts no drag of its own, the press focuses
+    // the slip itself: the arrow keys move it from here.
+    e.currentTarget.focus({preventScroll: true});
     e.currentTarget.setPointerCapture(e.pointerId);
     const rect = board.current!.getBoundingClientRect();
     const unit = rect.width / 100;
@@ -1269,7 +1328,7 @@ export default function LaStrada({
       from: [e.clientX, e.clientY],
       moved: false,
     };
-    // On the sheet as typed, a line is lifted only once it is carried: a touch hears it.
+    // On the sheet as typed, a line is lifted only once it is carried.
     if (phase === "intact") return;
     raise(piece);
     setLifted(piece.id);
@@ -1300,11 +1359,10 @@ export default function LaStrada({
     const d = drag.current;
     drag.current = null;
     setLifted(null);
-    // A touch that goes nowhere is a request to hear the action; a slip that
+    // A press that goes nowhere only focuses the slip (Enter or Space plays it); a slip that
     // has been carried somewhere settles onto the grid.
-    if (d && !d.moved && touched) hear(piece);
-    else if (d?.moved && touched) {
-      const at = snap(score.grid, places[piece.id].x, places[piece.id].y);
+    if (d?.moved && touched) {
+      const at = settle(piece, places[piece.id].x, places[piece.id].y);
       move(piece, at.x, at.y);
       moved();
     }
@@ -1312,20 +1370,22 @@ export default function LaStrada({
 
   const key = (e: React.KeyboardEvent<HTMLButtonElement>, piece: Piece) => {
     if (!touchable) return;
-    const step = e.shiftKey ? 5 : 1; // columns and lines at a time
+    // A tab stop along, or a line up or down.
     const by: Record<string, number[]> = {
-      ArrowLeft: [-step, 0],
-      ArrowRight: [step, 0],
-      ArrowUp: [0, -step],
-      ArrowDown: [0, step],
+      ArrowLeft: [-1, 0],
+      ArrowRight: [1, 0],
+      ArrowUp: [0, -1],
+      ArrowDown: [0, 1],
     };
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       hear(piece);
     } else if (by[e.key]) {
       e.preventDefault();
+      setPointing(piece.id);
+      const at = step(piece, by[e.key][0], by[e.key][1]);
+      if (!at) return; // nowhere clear that way before the edge
       if (phase === "intact") setPhase("free");
-      const at = nudge(score.grid, places[piece.id].x, places[piece.id].y, by[e.key][0], by[e.key][1]);
       move(piece, at.x, at.y);
       moved();
     }
@@ -1335,14 +1395,17 @@ export default function LaStrada({
   const settled = phase === "free";
   const ready = phase === "intact" || settled; // not in the middle of moving
   const touchable = ready; // a line can be heard: on the sheet as typed, or once things have settled
+  // What the sheet asks of the visitor in each arrangement: shown in the caption when
+  // nothing is being heard, and all a screen reader is told as the arrangement changes.
+  const guide = mode === "original" ? text.intro : mode === "shuffled" ? text.arranged : text.fallen;
   let caption: React.ReactNode = "";
   if (heard) {
     caption = (
       <>
-        <em>{heard.silent ? text.silent : isPerformed(heard) ? text.performed : text.announced}</em>“{heard.text.replace(/\n/g, " ")}”
+        <em>{heard.silent || !isPerformed(heard) ? text.silent : text.performed}</em>“{heard.text.replace(/\n/g, " ")}”
       </>
     );
-  } else if (ready) caption = mode === "original" ? text.intro : mode === "shuffled" ? text.arranged : text.fallen;
+  } else if (ready) caption = guide;
 
   // Everything the caption can say but an action heard, which is cut to fit.
   const widest = [text.intro, text.fallen, text.arranged];
@@ -1393,7 +1456,13 @@ export default function LaStrada({
             )}
           </React.Fragment>
         ))}
-        <p className="fx-strada__caption" aria-live="polite">
+        {/* The caption is for the eye. The action heard is already the sound itself, and
+            its text is what a screen reader says of its slip on reaching it, so a screen
+            reader is told only of the arrangement, here, when it changes. */}
+        <p className="fx-strada__said" aria-live="polite">
+          {ready ? guide : ""}
+        </p>
+        <p className="fx-strada__caption" aria-hidden="true">
           <span>{caption}</span>
           {widest.map((words) => (
             <span key={words} className="fx-strada__sizer" aria-hidden="true">
@@ -1449,6 +1518,10 @@ export default function LaStrada({
               title={performing && !paused ? text.pause : text.play}
               disabled={!ready}
               onClick={playPause}
+              data-fx-ann="7"
+              data-fx-ann-color={playPaint}
+              onPointerEnter={repaint}
+              onFocus={repaint}
             >
               <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                 {performing && !paused ? <path d="M4 3h3v10H4zM9 3h3v10H9z" /> : <path d="M5 2.5v11l9-5.5z" />}
@@ -1560,8 +1633,14 @@ export default function LaStrada({
                 onKeyDown={(e) => key(e, piece)}
                 onPointerEnter={() => setPointing(piece.id)}
                 onPointerLeave={() => unpoint(piece.id)}
-                onFocus={() => setPointing(piece.id)}
-                onBlur={() => unpoint(piece.id)}
+                onFocus={() => {
+                  setFocused(piece.id);
+                  setPointing(piece.id);
+                }}
+                onBlur={() => {
+                  setFocused((was) => (was === piece.id ? null : was));
+                  unpoint(piece.id);
+                }}
               />
             );
           })}
@@ -1576,7 +1655,9 @@ export default function LaStrada({
                 </filter>
                 <g filter="url(#fx-strada-marker)">
                   <path d={drawn.line} />
-                  <path d={drawn.brace} />
+                  {drawn.braces.map((d, i) => (
+                    <path key={i} d={d} />
+                  ))}
                 </g>
               </>
             )}
