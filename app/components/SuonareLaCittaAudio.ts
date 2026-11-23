@@ -1,85 +1,120 @@
 import type { EQ3, FeedbackDelay, Gain, PitchShift, Player } from 'tone';
-import type { Sprite, Ticker } from 'pixi.js';
+import type { Container } from 'pixi.js';
 
 export interface SpriteAudio {
-  player: Tone.Player;
-  pitch: Tone.PitchShift;
-  eq: Tone.EQ3;
-  delay: Tone.FeedbackDelay;
-  gain: Tone.Gain;
+  player: Player;
+  pitch: PitchShift;
+  eq: EQ3;
+  delay: FeedbackDelay;
+  gain: Gain;
 }
 
 export interface AudioManager {
-  // Associates a audio file with a sprite. Call before start()
-  attach(sprite: Sprite, audioPath: string): SpriteAudio;
-  // Unlocks AudioContext so the browser will allow audio to play.
+  // Associate an audio file with a Pixi object; newly added objects play after unlock.
+  attach(sprite: Container, audioPath: string): SpriteAudio;
+  // Stop and dispose one object's audio when it is erased.
+  remove(sprite: Container): void;
+  // Unlock the browser's audio context and start all loaded players.
   start(): Promise<void>;
-  // recalculate all sprite audio effects.
   updateAudio(screenHeight: number, screenWidth: number): void;
-  // Clean up audio nodes.
   dispose(): void;
 }
 
 export async function createAudioManager(): Promise<AudioManager> {
-  // Dynamic import
   const Tone = await import('tone');
 
-  const audioBySprite = new Map<Sprite, SpriteAudio>();
+  const audioBySprite = new Map<Container, SpriteAudio>();
+  const playingPlayers = new WeakSet<Player>();
   let started = false;
+  let disposed = false;
+  let startPromise: Promise<void> | null = null;
 
-  function attach(sprite: Sprite, audioPath: string): SpriteAudio {
-    const player = new Tone.Player({ url: audioPath, loop: true });
-    // audio fx
-    const pitch = new Tone.PitchShift({ pitch: 0 });         // semitones
-    const eq = new Tone.EQ3({ low: 0, mid: 0, high: 0 });    // dB per band
+  function startPlayer(sprite: Container, audio: SpriteAudio, time = Tone.now() + 0.1): void {
+    const { player } = audio;
+    if (
+      disposed || !started || !player.loaded || player.disposed ||
+      audioBySprite.get(sprite) !== audio || playingPlayers.has(player)
+    ) return;
+
+    playingPlayers.add(player);
+    player.start(time);
+  }
+
+  function attach(sprite: Container, audioPath: string): SpriteAudio {
+    const player = new Tone.Player({
+      url: audioPath,
+      loop: true,
+      onload: () => {
+        // Also handle files that finish loading after the app has started.
+        const audio = audioBySprite.get(sprite);
+        if (audio) startPlayer(sprite, audio);
+      },
+    });
+    const pitch = new Tone.PitchShift({ pitch: 0 });
+    const eq = new Tone.EQ3({ low: 0, mid: 0, high: 0 });
     const delay = new Tone.FeedbackDelay({ delayTime: 0.25, feedback: 0.3, wet: 0 });
-    const gain = new Tone.Gain(0);                           // linear 0..1
+    const gain = new Tone.Gain(0);
 
     player.chain(pitch, eq, delay, gain, Tone.getDestination());
 
     const audio: SpriteAudio = { player, pitch, eq, delay, gain };
     audioBySprite.set(sprite, audio);
-
+    // Covers cached buffers whose onload fired before the entry was registered.
+    startPlayer(sprite, audio);
     return audio;
   }
 
-  // prompt input to start audio playback
   async function start(): Promise<void> {
-    if (started) return; // already started.
+    if (disposed) return;
+    if (startPromise) return startPromise;
 
-    started = true;
+    startPromise = (async () => {
+      await Tone.start();
+      await Tone.loaded();
+      if (disposed) return;
 
-    await Tone.start();    // unlocks the AudioContext
-    await Tone.loaded();   // waits for all buffers
-    const startTime = Tone.now() + 0.1;   // start together so loops stay in sync
-    // Start every audio playback
-    for (const { player } of audioBySprite.values()) {
-      player.start(startTime);
-    }
+      started = true;
+      const startTime = Tone.now() + 0.1;
+      for (const [sprite, audio] of audioBySprite) {
+        startPlayer(sprite, audio, startTime);
+      }
+    })().catch((error: unknown) => {
+      startPromise = null;
+      throw error;
+    });
+    return startPromise;
   }
 
-  // called every 'update'
   function updateAudio(screenHeight: number, screenWidth: number): void {
-    // for each sprite
-    for (const [sprite, { gain, pitch }] of audioBySprite) {
-      // JS's Math lib doesn't include clamp?????
+    if (disposed || screenHeight <= 0 || screenWidth <= 0) return;
+    for (const [sprite, { gain, pitch, player }] of audioBySprite) {
       const y = Math.min(1, Math.max(0, sprite.y / screenHeight));
       const x = Math.min(1, Math.max(0, sprite.x / screenWidth));
 
-      // modify based on coords
-      gain.gain.rampTo((1 - y), 0.05); // smooth audio volume adjustment.
-      pitch.pitch = (0.5 - x) * -48; // range of -24 to +24 cents
+      gain.gain.rampTo(1 - y, 0.05);
+      // pitch.pitch = (0.5 - x) * -48;
+      player.playbackRate = 0.5 + x * 1.5;
     }
   }
 
-  // dispose all audio playback
+  function remove(sprite: Container): void {
+    const audio = audioBySprite.get(sprite);
+    if (!audio) return;
+    audioBySprite.delete(sprite);
+
+    if (playingPlayers.has(audio.player)) audio.player.stop();
+    audio.player.dispose();
+    audio.pitch.dispose();
+    audio.eq.dispose();
+    audio.delay.dispose();
+    audio.gain.dispose();
+  }
+
   function dispose(): void {
-    for (const { player, pitch, eq, delay, gain } of audioBySprite.values()) {
-      player.stop();
-      [player, pitch, eq, delay, gain].forEach((node) => node.dispose());
-    }
-    audioBySprite.clear();
+    if (disposed) return;
+    disposed = true;
+    for (const sprite of Array.from(audioBySprite.keys())) remove(sprite);
   }
 
-  return { attach, start, updateAudio, dispose };
+  return { attach, remove, start, updateAudio, dispose };
 }

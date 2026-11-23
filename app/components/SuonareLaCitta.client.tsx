@@ -1,5 +1,5 @@
 import type { Application, FederatedPointerEvent, Graphics, GraphicsContext } from 'pixi.js';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { withBasePath } from '@nulib/canopy/base-path';
 import { createAudioManager, type AudioManager } from './SuonareLaCittaAudio';
 import { colorizeMark, loadSafeSvgGraphicsContext, saturatedColor } from './SuonareLaCittaSvg';
@@ -18,18 +18,88 @@ import { colorizeMark, loadSafeSvgGraphicsContext, saturatedColor } from './Suon
 // Implement title label on SonicObject drag.
 // Randomize audio start times.
 
+type ToolMode = 'move' | 'pencil' | 'eraser';
+
+const toolButtonStyle: React.CSSProperties = {
+  display: 'grid',
+  placeItems: 'center',
+  width: 44,
+  height: 44,
+  padding: 0,
+  borderRadius: 8,
+  border: '1px solid rgba(0, 0, 0, 0.2)',
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+  cursor: 'pointer',
+  touchAction: 'manipulation',
+};
+
 export default function SuonareLaCitta() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const modeRef = useRef<ToolMode>('move');
+  const [mode, setMode] = useState<ToolMode>('move');
 
   useEffect(() => {
     const element = containerRef.current;
     if (!element) return;
-    return mountApplication(element);
+    return mountApplication(element, () => modeRef.current);
   }, []);
+
+  function toggleTool(tool: 'pencil' | 'eraser'): void {
+    // Clicking the currently selected tool returns to drag/move mode.
+    const nextMode: ToolMode = modeRef.current === tool ? 'move' : tool;
+    modeRef.current = nextMode;
+    setMode(nextMode);
+  }
 
   return (
     <section style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1' }}>
+      {/* Nerd Fonts official webfont stylesheet, for browsers without local fonts. */}
+      <link rel="stylesheet" href="https://www.nerdfonts.com/assets/css/webfont.css" />
       <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
+
+      {/* Position is relative to the app container, not the Pixi scene. */}
+      <div
+        role="toolbar"
+        aria-label="Sonic object tools"
+        style={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          zIndex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+        }}
+      >
+        <button
+          type="button"
+          aria-label="Pencil tool"
+          aria-pressed={mode === 'pencil'}
+          title="Pencil: click the canvas to add a sonic object"
+          onClick={() => toggleTool('pencil')}
+          style={{
+            ...toolButtonStyle,
+            background: mode === 'pencil' ? '#2b405e' : 'rgba(255, 255, 255, 0.93)',
+            color: mode === 'pencil' ? '#fff' : '#2b2d35',
+          }}
+        >
+          <i className="nf nf-fa-pencil" aria-hidden="true" style={{ fontSize: 22, lineHeight: 1 }} />
+        </button>
+        <button
+          type="button"
+          aria-label="Eraser tool"
+          aria-pressed={mode === 'eraser'}
+          title="Eraser: click within 10 pixels of a sonic object to remove it"
+          onClick={() => toggleTool('eraser')}
+          style={{
+            ...toolButtonStyle,
+            background: mode === 'eraser' ? '#2b405e' : 'rgba(255, 255, 255, 0.93)',
+            color: mode === 'eraser' ? '#fff' : '#2b2d35',
+          }}
+        >
+          <i className="nf nf-fa-eraser" aria-hidden="true" style={{ fontSize: 22, lineHeight: 1 }} />
+        </button>
+      </div>
     </section>
   );
 }
@@ -43,12 +113,14 @@ function shuffled<T>(values: readonly T[]): T[] {
   return result;
 }
 
-function mountApplication(container: HTMLElement): () => void {
+function mountApplication(container: HTMLElement, getMode: () => ToolMode): () => void {
   let disposed = false;
   let app: Application | null = null;
   let audio: AudioManager | null = null;
 
-  const unlockAudio = (): void => { void audio?.start(); };
+  const unlockAudio = (): void => {
+    void audio?.start().catch((error: unknown) => console.error('Unable to start audio:', error));
+  };
   const marksPath = '/images/marks/';
   const audioFilesPath = '/suonarelacitta/audio/';
   const audioFiles = [
@@ -85,12 +157,15 @@ function mountApplication(container: HTMLElement): () => void {
     audio = newAudio;
     app.canvas.style.touchAction = 'none';
     container.appendChild(app.canvas);
+    container.addEventListener('pointerdown', unlockAudio, { once: true });
 
     let dragTarget: Graphics | null = null;
     const contexts = new WeakMap<Graphics, GraphicsContext>();
+    const sonicObjects = new Set<Graphics>();
+    let svgContexts: GraphicsContext[] = [];
 
     function onDragMove(event: FederatedPointerEvent): void {
-      if (!dragTarget || !dragTarget.parent || !app) return;
+      if (!dragTarget || !dragTarget.parent || !app || getMode() !== 'move') return;
 
       dragTarget.parent.toLocal(event.global, undefined, dragTarget.position);
 
@@ -105,6 +180,7 @@ function mountApplication(container: HTMLElement): () => void {
     }
 
     function onDragStart(this: Graphics): void {
+      if (getMode() !== 'move') return;
       dragTarget = this;
       app?.stage.on('pointermove', onDragMove);
     }
@@ -135,43 +211,87 @@ function mountApplication(container: HTMLElement): () => void {
       // Do not use blendMode='screen': it washes saturated colors out on light backgrounds.
 
       contexts.set(sonicObject, svgContext);
+      sonicObjects.add(sonicObject);
       sonicObject.on('pointerdown', onDragStart, sonicObject);
       app?.stage.addChild(sonicObject);
-      // If AudioManager.attach is typed `Sprite`, change that parameter to `Container`:
-      // Graphics and Sprite both extend PixiJS Container and expose x/y/position.
       audio?.attach(sonicObject, audioPath);
     }
 
+    function eraseClosestSonicObject(x: number, y: number): void {
+      const margin = 10;
+      let closest: Graphics | null = null;
+      let closestBoundsDistance = Infinity;
+      let closestCenterDistance = Infinity;
+
+      for (const sonicObject of sonicObjects) {
+        // Test the visible SVG bounds, expanded by +/- 10 screen units.
+        const box = sonicObject.getBounds();
+        const dx = Math.max(box.x - x, 0, x - (box.x + box.width));
+        const dy = Math.max(box.y - y, 0, y - (box.y + box.height));
+        if (dx > margin || dy > margin) continue;
+
+        const boundsDistance = dx * dx + dy * dy;
+        const centerDistance = (sonicObject.x - x) ** 2 + (sonicObject.y - y) ** 2;
+        if (
+          boundsDistance < closestBoundsDistance ||
+          (boundsDistance === closestBoundsDistance && centerDistance < closestCenterDistance)
+        ) {
+          closest = sonicObject;
+          closestBoundsDistance = boundsDistance;
+          closestCenterDistance = centerDistance;
+        }
+      }
+
+      if (!closest) return;
+      if (dragTarget === closest) onDragEnd();
+      sonicObjects.delete(closest);
+      audio?.remove(closest);
+      closest.destroy();
+    }
+
+    function onStagePointerDown(event: FederatedPointerEvent): void {
+      if (!app || getMode() === 'move') return;
+      const { x, y } = app.stage.toLocal(event.global);
+
+      if (getMode() === 'pencil') {
+        if (svgContexts.length === 0) return;
+        const context = svgContexts[Math.floor(Math.random() * svgContexts.length)];
+        const audioFile = audioFiles[Math.floor(Math.random() * audioFiles.length)];
+        createSonicObject(x, y, context, withBasePath(`${audioFilesPath}${audioFile}`));
+      } else if (getMode() === 'eraser') {
+        eraseClosestSonicObject(x, y);
+      }
+    }
+
+    app.stage.eventMode = 'static';
+    app.stage.hitArea = app.screen;
+    app.stage.on('pointerdown', onStagePointerDown);
+    app.stage.on('pointerup', onDragEnd);
+    app.stage.on('pointerupoutside', onDragEnd);
+
+    // Generate background paper svg.
+    const paperBgContext = await loadSafeSvgGraphicsContext('/suonarelacitta/college_ruled_letter.svg');
+    if (disposed) return;
+    const paperBg = new Graphics(paperBgContext);
+    const bounds = paperBg.getLocalBounds();
+    paperBg.pivot.set(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+    paperBg.eventMode = 'none';
+    app.stage.addChild(paperBg);
+
     let paperScreenWidth = -1;
     let paperScreenHeight = -1;
-
     function updatePaperBg(): void {
       if (!app) return;
-
       const { width, height } = app.screen;
       if (width === paperScreenWidth && height === paperScreenHeight) return;
 
       paperBg.scale.set(height / bounds.height);
       paperBg.position.set(width / 2, height / 2);
-
+      app.stage.hitArea = app.screen;
       paperScreenWidth = width;
       paperScreenHeight = height;
     }
-
-    app.stage.eventMode = 'static';
-    app.stage.hitArea = app.screen;
-    app.stage.on('pointerup', onDragEnd);
-    app.stage.on('pointerupoutside', onDragEnd);
-
-    // Generate background paper svg.
-    const paperBgContext = await loadSafeSvgGraphicsContext("/suonarelacitta/college_ruled_letter.svg");
-    const paperBg = new Graphics(paperBgContext);
-    const bounds = paperBg.getLocalBounds();
-    paperBg.pivot.set(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
-    paperBg.position.set( app?.screen.width / 2, app?.screen.height / 2 );
-    paperBg.scale.set(1, 1);
-    paperBg.eventMode = 'none';
-    app?.stage.addChild(paperBg);
+    updatePaperBg();
 
     const markFilenames = [
       'annotate-01.svg',
@@ -204,7 +324,6 @@ function mountApplication(container: HTMLElement): () => void {
     }
 
     // Fetch and repair malformed point-only paths before PixiJS parses SVG geometry.
-    let svgContexts: GraphicsContext[];
     try {
       svgContexts = await Promise.all(
         selectedMarks.map((filename) =>
@@ -220,21 +339,20 @@ function mountApplication(container: HTMLElement): () => void {
 
     if (disposed) return;
 
-    audioFiles.forEach((audioFile, index) => {
-      createSonicObject(
-        Math.floor(Math.random() * app!.screen.width),
-        // Keep the docked-at-bottom initial placement from the uploaded file.
-        app!.screen.height,
-        svgContexts[index % svgContexts.length],
-        withBasePath(`${audioFilesPath}${audioFile}`),
-      );
-    });
+    // audioFiles.forEach((audioFile, index) => {
+    //   createSonicObject(
+    //     Math.floor(Math.random() * app!.screen.width),
+    //     // Keep the docked-at-bottom initial placement from the uploaded file.
+    //     app!.screen.height,
+    //     svgContexts[index % svgContexts.length],
+    //     withBasePath(`${audioFilesPath}${audioFile}`),
+    //   );
+    // });
 
     app.ticker.add(() => {
       updatePaperBg();
-      audio?.updateAudio(app!.screen.height, app!.screen.width)
+      audio?.updateAudio(app!.screen.height, app!.screen.width);
     });
-    container.addEventListener('pointerdown', unlockAudio, { once: true });
   })().catch((error) => {
     console.error('Unable to initialize SuonareLaCitta:', error);
   });
