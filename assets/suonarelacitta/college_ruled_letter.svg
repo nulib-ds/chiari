@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="8.5in" height="11in" viewBox="0 0 612 792">
+  <title>College-ruled paper (US Letter)</title>
+  <desc>
+    College-ruled paper; SVG-ateratored.
+    MIT license or something. Idk just take it.
+  </desc>
+  <!-- Geometry: 1 user unit = 1 point = 1/72 inch. -->
+  <!-- Page: 8.5 x 11 in; horizontal rules span x=0.5 to 8.0 in. -->
+  <!-- First blue rule y=0.75 in; spacing=9/32 in; last y=10.3125 in. -->
+  <!-- Blue stroke: 0.5 pt. Red stroke: 0.75 pt. -->
+  <!-- Red rule: x=1.25 in; from y=0.5 in to y=10.5 in. -->
+  <rect x="0" y="0" width="612" height="792" fill="#ffffff" />
+  <g id="horizontal-rules" fill="none" stroke="#a5c9df" stroke-width="0.5">
+    <line x1="36" y1="54.00" x2="576" y2="54.00" />
+    <line x1="36" y1="74.25" x2="576" y2="74.25" />
+    <line x1="36" y1="94.50" x2="576" y2="94.50" />
+    <line x1="36" y1="114.75" x2="576" y2="114.75" />
+    <line x1="36" y1="135.00" x2="576" y2="135.00" />
+    <line x1="36" y1="155.25" x2="576" y2="155.25" />
+    <line x1="36" y1="175.50" x2="576" y2="175.50" />
+    <line x1="36" y1="195.75" x2="576" y2="195.75" />
+    <line x1="36" y1="216.00" x2="576" y2="216.00" />
+    <line x1="36" y1="236.25" x2="576" y2="236.25" />
+    <line x1="36" y1="256.50" x2="576" y2="256.50" />
+    <line x1="36" y1="276.75" x2="576" y2="276.75" />
+    <line x1="36" y1="297.00" x2="576" y2="297.00" />
+    <line x1="36" y1="317.25" x2="576" y2="317.25" />
+    <line x1="36" y1="337.50" x2="576" y2="337.50" />
+    <line x1="36" y1="357.75" x2="576" y2="357.75" />
+    <line x1="36" y1="378.00" x2="576" y2="378.00" />
+    <line x1="36" y1="398.25" x2="576" y2="398.25" />
+    <line x1="36" y1="418.50" x2="576" y2="418.50" />
+    <line x1="36" y1="438.75" x2="576" y2="438.75" />
+    <line x1="36" y1="459.00" x2="576" y2="459.00" />
+    <line x1="36" y1="479.25" x2="576" y2="479.25" />
+    <line x1="36" y1="499.50" x2="576" y2="499.50" />
+    <line x1="36" y1="519.75" x2="576" y2="519.75" />
+    <line x1="36" y1="540.00" x2="576" y2="540.00" />
+    <line x1="36" y1="560.25" x2="576" y2="560.25" />
+    <line x1="36" y1="580.50" x2="576" y2="580.50" />
+    <line x1="36" y1="600.75" x2="576" y2="600.75" />
+    <line x1="36" y1="621.00" x2="576" y2="621.00" />
+    <line x1="36" y1="641.25" x2="576" y2="641.25" />
+    <line x1="36" y1="661.50" x2="576" y2="661.50" />
+    <line x1="36" y1="681.75" x2="576" y2="681.75" />
+    <line x1="36" y1="702.00" x2="576" y2="702.00" />
+    <line x1="36" y1="722.25" x2="576" y2="722.25" />
+    <line x1="36" y1="742.50" x2="576" y2="742.50" />
+  </g>
+  <line id="left-margin-rule" x1="90" y1="36"
+        x2="90" y2="756"
+        stroke="#dd8795" stroke-width="0.75" />
+</svg>

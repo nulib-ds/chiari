@@ -142,10 +142,36 @@ function mountApplication(container: HTMLElement): () => void {
       audio?.attach(sonicObject, audioPath);
     }
 
+    let paperScreenWidth = -1;
+    let paperScreenHeight = -1;
+
+    function updatePaperBg(): void {
+      if (!app) return;
+
+      const { width, height } = app.screen;
+      if (width === paperScreenWidth && height === paperScreenHeight) return;
+
+      paperBg.scale.set(height / bounds.height);
+      paperBg.position.set(width / 2, height / 2);
+
+      paperScreenWidth = width;
+      paperScreenHeight = height;
+    }
+
     app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
     app.stage.on('pointerup', onDragEnd);
     app.stage.on('pointerupoutside', onDragEnd);
+
+    // Generate background paper svg.
+    const paperBgContext = await loadSafeSvgGraphicsContext("/suonarelacitta/college_ruled_letter.svg");
+    const paperBg = new Graphics(paperBgContext);
+    const bounds = paperBg.getLocalBounds();
+    paperBg.pivot.set(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+    paperBg.position.set( app?.screen.width / 2, app?.screen.height / 2 );
+    paperBg.scale.set(1, 1);
+    paperBg.eventMode = 'none';
+    app?.stage.addChild(paperBg);
 
     const markFilenames = [
       'annotate-01.svg',
@@ -204,7 +230,10 @@ function mountApplication(container: HTMLElement): () => void {
       );
     });
 
-    app.ticker.add(() => audio?.updateAudio(app!.screen.height, app!.screen.width));
+    app.ticker.add(() => {
+      updatePaperBg();
+      audio?.updateAudio(app!.screen.height, app!.screen.width)
+    });
     container.addEventListener('pointerdown', unlockAudio, { once: true });
   })().catch((error) => {
     console.error('Unable to initialize SuonareLaCitta:', error);
