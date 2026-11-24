@@ -44,7 +44,7 @@ type Labels = {
   items: string;
   play: string;
   eject: string;
-  /** Under the screen while nothing is loaded. */
+  /** In the middle of the screen while nothing is loaded. */
   empty: string;
   /** Before the loaded film's name. */
   showing: string;
@@ -507,9 +507,17 @@ export default function Projector({
               options={{hideDelay: 2000}}
             />
           </div>
-        ) : null}
+        ) : (
+          // Nothing loaded: what to do, in the middle of the dark screen. The
+          // caption below says the same to a screen reader, once.
+          <p className="fx-projector__idle" aria-hidden="true">
+            {labels.empty}
+          </p>
+        )}
       </div>
 
+      {/* The film's name, under the screen. With nothing loaded the line is
+          empty but keeps its height, so loading and ejecting move nothing. */}
       <p className="fx-projector__caption" aria-live="polite">
         {current ? (
           <>
@@ -518,7 +526,7 @@ export default function Projector({
             {credit(current) ? `. ${credit(current)}.` : "."}
           </>
         ) : (
-          labels.empty
+          <span className="sr-only">{labels.empty}</span>
         )}
       </p>
 

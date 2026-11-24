@@ -76,6 +76,24 @@
   100% { opacity: 0; filter: sepia(0.7) brightness(0.3) blur(5px); }
 }
 
+/* Nothing loaded: what to do, in the middle of the dark screen, in the
+ * paper's color (20:1 on the black). It comes up once the lamp has died. */
+main .fx-projector__idle {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: var(--fx-line) var(--fx-tab);
+  color: var(--fx-paper);
+  text-align: center;
+  animation: fx-idle-in 0.6s ease-out both;
+}
+
+@keyframes fx-idle-in {
+  from { opacity: 0; }
+}
+
 .fx-projector__canvas {
   position: absolute;
   inset: 0;
@@ -273,8 +291,10 @@
 
 /* --- Caption ----------------------------------------------------------- */
 
-/* Directly under the screen, as a film's title card. */
+/* Directly under the screen, as a film's title card. With nothing loaded
+ * it is empty, and keeps its line, so loading and ejecting shift nothing. */
 main .fx-projector__caption {
+  min-height: var(--fx-line);
   margin: calc(var(--fx-line) / 2) 0 0;
   text-align: center;
 }
@@ -511,7 +531,8 @@ main .fx-projector__shelf li::marker {
   .fx-gate__film,
   .fx-cartridge__mark::after,
   .fx-projector__film,
-  .fx-projector.is-dimming .fx-projector__film {
+  .fx-projector.is-dimming .fx-projector__film,
+  .fx-projector__idle {
     animation: none;
   }
 
