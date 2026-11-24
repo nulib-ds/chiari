@@ -458,10 +458,19 @@ main blockquote a:hover {
 }
 
 /* The search field's underline is the black paint stroke alone: no ruled
- * line under it on focus (northwestern.css, Canopy 2). The input keeps its
- * focus outline. */
+ * line under it on focus (northwestern.css, Canopy 2). Reached by keyboard,
+ * the field gets the site's focus outline instead, round the whole field as
+ * round the folded Search button, since Canopy takes the input's own away
+ * (WCAG 2.4.7). Clicked open, it has none, as a clicked button has none; the
+ * caret shows where typing goes. data-fx-keys comes from KEYS_IN_USE in
+ * _app.mdx, because a text field always matches :focus-visible. */
 .canopy-header .canopy-search-form:focus-within {
   box-shadow: none;
+}
+
+html[data-fx-keys] .canopy-header .canopy-search-form:focus-within {
+  outline: 2px solid var(--fx-ink);
+  outline-offset: 3px;
 }
 
 /* The search field's ⌘K hint is a printed key cap, which the masthead
@@ -816,6 +825,34 @@ main blockquote a:hover {
   color: var(--fx-ink);
 }
 
+/* Folded, search is the same field, only shorter: the black stroke under
+ * it, no box, and the brush magnifier at its right end, with "Search" where
+ * the query will go. Both are set to the right, so on opening the magnifier
+ * stays put and the line runs on to the left. Keyboard focus draws the
+ * site's outline round it, as round the field's input. */
+.canopy-header .canopy-header__search-toggle {
+  justify-content: space-between;
+  gap: 1ch;
+  min-width: 8.5rem;
+  padding: 0 0 0.5rem;
+  border: none;
+  border-radius: 0;
+  background: url("../images/marker/paint-black.svg") left bottom / 100% 0.5rem no-repeat;
+  color: var(--fx-ink);
+}
+
+.canopy-header .canopy-header__search-toggle svg {
+  display: none;
+}
+
+.canopy-header .canopy-header__search-toggle::after {
+  content: "";
+  flex: none;
+  width: 1.45rem;
+  height: 1.45rem;
+  background: url("../images/marker/paint-magnifier.svg") center / contain no-repeat;
+}
+
 /* The browser's clear button (Chromium and Safari; Firefox draws none)
  * becomes a pink brush × to match the magnifier. Pink holds 4.1:1 on the
  * paper, above the 3:1 needed for a control. */
@@ -849,8 +886,15 @@ main blockquote a:hover {
 
 /* A soft shadow under the sheet. The mask above would clip a shadow on the
  * panel itself, so it goes on the wrapper while results are open; a
- * drop-shadow follows the painted shape, so it traces the cut outline. */
+ * drop-shadow follows the painted shape, so it traces the cut outline.
+ *
+ * The filter makes the wrapper a stacking context, which holds the panel's
+ * own z-index (1000) inside it. The main menu's links are stacking contexts
+ * too (isolation, for their marks) and come later in the header, so without
+ * a z-index of its own the wrapper painted under them and COLLABORATE showed
+ * through the results. One is enough to lift it over the menu. */
 .canopy-header [data-canopy-search-form-auto]:has(> [data-canopy-search-form-panel]:not([hidden])) {
+  z-index: 1;
   filter: drop-shadow(0 14px 18px rgb(0 0 0 / 0.14)) drop-shadow(0 2px 3px rgb(0 0 0 / 0.06));
 }
 

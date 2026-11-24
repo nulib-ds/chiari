@@ -217,6 +217,24 @@ export const SEARCH_LABEL_TAGS =
   document.addEventListener("DOMContentLoaded", tag);
 })();`;
 
+export const KEYS_IN_USE =
+  // Whether the visitor is getting round by keyboard: Tab, or Cmd/Ctrl+K
+  // (which opens search), sets data-fx-keys on <html>, and a press of a
+  // pointer clears it. Typing and the arrow keys leave it alone, since they
+  // edit a field. CSS reads it where :focus-visible can't tell the two apart:
+  // a text field always matches :focus-visible, so the opened search field
+  // would be outlined even when clicked. By keyboard it is (WCAG 2.4.7).
+  `(function () {
+  var root = document.documentElement;
+  document.addEventListener("keydown", function (e) {
+    var openSearch = (e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K");
+    if (e.key === "Tab" || openSearch) root.setAttribute("data-fx-keys", "");
+  }, true);
+  document.addEventListener("pointerdown", function () {
+    root.removeAttribute("data-fx-keys");
+  }, true);
+})();`;
+
 export function Head() {
   return (
     <>
@@ -232,6 +250,7 @@ export function Head() {
       <Stylesheet />
       <script dangerouslySetInnerHTML={{__html: IIIF_SIZE_FALLBACK}} />
       <script dangerouslySetInnerHTML={{__html: SEARCH_LABEL_TAGS}} />
+      <script dangerouslySetInnerHTML={{__html: KEYS_IN_USE}} />
     </>
   );
 }

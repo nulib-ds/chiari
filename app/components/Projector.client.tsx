@@ -373,9 +373,6 @@ export default function Projector({
             />
           </div>
         ) : null}
-        <svg className="fx-projector__frame" viewBox="0 0 160 90" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-          <path d="M0.3 0.6 L159.7 0.2 L159.6 89.7 L0.2 89.5 Z" />
-        </svg>
       </div>
 
       <p className="fx-projector__caption" aria-live="polite">
