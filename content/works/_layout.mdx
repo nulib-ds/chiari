@@ -23,7 +23,10 @@ import {
       <References />
       <Metadata manifest={props.manifest} />
       <RequiredStatement manifest={props.manifest} />
-      <Id id={props.manifest.id} />
+      <Id
+        id={props.manifest.id}
+        title={<LocaleString id="common.misc.iiif_manifest">IIIF Manifest</LocaleString>}
+      />
     </div>
   </div>
 </Container>
@@ -41,6 +44,8 @@ import {
   />
 </Container> */}
 <Container>
-  <h2>Related Items</h2>
+  {/* Canopy builds the Italian work pages from this layout too, so the
+      heading takes its words from the page's locale.yml. */}
+  <h2><LocaleString id="common.misc.related_items">Related Items</LocaleString></h2>
   <RelatedItems iiifContent={props.manifest.id} top={3} />
 </Container>
