@@ -195,9 +195,11 @@ function drawReel(rand: Rand, cx: number, cy: number, r: number): ReelArt {
 /** The projector, drawn once: the same on every load. */
 const PROJECTOR = (() => {
   const rand = seeded(1926);
-  const body: Pt[] = [[38, 93.5], [190.5, 92.5], [191, 139], [37.5, 139.5]];
-  const neck: Pt[] = [[191, 124.5], [206.5, 124], [206, 17], [194, 17.5], [194, 104], [191, 104]];
-  const gate: Pt[] = [[52, 101], [100, 100.5], [100.5, 132], [51.5, 132.5]];
+  // The body runs wide of the rear reel, and the gate keeps to its left, so
+  // the two keys and their names fit beside the gate (Espelli, Riproduci).
+  const body: Pt[] = [[38, 93.5], [198, 92.5], [198.5, 139], [37.5, 139.5]];
+  const neck: Pt[] = [[198.5, 124.5], [214, 124], [213.5, 17], [201.5, 17.5], [201.5, 104], [198.5, 104]];
+  const gate: Pt[] = [[46, 101], [94, 100.5], [94.5, 132], [45.5, 132.5]];
   return {
     // Arms holding the reels above the body.
     arms: [
@@ -210,10 +212,10 @@ const PROJECTOR = (() => {
     // reels, looking up at the screen.
     body: twice(() => roughBox(rand, body, {jitter: 0.7, over: 3}), 2.4),
     neck: twice(() => roughRun(rand, neck, {jitter: 0.6, over: 1.8}), 1.9),
-    lens: {d: roughLoop(rand, 200, 15, 9, 2.8, {jitter: 0.05, overlap: 0.7}), w: 1.7} as Line,
+    lens: {d: roughLoop(rand, 207.5, 15, 9, 2.8, {jitter: 0.05, overlap: 0.7}), w: 1.7} as Line,
     feet: [
       {d: roughLine(rand, [52, 139.5], [48, 146], {jitter: 0.4, over: 1}), w: 2.4},
-      {d: roughLine(rand, [184, 139], [188, 146], {jitter: 0.4, over: 1}), w: 2.2},
+      {d: roughLine(rand, [191.5, 139], [195.5, 146], {jitter: 0.4, over: 1}), w: 2.2},
     ] as Line[],
     // The gate, where a cartridge goes.
     gate: roughBox(rand, gate, {jitter: 0.5, over: 1.4}),
@@ -599,7 +601,7 @@ export default function Projector({
                 <CartridgeShape
                   className="fx-gate__cartridge"
                   variant={loaded}
-                  box={{x: 54, y: 102, width: 44, height: 29.3}}
+                  box={{x: 48, y: 102, width: 44, height: 29.3}}
                   filter={`url(#${wobble})`}
                 />
               </g>

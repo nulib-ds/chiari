@@ -215,9 +215,10 @@ main .fx-projector__idle {
 
 .fx-key {
   position: absolute;
-  top: 77%;
+  /* High in the body, so each key's name fits under it, inside the body. */
+  top: 73.7%;
   display: block;
-  width: 11.5cqw;
+  width: 10.5cqw;
   min-width: 2.25rem;
   aspect-ratio: 1;
   padding: 0;
@@ -229,14 +230,14 @@ main .fx-projector__idle {
   transform: translate(-50%, -50%);
 }
 
-/* Far enough apart that their labels clear each other at a phone's width,
- * in Italian too (Espelli, Avvia). */
+/* Far enough apart, and far enough from the gate and the body's edge, that
+ * their names clear each other in Italian too (Espelli, Riproduci). */
 .fx-key--eject {
-  left: 48%;
+  left: 49.2%;
 }
 
 .fx-key--play {
-  left: 72.5%;
+  left: 69.6%;
 }
 
 .fx-key__drawing {
@@ -289,12 +290,24 @@ main .fx-projector__idle {
 
 .fx-key__label {
   position: absolute;
-  /* Typed just below the drawing, clear of the body and its feet. */
-  top: calc(100% + 2.4rem);
+  /* Typed right under its key, inside the body. */
+  top: calc(100% + 0.2rem);
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
   line-height: 1;
+}
+
+/* A narrow projector (a phone's) is too small for the names beside each
+ * other: type keeps its size while the drawing shrinks. The keys' signs
+ * stand alone there, and the names stay for screen readers. */
+@container (max-width: 26rem) {
+  .fx-key__label {
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
 }
 
 .fx-key:hover:not([aria-disabled="true"]) .fx-key__label {
