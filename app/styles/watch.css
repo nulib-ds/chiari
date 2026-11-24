@@ -8,9 +8,14 @@
  * Every line is ink on the paper, drawn a little roughly: ends that miss,
  * sides that run past their corners, outlines gone over twice, and weights
  * that vary from line to line (app/components/roughLines.ts). No two
- * cartridges are drawn alike. Motion is the film's own: the reels turn and
- * the film runs only while it plays, and a loaded cartridge floats into the
- * gate. Readers who ask for reduced motion get the states without it.
+ * cartridges are drawn alike.
+ *
+ * Motion is the film's own. The reels turn and the film runs only while it
+ * plays. Loading flies a cartridge from the shelf into the gate: the
+ * projector jolts as it lands, the reels wind on, the film threads across
+ * and the lamp warms up. Ejecting flies it back while the reels rewind, the
+ * film pulls back and the lamp dies. Readers who ask for reduced motion get
+ * the states without any of it.
  */
 
 .fx-watch {
@@ -41,8 +46,9 @@
 /* The lamp. A loaded film warms up over 2.4s: from black, warm and out of
  * focus, it flickers up unevenly as the lamp catches, and is pulled into
  * focus as it settles. On eject the lamp dies: one small flare, then it
- * dims warm and soft to black, and the cartridge comes out
- * (Projector.client.tsx waits LAMP_OFF_MS for it).
+ * dims warm and soft to black, while the cartridge flies back to the shelf
+ * (Projector.client.tsx waits LAMP_OFF_MS for it). A film whose cartridge
+ * flew in waits for it to land first (--fx-lamp-delay).
  *
  * The flicker dips at most twice in any second, under the three flashes a
  * second that WCAG 2.3.1 allows a picture this size. Under reduced motion
@@ -50,7 +56,7 @@
 .fx-projector__film {
   position: absolute;
   inset: 0;
-  animation: fx-lamp-on 2.4s linear both;
+  animation: fx-lamp-on 2.4s linear var(--fx-lamp-delay, 0s) both;
 }
 
 .fx-projector.is-dimming .fx-projector__film {
@@ -120,11 +126,34 @@ main .fx-projector__idle {
 
 /* --- Projector --------------------------------------------------------- */
 
-/* The projector and its shelf, under the screen. */
+/* The projector and its shelf, under the screen. Cartridges cross it in the
+ * air (.fx-flyer), placed in its own pixels. */
 .fx-projector__deck {
+  position: relative;
   display: grid;
   justify-items: center;
   width: 100%;
+}
+
+/* A cartridge on its way between the shelf and the gate. It is set down on
+ * the place it leaves, and Projector.client.tsx flies it to the other. */
+.fx-flyer {
+  position: absolute;
+  z-index: 2;
+  display: block;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.fx-flyer__shape {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--fx-ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .fx-projector__machine {
@@ -152,22 +181,40 @@ main .fx-projector__idle {
   transform-box: view-box;
 }
 
-.fx-projector.is-playing .fx-reel--front {
-  animation: fx-reel-turn 4.2s linear infinite;
+/* The reels turn while the film runs and hold where they stop, as reels do:
+ * the turning is paused, not taken away. Loading and ejecting wind them a
+ * few whole turns on top of that (turnReels in Projector.client.tsx). */
+.fx-reel--front {
+  animation: fx-reel-turn 4.2s linear infinite paused;
 }
 
 /* The smaller reel turns faster, as take-up reels do. */
-.fx-projector.is-playing .fx-reel--rear {
-  animation: fx-reel-turn 2.9s linear infinite;
+.fx-reel--rear {
+  animation: fx-reel-turn 2.9s linear infinite paused;
+}
+
+.fx-projector.is-playing .fx-reel {
+  animation-play-state: running;
 }
 
 @keyframes fx-reel-turn {
   to { transform: rotate(360deg); }
 }
 
+/* The film is the cartridge's. With the gate empty there is none between
+ * the reels; once a cartridge is seated it threads across from the front
+ * reel, and on eject it pulls back the way it came. The clip is a little
+ * larger than the line's own box, which leaves out its width. */
 .fx-film {
   stroke-width: 1.2;
   stroke-dasharray: 2.5 2.5;
+  clip-path: inset(-6px 100% -6px -6px);
+  transition: clip-path 0.45s ease-in;
+}
+
+.fx-projector.is-seated:not(.is-dimming) .fx-film {
+  clip-path: inset(-6px);
+  transition: clip-path 0.9s cubic-bezier(0.3, 0, 0.2, 1);
 }
 
 .fx-projector.is-playing .fx-film {
@@ -183,24 +230,21 @@ main .fx-projector__idle {
   stroke-dasharray: 3 3;
 }
 
-.fx-projector.is-loaded .fx-gate {
+.fx-projector.is-seated .fx-gate {
   stroke-dasharray: none;
 }
 
+/* The cartridge has flown in (.fx-flyer); here it drops the last of the way
+ * and seats itself. */
 .fx-gate__film {
-  animation: fx-cartridge-arrive 0.8s cubic-bezier(0.25, 0.9, 0.3, 1.15) both;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fx-cartridge-seat 0.32s cubic-bezier(0.3, 1.7, 0.5, 1) both;
 }
 
-/* It drifts in from up and to the left, turning as it comes, and settles. */
-@keyframes fx-cartridge-arrive {
-  from {
-    opacity: 0;
-    transform: translate(-28px, -46px) rotate(-14deg);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+@keyframes fx-cartridge-seat {
+  from { transform: translateY(-3px) scale(1.05); }
+  to { transform: none; }
 }
 
 .fx-gate__cartridge {
@@ -397,17 +441,18 @@ main .fx-projector__shelf li::marker {
   transform: translateY(-3px) rotate(-5deg);
 }
 
-/* Loaded: it has left the shelf for the gate, so only its outline is left,
- * grayed under its paint mark. The gray holds 3:1 on the paper, so the
- * outline still reads (WCAG 1.4.11). */
-.fx-cartridge[aria-pressed="true"] .fx-cartridge__shape {
+/* Away: it has left the shelf for the gate, or is in the air to or from it,
+ * so only its outline is left, grayed, and under its paint mark while it is
+ * loaded. The gray holds 3:1 on the paper, so the outline still reads
+ * (WCAG 1.4.11). */
+.fx-cartridge[data-away] .fx-cartridge__shape {
   stroke: color-mix(in srgb, var(--fx-ink) 45%, var(--fx-paper));
   stroke-dasharray: 3 3;
   transform: none;
 }
 
 /* Only the one outline is left: a second pass would double the dashes. */
-.fx-cartridge[aria-pressed="true"] .fx-rough__again {
+.fx-cartridge[data-away] .fx-rough__again {
   display: none;
 }
 
@@ -533,26 +578,14 @@ main .fx-projector__shelf li::marker {
   .fx-cartridge__by {
     align-self: start;
   }
-
-  /* From the shelf at its right, the cartridge drifts in from that side. */
-  .fx-gate__film {
-    animation-name: fx-cartridge-arrive-right;
-  }
 }
 
-@keyframes fx-cartridge-arrive-right {
-  from {
-    opacity: 0;
-    transform: translate(40px, -36px) rotate(14deg);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
+/* Reduced motion: the states without the movement. Projector.client.tsx
+ * flies no cartridge, and neither jolts the projector nor winds the reels. */
 @media (prefers-reduced-motion: reduce) {
-  .fx-projector.is-playing :is(.fx-reel--front, .fx-reel--rear, .fx-film),
+  .fx-reel--front,
+  .fx-reel--rear,
+  .fx-projector.is-playing .fx-film,
   .fx-gate__film,
   .fx-cartridge__mark::after,
   .fx-projector__film,
@@ -564,7 +597,9 @@ main .fx-projector__shelf li::marker {
   .fx-key__cap,
   .fx-key[aria-pressed="true"] .fx-key__cap,
   .fx-key:active:not([aria-disabled="true"]) .fx-key__cap,
-  .fx-cartridge__shape {
+  .fx-cartridge__shape,
+  .fx-film,
+  .fx-projector.is-seated:not(.is-dimming) .fx-film {
     transition: none;
   }
 

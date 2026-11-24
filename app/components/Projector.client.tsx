@@ -1,4 +1,4 @@
-import React, {useEffect, useId, useRef, useState} from "react";
+import React, {useEffect, useId, useLayoutEffect, useRef, useState} from "react";
 import {withBasePath} from "@nulib/canopy/base-path";
 import {Canvas, decodeContentState, initCloverI18n} from "./clover";
 import {roughBox, roughLine, roughLoop, roughRun, seeded, smooth} from "./roughLines";
@@ -86,6 +86,13 @@ const first = (v: any) => (Array.isArray(v) ? v[0] : v);
 
 /** How long the lamp takes to die on eject; watch.css's fx-lamp-off. */
 const LAMP_OFF_MS = 900;
+
+/** How long a cartridge is in the air between the shelf and the gate. */
+const FLIGHT_MS = 720;
+
+/** The drawing's width in its own units, and where its gate holds a cartridge. */
+const DRAWING_WIDTH = 240;
+const GATE_BOX = {x: 48, y: 102, width: 44, height: 29.3};
 
 /**
  * The page's language, as Canopy sets it on <html> for each locale (en, it).
@@ -361,6 +368,77 @@ function Reel({art, className}: {art: ReelArt; className: string}) {
   );
 }
 
+type Box = {left: number; top: number; width: number; height: number};
+
+/** A cartridge in the air: which, which way, and between where, in the deck's own pixels. */
+type Flight = {id: number; variant: number; way: "in" | "out"; from: Box; to: Box; ms: number};
+
+/**
+ * A cartridge on its way between the shelf and the gate. It leaves one place
+ * drawn as it is there and lands on the other drawn as it is there. Going in,
+ * it lifts off the shelf, arcs over and drops into the gate; coming out, it
+ * pops up out of the gate first, then arcs back and settles.
+ */
+function Flyer({flight, filter, onLand}: {flight: Flight; filter: string; onLand: (flight: Flight) => void}) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const landed = useRef(onLand);
+  landed.current = onLand;
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || typeof el.animate !== "function") {
+      landed.current(flight);
+      return;
+    }
+    const {from, to, way} = flight;
+    const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+    const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+    const grow = to.width / from.width;
+    const half = 1 + (grow - 1) / 2;
+    const lift = Math.max(40, Math.abs(dx) * 0.14);
+    const at = (x: number, y: number, scale: number, turn: number) =>
+      `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${scale.toFixed(3)}) rotate(${turn}deg)`;
+    const frames: Keyframe[] =
+      way === "in"
+        ? [
+            {transform: at(0, 0, 1, 0), offset: 0},
+            {transform: at(0, -10, 1, 5), offset: 0.12},
+            {transform: at(dx * 0.5, dy * 0.5 - lift, half, -16), offset: 0.58},
+            {transform: at(dx, dy - 10, grow, 4), offset: 0.86},
+            {transform: at(dx, dy, grow, 0), offset: 1},
+          ]
+        : [
+            {transform: at(0, 0, 1, 0), offset: 0},
+            {transform: at(0, -20, 1, -7), offset: 0.14, easing: "ease-out"},
+            {transform: at(dx * 0.5, dy * 0.5 - lift, half, 15), offset: 0.6},
+            {transform: at(dx, dy + 3, grow, -5), offset: 0.9},
+            {transform: at(dx, dy, grow, 0), offset: 1},
+          ];
+    const animation = el.animate(frames, {
+      duration: flight.ms,
+      easing: "cubic-bezier(0.45, 0, 0.3, 1)",
+      fill: "forwards",
+    });
+    let live = true;
+    animation.finished.then(
+      () => {
+        if (live) landed.current(flight);
+      },
+      () => {},
+    );
+    return () => {
+      live = false;
+      animation.cancel();
+    };
+    // A flight is drawn once: a new one is a new Flyer (keyed by its id).
+  }, []);
+  const {left, top, width, height} = flight.from;
+  return (
+    <span ref={ref} className="fx-flyer" style={{left, top, width, height}} aria-hidden="true">
+      <CartridgeShape className="fx-flyer__shape" variant={flight.variant} filter={filter} />
+    </span>
+  );
+}
+
 export default function Projector({
   cartridges = [],
   labels: given = {},
@@ -398,6 +476,14 @@ export default function Projector({
   const [mark, setMark] = useState<Mark | null>(() => (start.index == null ? null : nextMark(null)));
   // A shared link's time, until the film is far enough along to go to it.
   const seekTo = useRef<number | null>(start.time);
+  // Cartridges in the air between the shelf and the gate, and how long the
+  // lamp waits for the one coming in.
+  const [flights, setFlights] = useState<Flight[]>([]);
+  const [lampDelay, setLampDelay] = useState(0);
+  const flightId = useRef(0);
+  const deckRef = useRef<HTMLDivElement>(null);
+  const machineRef = useRef<HTMLDivElement>(null);
+  const drawingRef = useRef<SVGSVGElement>(null);
   // Ejecting: the lamp dies, then the cartridge leaves.
   const [dimming, setDimming] = useState(false);
   const dimTimer = useRef<number | null>(null);
@@ -481,6 +567,85 @@ export default function Projector({
     setMedia(null);
   };
 
+  const inFlight = (index: number | null) => index != null && flights.some((f) => f.variant === index);
+  // In the gate: loaded, and no longer (or not yet) in the air.
+  const seated = current != null && !inFlight(loaded);
+
+  /** Send a cartridge between its place on the shelf and the gate. */
+  const fly = (index: number, way: Flight["way"], ms: number) => {
+    const deck = deckRef.current;
+    const drawing = drawingRef.current;
+    const face = deck?.querySelectorAll<HTMLElement>(".fx-cartridge__face")[index];
+    if (!deck || !drawing || !face || reducedMotion()) return;
+    const d = deck.getBoundingClientRect();
+    const g = drawing.getBoundingClientRect();
+    const f = face.getBoundingClientRect();
+    const unit = g.width / DRAWING_WIDTH;
+    const shelf: Box = {left: f.left - d.left, top: f.top - d.top, width: f.width, height: f.height};
+    const gate: Box = {
+      left: g.left - d.left + GATE_BOX.x * unit,
+      top: g.top - d.top + GATE_BOX.y * unit,
+      width: GATE_BOX.width * unit,
+      height: GATE_BOX.height * unit,
+    };
+    const flight: Flight = {
+      id: ++flightId.current,
+      variant: index,
+      way,
+      ms,
+      from: way === "in" ? shelf : gate,
+      to: way === "in" ? gate : shelf,
+    };
+    // One flight a cartridge: a new one the other way takes over from it.
+    setFlights((all) =>
+      all.some((other) => other.variant === index && other.way === way)
+        ? all
+        : [...all.filter((other) => other.variant !== index), flight],
+    );
+  };
+
+  /** The projector takes a knock: a cartridge dropping in, or a key going down. */
+  const jolt = (by = 1) => {
+    const machine = machineRef.current;
+    if (!machine || typeof machine.animate !== "function" || reducedMotion()) return;
+    machine.animate(
+      [
+        {transform: "none"},
+        {transform: `translate(${by}px, ${3 * by}px) rotate(${0.5 * by}deg)`, offset: 0.3},
+        {transform: `translate(${-0.5 * by}px, ${-by}px) rotate(${-0.25 * by}deg)`, offset: 0.65},
+        {transform: "none"},
+      ],
+      {duration: 340, easing: "ease-out"},
+    );
+  };
+
+  /**
+   * Whole turns of the reels, on top of wherever they stand: forward to take
+   * up the film, back to rewind it. The smaller reel turns twice as far.
+   */
+  const turnReels = (turns: number, ms: number) => {
+    if (reducedMotion()) return;
+    drawingRef.current?.querySelectorAll<SVGGElement>(".fx-reel").forEach((reel, k) => {
+      if (typeof reel.animate !== "function") return;
+      const frames = [{transform: "rotate(0deg)"}, {transform: `rotate(${360 * turns * (k + 1)}deg)`}];
+      const timing = {duration: ms, easing: "cubic-bezier(0.35, 0, 0.2, 1)"};
+      try {
+        reel.animate(frames, {...timing, composite: "add" as CompositeOperation});
+      } catch (_) {
+        reel.animate(frames, timing);
+      }
+    });
+  };
+
+  /** A cartridge has landed. In the gate, the projector jolts and winds the film on. */
+  const land = (flight: Flight) => {
+    setFlights((all) => all.filter((other) => other.id !== flight.id));
+    if (flight.way === "in") {
+      jolt();
+      turnReels(1, 1000);
+    }
+  };
+
   const stopDimming = () => {
     if (dimTimer.current) window.clearTimeout(dimTimer.current);
     dimTimer.current = null;
@@ -494,10 +659,13 @@ export default function Projector({
     setLoaded(null);
   };
 
-  // The lamp dies on the paused film, then the screen is left black and the
-  // cartridge comes out. At once, for a reader who asks for reduced motion.
+  // The cartridge pops out of the gate and flies back to its place on the
+  // shelf while the lamp dies on the paused film, the reels rewind and the
+  // film pulls back; then the screen is left black. It lands just after the
+  // lamp is out, so its place is never seen empty. All at once, for a reader
+  // who asks for reduced motion.
   const eject = () => {
-    if (!current || dimming) return;
+    if (!current || loaded == null || dimming) return;
     if (media) media.pause();
     if (reducedMotion()) {
       finishEject();
@@ -505,10 +673,14 @@ export default function Projector({
     }
     setDimming(true);
     dimTimer.current = window.setTimeout(finishEject, LAMP_OFF_MS);
+    jolt(0.6);
+    turnReels(-2, LAMP_OFF_MS);
+    fly(loaded, "out", LAMP_OFF_MS + 40);
   };
 
-  // A cartridge on the shelf: the loaded one goes back (eject); any other
-  // takes its place at once, and its lamp warms up.
+  // A cartridge on the shelf: the loaded one goes back (eject). Any other
+  // flies to the gate, passing the one it replaces on its way back, and the
+  // lamp waits for it to land before it warms up.
   const load = (index: number) => {
     if (index === loaded) {
       eject();
@@ -517,6 +689,9 @@ export default function Projector({
     stopDimming();
     unload();
     seekTo.current = null;
+    if (loaded != null) fly(loaded, "out", FLIGHT_MS);
+    fly(index, "in", FLIGHT_MS);
+    setLampDelay(reducedMotion() ? 0 : FLIGHT_MS);
     setLoaded(index);
     setMark(nextMark);
   };
@@ -527,7 +702,12 @@ export default function Projector({
     else media.pause();
   };
 
-  const state = [current ? "is-loaded" : "", playing ? "is-playing" : "", dimming ? "is-dimming" : ""]
+  const state = [
+    current ? "is-loaded" : "",
+    seated ? "is-seated" : "",
+    playing ? "is-playing" : "",
+    dimming ? "is-dimming" : "",
+  ]
     .filter(Boolean)
     .join(" ");
 
@@ -535,8 +715,13 @@ export default function Projector({
     <div className={`fx-projector ${state}`.trim()}>
       <div className="fx-projector__screen">
         {current ? (
-          // The lamp: each film warms up on its own, from black (watch.css).
-          <div className="fx-projector__film" key={current.manifest}>
+          // The lamp: each film warms up on its own, from black (watch.css),
+          // once its cartridge has landed in the gate.
+          <div
+            className="fx-projector__film"
+            key={current.manifest}
+            style={{"--fx-lamp-delay": `${lampDelay}ms`} as React.CSSProperties}
+          >
             <Canvas
               iiifContent={current.manifest}
               language={language}
@@ -569,9 +754,15 @@ export default function Projector({
         )}
       </p>
 
-      <div className="fx-projector__deck">
-        <div className="fx-projector__machine">
-          <svg className="fx-projector__drawing" viewBox="0 0 240 150" aria-hidden="true" focusable="false">
+      <div className="fx-projector__deck" ref={deckRef}>
+        <div className="fx-projector__machine" ref={machineRef}>
+          <svg
+            ref={drawingRef}
+            className="fx-projector__drawing"
+            viewBox={`0 0 ${DRAWING_WIDTH} 150`}
+            aria-hidden="true"
+            focusable="false"
+          >
             <defs>
               {/* As <Hand>'s wet edge: a slow wobble over the drawn lines, which
                   the shelf's cartridges share. */}
@@ -596,12 +787,12 @@ export default function Projector({
               ))}
               <path className="fx-gate" d={PROJECTOR.gate} />
             </g>
-            {current && loaded != null ? (
+            {current && loaded != null && seated ? (
               <g className="fx-gate__film" key={current.manifest}>
                 <CartridgeShape
                   className="fx-gate__cartridge"
                   variant={loaded}
-                  box={{x: 48, y: 102, width: 44, height: 29.3}}
+                  box={GATE_BOX}
                   filter={`url(#${wobble})`}
                 />
               </g>
@@ -643,6 +834,8 @@ export default function Projector({
                   type="button"
                   className="fx-cartridge"
                   aria-pressed={loaded === i}
+                  // Off the shelf: in the gate, or in the air either way.
+                  data-away={loaded === i || inFlight(i) ? "" : undefined}
                   data-fx-ann-color={loaded === i && mark ? mark.color : undefined}
                   onClick={() => load(i)}
                 >
@@ -665,6 +858,10 @@ export default function Projector({
             ))}
           </ul>
         </div>
+
+        {flights.map((flight) => (
+          <Flyer key={flight.id} flight={flight} filter={`url(#${wobble})`} onLand={land} />
+        ))}
       </div>
     </div>
   );
