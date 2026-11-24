@@ -82,21 +82,19 @@
   --clover-canvas-background: var(--fx-ink);
 }
 
-.fx-projector__frame {
+/* Framed in black marker, as the search results are: paint-frame.svg as a
+ * 9-slice border image, so the corners stay put and the line keeps its
+ * weight at any size. It's laid round the screen, outside it, so the
+ * picture keeps its size; the line falls about 6px out, leaving a strip of
+ * paper between it and the black, as the results sit inside theirs. */
+.fx-projector__screen::after {
+  content: "";
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
+  inset: -14px;
+  z-index: 1;
+  border: 10px solid transparent;
+  border-image: url("../images/marker/paint-frame.svg") 24 / 10px stretch;
   pointer-events: none;
-  fill: none;
-  stroke: var(--fx-ink);
-  stroke-width: 1.5px;
-  vector-effect: non-scaling-stroke;
-}
-
-.fx-projector__frame path {
-  vector-effect: non-scaling-stroke;
 }
 
 /* --- Projector --------------------------------------------------------- */
