@@ -101,6 +101,13 @@
 
 /* --- Projector --------------------------------------------------------- */
 
+/* The projector and its shelf, under the screen. */
+.fx-projector__deck {
+  display: grid;
+  justify-items: center;
+  width: 100%;
+}
+
 .fx-projector__machine {
   position: relative;
   container-type: inline-size;
@@ -396,35 +403,31 @@ main .fx-projector__shelf li::marker {
 }
 
 /* Wide: the projector and the shelf stand side by side, centered as a pair
- * under the screen, so the projector sits left of center. The outer columns
- * only share out the spare width. Narrow, the shelf waits under the projector. */
+ * under the screen, so the projector sits left of center. The pair is a row
+ * of its own, so however long a language's names run, the screen above keeps
+ * the container's width; the shelf gives way first, wrapping a subtitle onto a
+ * third line before it would push past the edge. Narrow, the shelf waits under
+ * the projector. */
 @media (min-width: 64rem) {
-  .fx-projector {
-    grid-template-columns: minmax(0, 1fr) 28rem auto minmax(0, 1fr);
+  .fx-projector__deck {
+    display: flex;
+    justify-content: center;
+    /* Each keeps its own height, so the knobs stay on the drawn body. */
+    align-items: center;
     column-gap: calc(2 * var(--fx-tab));
-  }
-
-  .fx-projector__screen,
-  main .fx-projector__caption {
-    grid-column: 1 / -1;
-  }
-
-  /* Each keeps its own height, so the knobs stay on the drawn body. */
-  .fx-projector__machine,
-  .fx-projector__shelf {
-    grid-row: 3;
-    align-self: center;
+    margin-top: clamp(2.5rem, 6vw, 4rem);
   }
 
   .fx-projector__machine {
-    grid-column: 2;
+    flex: 0 0 28rem;
+    margin-top: 0;
   }
 
   .fx-projector__shelf {
-    grid-column: 3;
-    justify-self: start;
+    flex: 0 1 auto;
+    min-width: 0;
     width: auto;
-    margin-top: clamp(2.5rem, 6vw, 4rem);
+    margin-top: 0;
   }
 
   .fx-projector__shelf ul {
@@ -461,9 +464,9 @@ main .fx-projector__shelf li::marker {
     width: 200%;
   }
 
-  /* Two lines each: the score, then what this recording of it is. */
-  .fx-cartridge__work,
-  .fx-cartridge__by {
+  /* Two lines each, room allowing: the score, then what this recording of
+   * it is. The score's name never breaks. */
+  .fx-cartridge__work {
     white-space: nowrap;
   }
 
