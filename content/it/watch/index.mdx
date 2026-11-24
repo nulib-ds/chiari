@@ -1,9 +1,50 @@
 ---
 title: Guardare
-description: Blank description
+description: Carica una pellicola nel proiettore e guarda le registrazioni di Per Arco e Teatrino di Giuseppe Chiari.
 ---
-<Container>
-# Guardare
-## WIP
-<RelatedItems />
-</Container>
+
+<Projector
+  labels={{
+    items: "Elementi da guardare",
+    play: "Avvia",
+    eject: "Espelli",
+    empty: "Carica una pellicola, poi gira la manopola.",
+    showing: "In proiezione",
+  }}
+  cartridges={[
+    {
+      manifest: "https://iiif-understory.dc.library.northwestern.edu/published/presentation/manifest/e0bc633a-0660-486d-9810-b67cd49937c7/manifest.json",
+      work: "Per Arco",
+      by: "Charlotte Moorman",
+      date: "1983",
+      href: "/it/works/per-arco-performance-1.html",
+    },
+    {
+      manifest: "https://iiif-understory.dc.library.northwestern.edu/published/presentation/manifest/69740016-5868-4366-abd4-b255e41365db/manifest.json",
+      work: "Per Arco",
+      by: "Deborah Walker",
+      date: "2016",
+      href: "/it/works/per-arco-performance.html",
+    },
+    {
+      manifest: "https://iiif-understory.dc.library.northwestern.edu/published/presentation/manifest/6c077f57-c11f-4407-890f-d0846853cf69/manifest.json",
+      work: "Per Arco",
+      by: "Suoni di guerra, primo nastro",
+      date: "c. 1963",
+      href: "/it/works/per-arco-war-sounds-1963.html",
+    },
+    {
+      manifest: "https://iiif-understory.dc.library.northwestern.edu/published/presentation/manifest/8714d89c-5347-43c9-a906-0ce17db8144f/manifest.json",
+      work: "Per Arco",
+      by: "Suoni di guerra, secondo nastro",
+      date: "c. 1975",
+      href: "/it/works/per-arco-war-sounds-1975.html",
+    },
+    {
+      manifest: "https://iiif-understory.dc.library.northwestern.edu/published/presentation/manifest/9bf1a654-2a88-480a-ade6-90098ca3a900/manifest.json",
+      work: "Teatrino",
+      by: "Frederic Rzewski",
+      href: "/it/works/teatrino-1.html",
+    },
+  ]}
+/>

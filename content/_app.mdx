@@ -314,7 +314,7 @@ export function ChiariHeader() {
   const PageContext = globalThis[Symbol.for("__CANOPY_PAGE_CONTEXT__")];
   const context = PageContext ? React.useContext(PageContext) : null;
   // Canopy leaves isActive unset on primary links, so mark the section the
-  // current page lives under (e.g. /it/watch/per_arco/ → Watch).
+  // current page lives under (e.g. /it/play/la_strada/ → Play).
   const page = (context && context.page) || {};
   const pageSegments = String(page.href || page.url || "").split(/[?#]/)[0].split("/");
   const links = ((context && context.primaryNavigation) || []).map((link) => ({

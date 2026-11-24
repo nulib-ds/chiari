@@ -1,0 +1,466 @@
+/**
+ * Watch: one page, a projector drawn in a few ink lines under its screen.
+ *
+ * content/watch/_layout.mdx gives the page its own shell (.fx-watch) in place
+ * of Canopy's Layout: no section sidebar or contents, the site container and
+ * a heading kept for screen readers alone. Projector.client.tsx draws the rest.
+ *
+ * Every line is ink on the paper. Motion is the film's own: the reels turn and
+ * the film runs only while it plays, and a loaded cartridge floats into the
+ * gate. Readers who ask for reduced motion get the states without it.
+ */
+
+.fx-watch {
+  max-width: var(--fx-container);
+  margin-inline: auto;
+  /* The screen starts a line under the menu, higher than other pages start. */
+  padding-top: var(--fx-line);
+  padding-inline: var(--fx-inset);
+}
+
+.fx-projector {
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+
+/* --- Screen ------------------------------------------------------------ */
+
+/* The screen runs the container's full width. */
+.fx-projector__screen {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.fx-projector__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  --clover-body-height: 100%;
+  --clover-canvas-background: var(--fx-paper);
+}
+
+.fx-projector__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke: var(--fx-ink);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+}
+
+.fx-projector__frame path {
+  vector-effect: non-scaling-stroke;
+}
+
+/* --- Projector --------------------------------------------------------- */
+
+.fx-projector__machine {
+  position: relative;
+  container-type: inline-size;
+  width: min(100%, 28rem);
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+}
+
+.fx-projector__drawing {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  fill: none;
+  stroke: var(--fx-ink);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.fx-reel {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.fx-projector.is-playing .fx-reel--front {
+  animation: fx-reel-turn 4.2s linear infinite;
+}
+
+/* The smaller reel turns faster, as take-up reels do. */
+.fx-projector.is-playing .fx-reel--rear {
+  animation: fx-reel-turn 2.9s linear infinite;
+}
+
+@keyframes fx-reel-turn {
+  to { transform: rotate(360deg); }
+}
+
+.fx-film {
+  stroke-width: 1.2;
+  stroke-dasharray: 2.5 2.5;
+}
+
+.fx-projector.is-playing .fx-film {
+  animation: fx-film-run 0.5s linear infinite;
+}
+
+@keyframes fx-film-run {
+  to { stroke-dashoffset: -5; }
+}
+
+.fx-gate {
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+}
+
+.fx-projector.is-loaded .fx-gate {
+  stroke-dasharray: none;
+}
+
+.fx-gate__film {
+  animation: fx-cartridge-arrive 0.8s cubic-bezier(0.25, 0.9, 0.3, 1.15) both;
+}
+
+/* It drifts in from up and to the left, turning as it comes, and settles. */
+@keyframes fx-cartridge-arrive {
+  from {
+    opacity: 0;
+    transform: translate(-28px, -46px) rotate(-14deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.fx-gate__cartridge {
+  overflow: visible;
+}
+
+/* --- Knobs: real buttons over the body of the drawing ------------------ */
+
+.fx-knob {
+  position: absolute;
+  top: 77%;
+  display: block;
+  width: 11.5cqw;
+  min-width: 2.25rem;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--fx-ink);
+  font: inherit;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+/* Far enough apart that their labels clear each other at a phone's width,
+ * in Italian too (Avvia, Espelli). */
+.fx-knob--play {
+  left: 48%;
+}
+
+.fx-knob--eject {
+  left: 72.5%;
+}
+
+.fx-knob__dial {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: var(--fx-paper);
+  stroke: var(--fx-ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.fx-knob__pointer {
+  transform-origin: 20px 20px;
+  transform: rotate(-55deg);
+  transition: transform 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.fx-knob[aria-pressed="true"] .fx-knob__pointer {
+  transform: rotate(55deg);
+}
+
+/* Eject turns over and springs back. */
+.fx-knob--eject:active:not([aria-disabled="true"]) .fx-knob__pointer {
+  transform: rotate(55deg);
+  transition-duration: 0.15s;
+}
+
+/* Nothing to play or eject: the dial is drawn open, the label stays ink. */
+.fx-knob[aria-disabled="true"] {
+  cursor: default;
+}
+
+.fx-knob[aria-disabled="true"] .fx-knob__dial circle {
+  stroke-dasharray: 3 3;
+}
+
+.fx-knob__label {
+  position: absolute;
+  /* Hung just under the body, like a typed label. */
+  top: calc(100% + 1.2rem);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.fx-knob:hover:not([aria-disabled="true"]) .fx-knob__label {
+  text-decoration-line: underline;
+}
+
+/* --- Caption ----------------------------------------------------------- */
+
+/* Directly under the screen, as a film's title card. */
+main .fx-projector__caption {
+  margin: calc(var(--fx-line) / 2) 0 0;
+  text-align: center;
+}
+
+/* --- Shelf of cartridges ----------------------------------------------- */
+
+.fx-projector__shelf {
+  width: 100%;
+  margin-top: calc(2 * var(--fx-line));
+}
+
+.fx-projector__shelf ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--fx-line) var(--fx-tab);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 40rem) {
+  .fx-projector__shelf ul {
+    column-gap: calc(2 * var(--fx-tab));
+  }
+}
+
+main .fx-projector__shelf li,
+main .fx-projector__shelf li + li {
+  margin: 0;
+  padding: 0;
+}
+
+main .fx-projector__shelf li::before,
+main .fx-projector__shelf li::marker {
+  content: none;
+}
+
+.fx-cartridge {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  max-width: 13ch;
+  padding: 0.25rem;
+  border: 0;
+  background: none;
+  color: var(--fx-ink);
+  font: inherit;
+  line-height: 1.3;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* The drawing and, once loaded, the paint mark laid over it. */
+.fx-cartridge__face {
+  position: relative;
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.fx-cartridge__shape {
+  display: block;
+  width: 5.5rem;
+  height: auto;
+  overflow: visible;
+  fill: none;
+  stroke: var(--fx-ink);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  transition: transform 0.35s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.fx-cartridge:hover .fx-cartridge__shape {
+  transform: translateY(-3px) rotate(-5deg);
+}
+
+/* Loaded: it has left the shelf for the gate, so only its outline is left,
+ * grayed under its paint mark. The gray holds 3:1 on the paper, so the
+ * outline still reads (WCAG 1.4.11). */
+.fx-cartridge[aria-pressed="true"] .fx-cartridge__shape {
+  stroke: color-mix(in srgb, var(--fx-ink) 45%, var(--fx-paper));
+  stroke-dasharray: 3 3;
+  transform: none;
+}
+
+/* Its name gets a marker stroke underneath, in its mark's paint, as a search
+ * result's title shares its mark's (pink until a mark is chosen). The padding
+ * makes room for the stroke and the margin gives it back, so nothing moves. */
+.fx-cartridge[aria-pressed="true"] .fx-cartridge__work {
+  padding-bottom: 0.3em;
+  margin-bottom: -0.3em;
+  background: var(--fx-ann-paint, url("../images/marker/paint-pink.svg")) left bottom / 100% 0.45em no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.fx-cartridge__work {
+  text-transform: uppercase;
+}
+
+/* A loaded cartridge's empty place gets a paint mark: a random one of the
+ * twenty gestures, in a random paint, never the last one's. It keeps the
+ * shape it was drawn in (280 by 50), across the outline and clear of the
+ * name beside it, and paints in from left to right. Decorative: the dashed
+ * outline and aria-pressed carry the state. */
+.fx-cartridge__mark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 160%;
+  aspect-ratio: 280 / 50;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.fx-cartridge__mark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--fx-ann, var(--fx-pink));
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: fx-mark-paint 0.4s cubic-bezier(0.3, 0.6, 0.3, 1) both;
+}
+
+@keyframes fx-mark-paint {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* Wide: the projector and the shelf stand side by side, centered as a pair
+ * under the screen, so the projector sits left of center. The outer columns
+ * only share out the spare width. Narrow, the shelf waits under the projector. */
+@media (min-width: 64rem) {
+  .fx-projector {
+    grid-template-columns: minmax(0, 1fr) 28rem auto minmax(0, 1fr);
+    column-gap: calc(2 * var(--fx-tab));
+  }
+
+  .fx-projector__screen,
+  main .fx-projector__caption {
+    grid-column: 1 / -1;
+  }
+
+  /* Each keeps its own height, so the knobs stay on the drawn body. */
+  .fx-projector__machine,
+  .fx-projector__shelf {
+    grid-row: 3;
+    align-self: center;
+  }
+
+  .fx-projector__machine {
+    grid-column: 2;
+  }
+
+  .fx-projector__shelf {
+    grid-column: 3;
+    justify-self: start;
+    width: auto;
+    margin-top: clamp(2.5rem, 6vw, 4rem);
+  }
+
+  .fx-projector__shelf ul {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  /* Each cartridge on its side, its name beside it. */
+  .fx-cartridge {
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+    column-gap: var(--fx-tab);
+    row-gap: 0;
+    align-items: center;
+    justify-items: start;
+    max-width: none;
+    text-align: start;
+  }
+
+  .fx-cartridge__face {
+    grid-row: 1 / span 2;
+    margin-bottom: 0;
+  }
+
+  .fx-cartridge__shape {
+    width: 3.75rem;
+  }
+
+  /* Twice the drawing's width, centered on it; the tab before the name
+   * leaves it room to overhang without covering the words. */
+  .fx-cartridge__mark {
+    width: 200%;
+  }
+
+  /* Two lines each: the score, then what this recording of it is. */
+  .fx-cartridge__work,
+  .fx-cartridge__by {
+    white-space: nowrap;
+  }
+
+  .fx-cartridge__work {
+    align-self: end;
+  }
+
+  .fx-cartridge__by {
+    align-self: start;
+  }
+
+  /* From the shelf at its right, the cartridge drifts in from that side. */
+  .fx-gate__film {
+    animation-name: fx-cartridge-arrive-right;
+  }
+}
+
+@keyframes fx-cartridge-arrive-right {
+  from {
+    opacity: 0;
+    transform: translate(40px, -36px) rotate(14deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-projector.is-playing :is(.fx-reel--front, .fx-reel--rear, .fx-film),
+  .fx-gate__film,
+  .fx-cartridge__mark::after {
+    animation: none;
+  }
+
+  .fx-knob__pointer,
+  .fx-cartridge__shape {
+    transition: none;
+  }
+}

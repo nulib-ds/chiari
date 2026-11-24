@@ -1,3 +1,8 @@
-<Layout navigation={true} fluid={true} contentNavigation={false}>
+{/* Watch's own shell, in place of Canopy's Layout: one page, no section
+    sidebar or contents. The page's title is its heading, kept for screen
+    readers and the outline but not shown, so the screen starts at the top;
+    the page itself holds the projector (app/styles/watch.css). */}
+<div className="fx-watch">
+  <h1 className="sr-only">{props.page.title}</h1>
   {props.children}
-</Layout>
+</div>
