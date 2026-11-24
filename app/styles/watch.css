@@ -31,6 +31,46 @@
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
+  /* A darkened room: the screen is black until a lamp lights it. */
+  background: var(--fx-ink);
+}
+
+/* The lamp. A loaded film warms up over 2.4s: from black, warm and out of
+ * focus, it flickers up unevenly as the lamp catches, and is pulled into
+ * focus as it settles. On eject the lamp dies: one small flare, then it
+ * dims warm and soft to black, and the cartridge comes out
+ * (Projector.client.tsx waits LAMP_OFF_MS for it).
+ *
+ * The flicker dips at most twice in any second, under the three flashes a
+ * second that WCAG 2.3.1 allows a picture this size. Under reduced motion
+ * the film is simply there, and on eject simply gone (no LAMP_OFF_MS wait). */
+.fx-projector__film {
+  position: absolute;
+  inset: 0;
+  animation: fx-lamp-on 2.4s linear both;
+}
+
+.fx-projector.is-dimming .fx-projector__film {
+  animation: fx-lamp-off 0.9s ease-in forwards;
+}
+
+@keyframes fx-lamp-on {
+  0% { opacity: 0; filter: sepia(0.7) brightness(0.45) blur(8px); }
+  6% { opacity: 0.45; }
+  11% { opacity: 0.2; }
+  21% { opacity: 0.6; filter: sepia(0.55) brightness(0.65) blur(6px); }
+  27% { opacity: 0.42; }
+  42% { opacity: 0.82; filter: sepia(0.35) brightness(0.82) blur(3px); }
+  48% { opacity: 0.66; }
+  66% { opacity: 0.96; filter: sepia(0.12) brightness(0.96) blur(1px); }
+  100% { opacity: 1; filter: none; }
+}
+
+@keyframes fx-lamp-off {
+  0% { opacity: 1; filter: none; }
+  10% { opacity: 1; filter: brightness(1.12); }
+  22% { opacity: 0.85; filter: sepia(0.25) brightness(0.9) blur(1px); }
+  100% { opacity: 0; filter: sepia(0.7) brightness(0.3) blur(5px); }
 }
 
 .fx-projector__canvas {
@@ -39,7 +79,7 @@
   width: 100%;
   height: 100%;
   --clover-body-height: 100%;
-  --clover-canvas-background: var(--fx-paper);
+  --clover-canvas-background: var(--fx-ink);
 }
 
 .fx-projector__frame {
@@ -207,8 +247,8 @@
 
 .fx-knob__label {
   position: absolute;
-  /* Hung just under the body, like a typed label. */
-  top: calc(100% + 1.2rem);
+  /* Typed just below the drawing, clear of the body and its feet. */
+  top: calc(100% + 2.4rem);
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
@@ -455,12 +495,19 @@ main .fx-projector__shelf li::marker {
 @media (prefers-reduced-motion: reduce) {
   .fx-projector.is-playing :is(.fx-reel--front, .fx-reel--rear, .fx-film),
   .fx-gate__film,
-  .fx-cartridge__mark::after {
+  .fx-cartridge__mark::after,
+  .fx-projector__film,
+  .fx-projector.is-dimming .fx-projector__film {
     animation: none;
   }
 
   .fx-knob__pointer,
   .fx-cartridge__shape {
     transition: none;
+  }
+
+  /* A cartridge holds still under the pointer. */
+  .fx-cartridge:hover .fx-cartridge__shape {
+    transform: none;
   }
 }
