@@ -79,6 +79,12 @@ const nextMark = (last: Mark | null): Mark => ({
 
 const first = (v: any) => (Array.isArray(v) ? v[0] : v);
 
+/** How long the lamp takes to die on eject; watch.css's fx-lamp-off. */
+const LAMP_OFF_MS = 900;
+
+const reducedMotion = () =>
+  typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
 /* --- The shareable address ------------------------------------------- */
 
 const CONTENT_PARAM = "iiif-content";
@@ -202,6 +208,12 @@ export default function Projector({
   const [mark, setMark] = useState<Mark | null>(() => (start.index == null ? null : nextMark(null)));
   // A shared link's time, until the film is far enough along to go to it.
   const seekTo = useRef<number | null>(start.time);
+  // Ejecting: the lamp dies, then the cartridge leaves.
+  const [dimming, setDimming] = useState(false);
+  const dimTimer = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (dimTimer.current) window.clearTimeout(dimTimer.current);
+  }, []);
 
   const current = loaded == null ? null : cartridges[loaded] || null;
 
@@ -279,44 +291,70 @@ export default function Projector({
     setMedia(null);
   };
 
-  const load = (index: number) => {
-    unload();
-    seekTo.current = null;
-    if (index === loaded) {
-      setLoaded(null);
-      return;
-    }
-    setLoaded(index);
-    setMark(nextMark);
+  const stopDimming = () => {
+    if (dimTimer.current) window.clearTimeout(dimTimer.current);
+    dimTimer.current = null;
+    setDimming(false);
   };
 
-  const eject = () => {
-    if (!current) return;
+  const finishEject = () => {
+    stopDimming();
     unload();
     seekTo.current = null;
     setLoaded(null);
   };
 
+  // The lamp dies on the paused film, then the screen is left black and the
+  // cartridge comes out. At once, for a reader who asks for reduced motion.
+  const eject = () => {
+    if (!current || dimming) return;
+    if (media) media.pause();
+    if (reducedMotion()) {
+      finishEject();
+      return;
+    }
+    setDimming(true);
+    dimTimer.current = window.setTimeout(finishEject, LAMP_OFF_MS);
+  };
+
+  // A cartridge on the shelf: the loaded one goes back (eject); any other
+  // takes its place at once, and its lamp warms up.
+  const load = (index: number) => {
+    if (index === loaded) {
+      eject();
+      return;
+    }
+    stopDimming();
+    unload();
+    seekTo.current = null;
+    setLoaded(index);
+    setMark(nextMark);
+  };
+
   const toggle = () => {
-    if (!media) return;
+    if (!media || dimming) return;
     if (media.paused || media.ended) media.play().catch(() => {});
     else media.pause();
   };
 
-  const state = [current ? "is-loaded" : "", playing ? "is-playing" : ""].filter(Boolean).join(" ");
+  const state = [current ? "is-loaded" : "", playing ? "is-playing" : "", dimming ? "is-dimming" : ""]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className={`fx-projector ${state}`.trim()}>
       <div className="fx-projector__screen">
         {current ? (
-          <Canvas
-            key={current.manifest}
-            iiifContent={current.manifest}
-            label={[current.work, credit(current)].filter(Boolean).join(", ")}
-            className="fx-projector__canvas"
-            onMediaElement={setMedia}
-            options={{hideDelay: 2000}}
-          />
+          // The lamp: each film warms up on its own, from black (watch.css).
+          <div className="fx-projector__film" key={current.manifest}>
+            <Canvas
+              iiifContent={current.manifest}
+              label={[current.work, credit(current)].filter(Boolean).join(", ")}
+              className="fx-projector__canvas"
+              onMediaElement={setMedia}
+              options={{hideDelay: 2000}}
+            />
+          </div>
         ) : null}
         <svg className="fx-projector__frame" viewBox="0 0 160 90" preserveAspectRatio="none" aria-hidden="true" focusable="false">
           <path d="M0.3 0.6 L159.7 0.2 L159.6 89.7 L0.2 89.5 Z" />
@@ -374,7 +412,7 @@ export default function Projector({
           type="button"
           className="fx-knob fx-knob--play"
           aria-pressed={playing}
-          aria-disabled={media ? undefined : true}
+          aria-disabled={media && !dimming ? undefined : true}
           onClick={toggle}
         >
           <svg className="fx-knob__dial" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
@@ -386,7 +424,7 @@ export default function Projector({
         <button
           type="button"
           className="fx-knob fx-knob--eject"
-          aria-disabled={current ? undefined : true}
+          aria-disabled={current && !dimming ? undefined : true}
           onClick={eject}
         >
           <svg className="fx-knob__dial" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
