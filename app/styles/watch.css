@@ -5,7 +5,10 @@
  * of Canopy's Layout: no section sidebar or contents, the site container and
  * a heading kept for screen readers alone. Projector.client.tsx draws the rest.
  *
- * Every line is ink on the paper. Motion is the film's own: the reels turn and
+ * Every line is ink on the paper, drawn a little roughly: ends that miss,
+ * sides that run past their corners, outlines gone over twice, and weights
+ * that vary from line to line (app/components/roughLines.ts). No two
+ * cartridges are drawn alike. Motion is the film's own: the reels turn and
  * the film runs only while it plays, and a loaded cartridge floats into the
  * gate. Readers who ask for reduced motion get the states without it.
  */
@@ -125,9 +128,10 @@
   stroke-linejoin: round;
 }
 
+/* Each reel turns about its hub, whose place in the drawing its style gives:
+ * a rough rim's own box is not quite centered on it. */
 .fx-reel {
-  transform-box: fill-box;
-  transform-origin: center;
+  transform-box: view-box;
 }
 
 .fx-projector.is-playing .fx-reel--front {
@@ -221,11 +225,14 @@
   overflow: visible;
   fill: var(--fx-paper);
   stroke: var(--fx-ink);
-  stroke-width: 2;
+  stroke-width: 2.4;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .fx-knob__pointer {
+  fill: none;
+  stroke-width: 2.9;
   transform-origin: 20px 20px;
   transform: rotate(-55deg);
   transition: transform 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
@@ -246,7 +253,7 @@
   cursor: default;
 }
 
-.fx-knob[aria-disabled="true"] .fx-knob__dial circle {
+.fx-knob[aria-disabled="true"] .fx-knob__rim {
   stroke-dasharray: 3 3;
 }
 
@@ -336,6 +343,7 @@ main .fx-projector__shelf li::marker {
   fill: none;
   stroke: var(--fx-ink);
   stroke-width: 1.6;
+  stroke-linecap: round;
   stroke-linejoin: round;
   transition: transform 0.35s cubic-bezier(0.3, 1.5, 0.5, 1);
 }
@@ -351,6 +359,11 @@ main .fx-projector__shelf li::marker {
   stroke: color-mix(in srgb, var(--fx-ink) 45%, var(--fx-paper));
   stroke-dasharray: 3 3;
   transform: none;
+}
+
+/* Only the one outline is left: a second pass would double the dashes. */
+.fx-cartridge[aria-pressed="true"] .fx-rough__again {
+  display: none;
 }
 
 /* Its name gets a marker stroke underneath, in its mark's paint, as a search

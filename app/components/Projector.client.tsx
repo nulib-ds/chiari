@@ -1,6 +1,8 @@
 import React, {useEffect, useId, useRef, useState} from "react";
 import {withBasePath} from "@nulib/canopy/base-path";
 import {Canvas, decodeContentState, initCloverI18n} from "./clover";
+import {roughBox, roughLine, roughLoop, roughRun, seeded, smooth} from "./roughLines";
+import type {Pt, Rand} from "./roughLines";
 
 /**
  * The Watch page: a projector drawn in a few ink lines, its screen above it.
@@ -158,31 +160,164 @@ function posterOf(manifest: any): string | null {
   return idOf(canvas?.thumbnail) || idOf(manifest?.thumbnail);
 }
 
+/* --- The drawing ---------------------------------------------------------
+ * Everything is drawn by roughLines.ts: strokes whose ends land a little off
+ * and run past their corners, circles that don't quite close. Weights vary,
+ * from the body's bold outline to thin details, and the bolder lines are gone
+ * over a second time, lighter, without quite following the first.
+ * ---------------------------------------------------------------------- */
+
+/** A drawn line: its path, its weight, and for bolder lines a second pass. */
+type Line = {d: string; w: number; again?: string};
+
+/** Draw the same stroke twice, as a marker goes back over an outline. */
+const twice = (make: () => string, w: number): Line => ({d: make(), w, again: make()});
+
+type ReelArt = {cx: number; cy: number; lines: Line[]};
+
+/** A reel: rim, hub and three holes. */
+function drawReel(rand: Rand, cx: number, cy: number, r: number): ReelArt {
+  const lines: Line[] = [
+    twice(() => roughLoop(rand, cx, cy, r, r, {jitter: 0.016, overlap: 0.5}), 2.1),
+    {d: roughLoop(rand, cx, cy, r * 0.12, r * 0.12, {jitter: 0.1}), w: 1.6},
+  ];
+  for (const deg of [0, 120, 240]) {
+    const a = ((deg - 90) * Math.PI) / 180;
+    const hole = roughLoop(rand, cx + Math.cos(a) * r * 0.5, cy + Math.sin(a) * r * 0.5, r * 0.2, r * 0.2, {jitter: 0.07});
+    lines.push({d: hole, w: 1.3});
+  }
+  return {cx, cy, lines};
+}
+
+/** The projector, drawn once: the same on every load. */
+const PROJECTOR = (() => {
+  const rand = seeded(1926);
+  const body: Pt[] = [[38, 93.5], [190.5, 92.5], [191, 139], [37.5, 139.5]];
+  const neck: Pt[] = [[191, 124.5], [206.5, 124], [206, 17], [194, 17.5], [194, 104], [191, 104]];
+  const gate: Pt[] = [[52, 101], [100, 100.5], [100.5, 132], [51.5, 132.5]];
+  return {
+    // Arms holding the reels above the body.
+    arms: [
+      {d: roughLine(rand, [68, 46], [84, 93], {jitter: 0.5, over: 1.5}), w: 2},
+      {d: roughLine(rand, [156, 52], [140, 93], {jitter: 0.5, over: 1.5}), w: 1.7},
+    ] as Line[],
+    front: drawReel(rand, 68, 46, 36),
+    rear: drawReel(rand, 156, 52, 29),
+    // Body, and the lens: out of the front, then up a long neck past the
+    // reels, looking up at the screen.
+    body: twice(() => roughBox(rand, body, {jitter: 0.7, over: 3}), 2.4),
+    neck: twice(() => roughRun(rand, neck, {jitter: 0.6, over: 1.8}), 1.9),
+    lens: {d: roughLoop(rand, 200, 15, 9, 2.8, {jitter: 0.05, overlap: 0.7}), w: 1.7} as Line,
+    feet: [
+      {d: roughLine(rand, [52, 139.5], [48, 146], {jitter: 0.4, over: 1}), w: 2.4},
+      {d: roughLine(rand, [184, 139], [188, 146], {jitter: 0.4, over: 1}), w: 2.2},
+    ] as Line[],
+    // The gate, where a cartridge goes.
+    gate: roughBox(rand, gate, {jitter: 0.5, over: 1.4}),
+  };
+})();
+
+/** A knob's dial and its pointer; each knob has its own. */
+const drawDial = (seed: number) => {
+  const rand = seeded(seed);
+  return {
+    rim: roughLoop(rand, 20, 20, 16.5, 16.5, {jitter: 0.03, overlap: 0.6}),
+    pointer: roughLine(rand, [20, 20], [20, 6], {jitter: 0.5}),
+  };
+};
+const DIALS = {play: drawDial(11), eject: drawDial(29)};
+
+type CartridgeArt = {tilt: number; lines: Line[]};
+const drawnCartridges = new Map<number, CartridgeArt>();
+
+/**
+ * One film's cartridge. All keep the rough shape, a box with two reels and a
+ * label, but no two are drawn alike: each has its own corners, its own tilt
+ * and line weights, its tape wound further onto one reel or the other, and
+ * one of five labels (a line, two lines, a box, a scribble, a line and a
+ * dot). `variant` is the film's place on the shelf, so a film keeps its
+ * cartridge from load to load, and takes it into the gate.
+ */
+function drawCartridge(variant: number): CartridgeArt {
+  const drawn = drawnCartridges.get(variant);
+  if (drawn) return drawn;
+  const rand = seeded(4099 + variant * 7919);
+  const nudge = (n: number, by: number) => n + (rand() - 0.5) * 2 * by;
+  const corners = ([[3.5, 3.5], [56.5, 3.5], [56.5, 36.5], [3.5, 36.5]] as Pt[]).map(
+    ([x, y]): Pt => [nudge(x, 1.6), nudge(y, 1.6)],
+  );
+  const wound = 0.15 + rand() * 0.7;
+  const left = {x: nudge(19, 1.2), y: nudge(16.5, 1), r: 5 + wound * 4.5};
+  const right = {x: nudge(41, 1.2), y: nudge(16.5, 1), r: 5 + (1 - wound) * 4.5};
+  const reelWeight = 1.3 + rand() * 0.6;
+  const lines: Line[] = [
+    twice(() => roughBox(rand, corners, {jitter: 0.6, over: 2.6}), 2 + rand() * 0.9),
+    {d: roughLoop(rand, left.x, left.y, left.r, left.r, {jitter: 0.05}), w: reelWeight},
+    {d: roughLoop(rand, right.x, right.y, right.r, right.r, {jitter: 0.05}), w: reelWeight},
+    {d: roughLoop(rand, left.x, left.y, 1.4, 1.4, {jitter: 0.15}), w: 1.2},
+    {d: roughLoop(rand, right.x, right.y, 1.4, 1.4, {jitter: 0.15}), w: 1.2},
+  ];
+  const labelKinds: Array<() => string[]> = [
+    () => [roughLine(rand, [11, 31], [49, 31], {jitter: 0.7, over: 1.5})],
+    () => [
+      roughLine(rand, [11, 29.5], [42, 29.5], {jitter: 0.6}),
+      roughLine(rand, [11, 33.5], [30, 33.5], {jitter: 0.6}),
+    ],
+    () => [roughBox(rand, [[13, 27.5], [47, 27.5], [47, 34], [13, 34]], {jitter: 0.5, over: 1.2})],
+    () => [smooth(Array.from({length: 9}, (_, k): Pt => [nudge(13 + k * 4.2, 0.6), nudge(k % 2 ? 33.5 : 28.5, 0.7)]))],
+    () => [
+      roughLine(rand, [14, 31], [36, 31], {jitter: 0.6, over: 1}),
+      roughLoop(rand, 45, 31, 1.8, 1.8, {jitter: 0.12}),
+    ],
+  ];
+  const labelWeight = 1.3 + rand() * 0.9;
+  for (const d of labelKinds[variant % labelKinds.length]()) lines.push({d, w: labelWeight});
+  const art = {tilt: (rand() - 0.5) * 6, lines};
+  drawnCartridges.set(variant, art);
+  return art;
+}
+
+/** A drawn line, and its second pass where it has one. */
+function Stroke({line}: {line: Line}) {
+  return (
+    <>
+      <path d={line.d} strokeWidth={line.w} />
+      {line.again ? <path className="fx-rough__again" d={line.again} strokeWidth={line.w * 0.5} /> : null}
+    </>
+  );
+}
+
 /** A film cartridge, as drawn on the shelf and in the projector's gate. */
-function CartridgeShape({className, box}: {className: string; box?: {x: number; y: number; width: number; height: number}}) {
+function CartridgeShape({
+  className,
+  variant,
+  box,
+  filter,
+}: {
+  className: string;
+  variant: number;
+  box?: {x: number; y: number; width: number; height: number};
+  filter?: string;
+}) {
+  const art = drawCartridge(variant);
   return (
     <svg className={className} viewBox="0 0 60 40" {...box} aria-hidden="true" focusable="false">
-      <path d="M3 2.5 L57.5 3 L57 37.5 L2.5 37 Z" />
-      <circle cx="19" cy="17" r="7.5" />
-      <circle cx="41" cy="17" r="7.5" />
-      <circle cx="19" cy="17" r="1.5" />
-      <circle cx="41" cy="17" r="1.5" />
-      <path d="M12 31 L48 31" />
+      <g transform={`rotate(${art.tilt.toFixed(1)} 30 20)`} filter={filter}>
+        {art.lines.map((line, k) => (
+          <Stroke key={k} line={line} />
+        ))}
+      </g>
     </svg>
   );
 }
 
-/** A reel: rim, hub and three holes, turning about its own center. */
-function Reel({cx, cy, r, className}: {cx: number; cy: number; r: number; className: string}) {
-  const holes = [0, 120, 240].map((deg) => {
-    const a = ((deg - 90) * Math.PI) / 180;
-    return <circle key={deg} cx={cx + Math.cos(a) * r * 0.5} cy={cy + Math.sin(a) * r * 0.5} r={r * 0.2} />;
-  });
+/** A reel, turning about its hub. */
+function Reel({art, className}: {art: ReelArt; className: string}) {
   return (
-    <g className={`fx-reel ${className}`}>
-      <circle cx={cx} cy={cy} r={r} />
-      <circle cx={cx} cy={cy} r={r * 0.12} />
-      {holes}
+    <g className={`fx-reel ${className}`} style={{transformOrigin: `${art.cx}px ${art.cy}px`}}>
+      {art.lines.map((line, k) => (
+        <Stroke key={k} line={line} />
+      ))}
     </g>
   );
 }
@@ -391,34 +526,37 @@ export default function Projector({
         <div className="fx-projector__machine">
           <svg className="fx-projector__drawing" viewBox="0 0 240 150" aria-hidden="true" focusable="false">
             <defs>
-              {/* As <Hand>'s wet edge: a slow wobble, so the lines read as drawn. */}
-              <filter id={wobble} x="-5%" y="-5%" width="110%" height="110%">
+              {/* As <Hand>'s wet edge: a slow wobble over the drawn lines, which
+                  the shelf's cartridges share. */}
+              <filter id={wobble} x="-8%" y="-8%" width="116%" height="116%">
                 <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves={2} seed={3} result="edge" />
-                <feDisplacementMap in="SourceGraphic" in2="edge" scale={1.6} xChannelSelector="R" yChannelSelector="G" />
+                <feDisplacementMap in="SourceGraphic" in2="edge" scale={2} xChannelSelector="R" yChannelSelector="G" />
               </filter>
             </defs>
             <g filter={`url(#${wobble})`}>
-              {/* Arms holding the reels above the body. */}
-              <path d="M68 46 L84 93" />
-              <path d="M156 52 L140 93" />
-              <Reel cx={68} cy={46} r={36} className="fx-reel--front" />
-              <Reel cx={156} cy={52} r={29} className="fx-reel--rear" />
+              {PROJECTOR.arms.map((line, k) => (
+                <Stroke key={k} line={line} />
+              ))}
+              <Reel art={PROJECTOR.front} className="fx-reel--front" />
+              <Reel art={PROJECTOR.rear} className="fx-reel--rear" />
               {/* The film, threaded from reel to reel through the gate. */}
               <path className="fx-film" d="M33 58 C28 86, 54 90, 76 87 C100 84, 122 89, 142 85 C164 81, 188 76, 185 52" />
-              {/* Body, and the lens: out of the front, then up a long neck past
-                  the reels, looking up at the screen. */}
-              <path d="M38 93.5 L190.5 92.5 L191 139 L37.5 139.5 Z" />
-              <path d="M191 124.5 L206.5 124 L206 17 L194 17.5 L194 104 L191 104" />
-              <ellipse cx={200} cy={15} rx={9} ry={2.8} />
-              {/* Feet. */}
-              <path d="M52 139.5 L48 146" />
-              <path d="M184 139 L188 146" />
-              {/* The gate, where a cartridge goes. */}
-              <path className="fx-gate" d="M52 101 L100 100.5 L100.5 132 L51.5 132.5 Z" />
+              <Stroke line={PROJECTOR.body} />
+              <Stroke line={PROJECTOR.neck} />
+              <Stroke line={PROJECTOR.lens} />
+              {PROJECTOR.feet.map((line, k) => (
+                <Stroke key={k} line={line} />
+              ))}
+              <path className="fx-gate" d={PROJECTOR.gate} />
             </g>
-            {current ? (
+            {current && loaded != null ? (
               <g className="fx-gate__film" key={current.manifest}>
-                <CartridgeShape className="fx-gate__cartridge" box={{x: 54, y: 102, width: 44, height: 29.3}} />
+                <CartridgeShape
+                  className="fx-gate__cartridge"
+                  variant={loaded}
+                  box={{x: 54, y: 102, width: 44, height: 29.3}}
+                  filter={`url(#${wobble})`}
+                />
               </g>
             ) : null}
           </svg>
@@ -431,8 +569,8 @@ export default function Projector({
             onClick={toggle}
           >
             <svg className="fx-knob__dial" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-              <circle cx="20" cy="20" r="17" />
-              <path className="fx-knob__pointer" d="M20 20 L20 6" />
+              <path className="fx-knob__rim" d={DIALS.play.rim} />
+              <path className="fx-knob__pointer" d={DIALS.play.pointer} />
             </svg>
             <span className="fx-knob__label">{labels.play}</span>
           </button>
@@ -443,8 +581,8 @@ export default function Projector({
             onClick={eject}
           >
             <svg className="fx-knob__dial" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-              <circle cx="20" cy="20" r="17" />
-              <path className="fx-knob__pointer" d="M20 20 L20 6" />
+              <path className="fx-knob__rim" d={DIALS.eject.rim} />
+              <path className="fx-knob__pointer" d={DIALS.eject.pointer} />
             </svg>
             <span className="fx-knob__label">{labels.eject}</span>
           </button>
@@ -465,7 +603,7 @@ export default function Projector({
                   onClick={() => load(i)}
                 >
                   <span className="fx-cartridge__face">
-                    <CartridgeShape className="fx-cartridge__shape" />
+                    <CartridgeShape className="fx-cartridge__shape" variant={i} filter={`url(#${wobble})`} />
                     {loaded === i && mark ? (
                       <span
                         key={mark.key}
