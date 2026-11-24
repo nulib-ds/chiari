@@ -12,6 +12,7 @@ export const components = {
   Plate: './Plate.tsx',
   Hand: './Hand.tsx',
   Palette: './Palette.tsx',
+  LocaleString: './LocaleString.tsx',
 };
 
 // Map browser-only components to their source files; the builder bundles

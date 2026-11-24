@@ -10,6 +10,7 @@ common:
     done: "Done"
     show: "Show"
     hide: "Hide"
+    search: "Search"
   nouns:
     search: "Search"
     filters: "Filters"
@@ -21,6 +22,8 @@ common:
     section_navigation: "section navigation"
     content_navigation: "content navigation"
     primary_navigation: "Primary navigation"
+    secondary_navigation: "Secondary"
+    language: "Language"
     metadata: "metadata"
     gallery: "gallery"
     gallery_thumbnails: "gallery thumbnails"
@@ -72,3 +75,5 @@ common:
   misc:
     referenced_by: "Referenced by"
     on_this_page: "On this page"
+    related_items: "Related Items"
+    iiif_manifest: "IIIF Manifest"

@@ -14,6 +14,7 @@ common:
     view_all: "Vedi tutto"
     widen_viewer: "Allarga il visualizzatore"
     copy: "Copia"
+    search: "Cerca"
   nouns:
     search: "Ricerca"
     filters: "Filtri"
@@ -25,6 +26,8 @@ common:
     section_navigation: "navigazione della sezione"
     content_navigation: "navigazione della pagina"
     primary_navigation: "Navigazione principale"
+    secondary_navigation: "Navigazione secondaria"
+    language: "Lingua"
     metadata: "metadati"
     gallery: "galleria"
     gallery_thumbnails: "miniature della galleria"
@@ -81,6 +84,8 @@ common:
   misc:
     referenced_by: "Citata in"
     on_this_page: "In questa pagina"
+    related_items: "Opere correlate"
+    iiif_manifest: "Manifest IIIF"
   appearance:
     label: "Aspetto"
     system: "Sistema"

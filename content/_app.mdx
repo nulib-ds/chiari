@@ -288,6 +288,17 @@ export function counterpartHref(pathname, locale, locales) {
   return exists ? `/${target}` : home;
 }
 
+export function siteString(site, key, fallback) {
+  // One of the page's locale strings (content/locale.yml, or content/it/locale.yml
+  // over it), which Canopy hands the page context whole, this site's own two
+  // keys among them: common.actions.search, common.nouns.secondary_navigation
+  // and common.nouns.language.
+  const value = String(key)
+    .split(".")
+    .reduce((node, part) => (node && typeof node === "object" ? node[part] : undefined), site && site.localeMessages);
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
 export function LanguageToggle({page, site}) {
   // English / Italiano drawn in Chiari's hand, both black; the current one is
   // circled, and the other links to the same page there.
@@ -298,7 +309,7 @@ export function LanguageToggle({page, site}) {
   const first = pathname.replace(/^\/+/, "").split("/")[0];
   const active = locales.find((l) => !l.default && l.lang === first) || locales.find((l) => l.default) || locales[0];
   return (
-    <nav className="fx-lang" aria-label="Language">
+    <nav className="fx-lang" aria-label={siteString(site, "common.nouns.language", "Language")}>
       {locales.map((locale) => {
         const current = locale.lang === active.lang;
         const label = locale.label || locale.lang;
@@ -335,6 +346,7 @@ export function ChiariHeader() {
   // Canopy leaves isActive unset on primary links, so mark the section the
   // current page lives under (e.g. /it/play/la_strada/ → Play).
   const page = (context && context.page) || {};
+  const site = (context && context.site) || {};
   const pageSegments = String(page.href || page.url || "").split(/[?#]/)[0].split("/");
   const links = ((context && context.primaryNavigation) || []).map((link) => ({
     ...link,
@@ -360,15 +372,19 @@ export function ChiariHeader() {
       {/* The header brand shows ART IS EASY, or L’ARTE È FACILE on Italian
           pages (an image, via CSS), over this line of text; the page <title>
           keeps canopy.yml's "Chiari". */}
+      {/* The search button's word is the verb, where a language has one
+          (Cerca; Canopy's own, common.nouns.search, is the noun, Ricerca).
+          It names the button, its submit and the phone's search sheet. */}
       <CanopyHeader
         title={HEADER_TAGLINE}
         navigation={main}
+        searchLabel={siteString(site, "common.actions.search")}
         searchPlaceholder=""
         languageToggle={false}
       />
       <div className="fx-subbar">
         {secondary.length ? (
-          <nav className="fx-secondary-nav" aria-label="Secondary">
+          <nav className="fx-secondary-nav" aria-label={siteString(site, "common.nouns.secondary_navigation", "Secondary")}>
             {secondary.map((link) => (
               <a key={link.href} href={link.href} aria-current={link.isActive ? "page" : undefined}>
                 {link.label || link.href}
@@ -376,7 +392,7 @@ export function ChiariHeader() {
             ))}
           </nav>
         ) : null}
-        <LanguageToggle page={page} site={(context && context.site) || {}} />
+        <LanguageToggle page={page} site={site} />
       </div>
     </div>
   );
