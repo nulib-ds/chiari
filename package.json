@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@nulib/canopy": "^2.0.2",
-    "@nulib/clover": "~4.10.2",
+    "@nulib/clover": "~4.12.3",
     "pixi.js": "^8.23.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -16,6 +16,11 @@
   },
   "devDependencies": {
     "@types/web": "^0.0.366"
+  },
+  "overrides": {
+    "@nulib/canopy": {
+      "@nulib/clover": "$@nulib/clover"
+    }
   },
   "author": "Mat Jordan <mat@northwestern.edu>",
   "homepage": "https://nulib-ds.github.io/chiari/",
