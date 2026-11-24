@@ -6,12 +6,15 @@ import type {Pt, Rand} from "./roughLines";
 
 /**
  * The Watch page: a projector drawn in a few ink lines, its screen above it.
- * The visitor loads a film cartridge from the shelf, then turns the play knob;
- * the reels turn and the film runs between them while it plays.
+ * The visitor loads a film cartridge from the shelf, then presses Play; the
+ * reels turn and the film runs between them while it plays.
  *
  * The screen is Clover's Canvas, which plays a Manifest's first Canvas, video
- * or sound, with its own seek bar, volume and full screen. The knobs drive its
- * media element and follow it, so its own play button and the knob agree.
+ * or sound, with its own seek bar, volume and full screen. Eject and Play are
+ * push buttons on the projector's body with an interlock, as on a tape deck:
+ * Play stays down while the film runs and Eject while the gate is empty, so
+ * pressing one lets the other up. They drive the Canvas's media element and
+ * follow it, so its own play button and the projector's agree.
  *
  * The first cartridge is loaded to begin with. The page's address names what
  * is on the screen and how far into it, so it can be shared:
@@ -54,7 +57,7 @@ const DEFAULT_LABELS: Labels = {
   items: "Items to view",
   play: "Play",
   eject: "Eject",
-  empty: "Load a film, then turn the play knob.",
+  empty: "Load a film, then press Play.",
   showing: "Now showing",
 };
 
@@ -217,15 +220,49 @@ const PROJECTOR = (() => {
   };
 })();
 
-/** A knob's dial and its pointer; each knob has its own. */
-const drawDial = (seed: number) => {
+/** Where a key's cap stands when it is out, and how far down and right its seat is. */
+const KEY_CAP: Pt[] = [[5, 5], [31, 5], [31, 31], [5, 31]];
+const KEY_TRAVEL = 4;
+
+/**
+ * A push button on the body: a cap standing proud of its seat, up and to the
+ * left of it, with its sign on it. Pressed, the cap sits down into the seat
+ * (watch.css moves it by KEY_TRAVEL). Each key is drawn on its own.
+ */
+const drawKey = (seed: number, sign: "play" | "eject") => {
   const rand = seeded(seed);
+  const seat = KEY_CAP.map(([x, y]): Pt => [x + KEY_TRAVEL, y + KEY_TRAVEL]);
+  const signs =
+    sign === "play"
+      ? [roughBox(rand, [[13.5, 10.5], [24.5, 18], [13.5, 25.5]], {jitter: 0.5, over: 0.8})]
+      : [
+          roughBox(rand, [[11, 19.5], [18, 10.5], [25, 19.5]], {jitter: 0.5, over: 0.8}),
+          roughLine(rand, [11, 24.5], [25, 24.5], {jitter: 0.5, over: 0.6}),
+        ];
   return {
-    rim: roughLoop(rand, 20, 20, 16.5, 16.5, {jitter: 0.03, overlap: 0.6}),
-    pointer: roughLine(rand, [20, 20], [20, 6], {jitter: 0.5}),
+    seat: roughBox(rand, seat, {jitter: 0.5, over: 1.2}),
+    cap: roughBox(rand, KEY_CAP, {jitter: 0.5, over: 1.4}),
+    signs,
   };
 };
-const DIALS = {play: drawDial(11), eject: drawDial(29)};
+const KEYS = {eject: drawKey(29, "eject"), play: drawKey(11, "play")};
+
+/** A key's drawing: its seat, and over it the cap, which moves. */
+function KeyDrawing({art}: {art: ReturnType<typeof drawKey>}) {
+  return (
+    <svg className="fx-key__drawing" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+      <path className="fx-key__seat" d={art.seat} />
+      <g className="fx-key__cap">
+        {/* The cap is paper, so it hides the seat it stands over. */}
+        <path className="fx-key__face" d={`M${KEY_CAP.map((p) => p.join(" ")).join(" L")} Z`} />
+        <path className="fx-key__edge" d={art.cap} />
+        {art.signs.map((d, k) => (
+          <path key={k} className="fx-key__sign" d={d} />
+        ))}
+      </g>
+    </svg>
+  );
+}
 
 type CartridgeArt = {tilt: number; lines: Line[]};
 const drawnCartridges = new Map<number, CartridgeArt>();
@@ -368,7 +405,7 @@ export default function Projector({
 
   const current = loaded == null ? null : cartridges[loaded] || null;
 
-  // The knob follows the film, whichever control plays or pauses it.
+  // Play follows the film, whichever control plays or pauses it.
   useEffect(() => {
     if (!media) {
       setPlaying(false);
@@ -569,30 +606,27 @@ export default function Projector({
             ) : null}
           </svg>
 
+          {/* Eject is down while the gate is empty, Play while the film runs:
+              pressing either lets the other up. */}
           <button
             type="button"
-            className="fx-knob fx-knob--play"
+            className="fx-key fx-key--eject"
+            aria-pressed={!current || dimming}
+            aria-disabled={current && !dimming ? undefined : true}
+            onClick={eject}
+          >
+            <KeyDrawing art={KEYS.eject} />
+            <span className="fx-key__label">{labels.eject}</span>
+          </button>
+          <button
+            type="button"
+            className="fx-key fx-key--play"
             aria-pressed={playing}
             aria-disabled={media && !dimming ? undefined : true}
             onClick={toggle}
           >
-            <svg className="fx-knob__dial" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-              <path className="fx-knob__rim" d={DIALS.play.rim} />
-              <path className="fx-knob__pointer" d={DIALS.play.pointer} />
-            </svg>
-            <span className="fx-knob__label">{labels.play}</span>
-          </button>
-          <button
-            type="button"
-            className="fx-knob fx-knob--eject"
-            aria-disabled={current && !dimming ? undefined : true}
-            onClick={eject}
-          >
-            <svg className="fx-knob__dial" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-              <path className="fx-knob__rim" d={DIALS.eject.rim} />
-              <path className="fx-knob__pointer" d={DIALS.eject.pointer} />
-            </svg>
-            <span className="fx-knob__label">{labels.eject}</span>
+            <KeyDrawing art={KEYS.play} />
+            <span className="fx-key__label">{labels.play}</span>
           </button>
         </div>
 

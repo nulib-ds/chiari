@@ -207,9 +207,13 @@ main .fx-projector__idle {
   overflow: visible;
 }
 
-/* --- Knobs: real buttons over the body of the drawing ------------------ */
+/* --- Keys: Eject and Play, real buttons over the body of the drawing ----
+ * Push buttons with an interlock, as on a tape deck. Each cap stands proud
+ * of its seat, up and to the left of it, until it is pressed; then it sits
+ * down into the seat and stays there. Play is down while the film runs, Eject
+ * while the gate is empty, so pressing one lets the other up. */
 
-.fx-knob {
+.fx-key {
   position: absolute;
   top: 77%;
   display: block;
@@ -218,7 +222,6 @@ main .fx-projector__idle {
   aspect-ratio: 1;
   padding: 0;
   border: 0;
-  border-radius: 50%;
   background: none;
   color: var(--fx-ink);
   font: inherit;
@@ -227,55 +230,64 @@ main .fx-projector__idle {
 }
 
 /* Far enough apart that their labels clear each other at a phone's width,
- * in Italian too (Avvia, Espelli). */
-.fx-knob--play {
+ * in Italian too (Espelli, Avvia). */
+.fx-key--eject {
   left: 48%;
 }
 
-.fx-knob--eject {
+.fx-key--play {
   left: 72.5%;
 }
 
-.fx-knob__dial {
+.fx-key__drawing {
   display: block;
   width: 100%;
   height: 100%;
   overflow: visible;
-  fill: var(--fx-paper);
+  fill: none;
   stroke: var(--fx-ink);
-  stroke-width: 2.4;
+  stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.fx-knob__pointer {
-  fill: none;
-  stroke-width: 2.9;
-  transform-origin: 20px 20px;
-  transform: rotate(-55deg);
-  transition: transform 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+.fx-key__seat {
+  stroke-width: 1.6;
 }
 
-.fx-knob[aria-pressed="true"] .fx-knob__pointer {
-  transform: rotate(55deg);
+.fx-key__face {
+  fill: var(--fx-paper);
+  stroke: none;
 }
 
-/* Eject turns over and springs back. */
-.fx-knob--eject:active:not([aria-disabled="true"]) .fx-knob__pointer {
-  transform: rotate(55deg);
-  transition-duration: 0.15s;
+.fx-key__edge {
+  stroke-width: 2.6;
 }
 
-/* Nothing to play or eject: the dial is drawn open, the label stays ink. */
-.fx-knob[aria-disabled="true"] {
+/* Let up, the cap springs back out of its seat. */
+.fx-key__cap {
+  transition: transform 0.32s cubic-bezier(0.3, 1.7, 0.5, 1);
+}
+
+/* Down: the cap sits in its seat (KEY_TRAVEL in Projector.client.tsx), under
+ * the finger at once and for as long as the key stays pressed. It goes down
+ * faster than it comes up. */
+.fx-key[aria-pressed="true"] .fx-key__cap,
+.fx-key:active:not([aria-disabled="true"]) .fx-key__cap {
+  transform: translate(4px, 4px);
+  transition: transform 0.09s ease-in;
+}
+
+/* Nothing to play or eject: the cap is drawn open, the label stays ink. */
+.fx-key[aria-disabled="true"] {
   cursor: default;
 }
 
-.fx-knob[aria-disabled="true"] .fx-knob__rim {
+.fx-key[aria-disabled="true"] .fx-key__edge {
   stroke-dasharray: 3 3;
 }
 
-.fx-knob__label {
+.fx-key__label {
   position: absolute;
   /* Typed just below the drawing, clear of the body and its feet. */
   top: calc(100% + 2.4rem);
@@ -285,7 +297,7 @@ main .fx-projector__idle {
   line-height: 1;
 }
 
-.fx-knob:hover:not([aria-disabled="true"]) .fx-knob__label {
+.fx-key:hover:not([aria-disabled="true"]) .fx-key__label {
   text-decoration-line: underline;
 }
 
@@ -443,7 +455,7 @@ main .fx-projector__shelf li::marker {
   .fx-projector__deck {
     display: flex;
     justify-content: center;
-    /* Each keeps its own height, so the knobs stay on the drawn body. */
+    /* Each keeps its own height, so the keys stay on the drawn body. */
     align-items: center;
     column-gap: calc(2 * var(--fx-tab));
     margin-top: clamp(2.5rem, 6vw, 4rem);
@@ -536,7 +548,9 @@ main .fx-projector__shelf li::marker {
     animation: none;
   }
 
-  .fx-knob__pointer,
+  .fx-key__cap,
+  .fx-key[aria-pressed="true"] .fx-key__cap,
+  .fx-key:active:not([aria-disabled="true"]) .fx-key__cap,
   .fx-cartridge__shape {
     transition: none;
   }
