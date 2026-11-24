@@ -1,1 +1,6 @@
-<div>{props.children}</div>
+{/* As content/watch/_layout.mdx: Watch's own shell, its title a heading
+    for screen readers only, the projector below. */}
+<div className="fx-watch">
+  <h1 className="sr-only">{props.page.title}</h1>
+  {props.children}
+</div>

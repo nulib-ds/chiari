@@ -22,5 +22,6 @@ export const clientComponents = {
   StoryMapJS: './StoryMapJS.client.tsx',
   LaStrada: './LaStrada.client.tsx',
   LaStradaDebug: './LaStradaDebug.client.tsx',
-  SuonareLaCitta: './SuonareLaCitta.client.tsx'
+  SuonareLaCitta: './SuonareLaCitta.client.tsx',
+  Projector: './Projector.client.tsx',
 };

@@ -1,9 +1,13 @@
 /**
  * The pieces of Clover 4 (@nulib/clover) the exhibit uses.
  *
- * They come from Clover's `helpers` entry, which holds its pure functions and
- * no React, rather than from the package's main entry, which brings in all of
- * Clover's React parts (about 180 kB against the helpers' 5). The version in
- * package.json follows the one @nulib/canopy brings, so there is one Clover.
+ * The pure functions come from Clover's `helpers` entry, which holds no
+ * React. The Watch page's projector screen is Clover's `Canvas`, from its
+ * `canvas` entry, which brings Clover's React parts into the client bundle.
+ *
+ * There is one Clover. package.json asks for the latest (4.12) and an npm
+ * `overrides` entry gives Canopy the same copy in place of the 4.10 it pins,
+ * so Canopy's Viewer, its Clover stylesheet and these pieces all agree.
  */
-export {chaptersOf, tableOfContents} from "@nulib/clover/helpers";
+export {chaptersOf, decodeContentState, tableOfContents} from "@nulib/clover/helpers";
+export {Canvas} from "@nulib/clover/canvas";
