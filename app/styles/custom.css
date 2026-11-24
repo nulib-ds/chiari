@@ -93,6 +93,18 @@
   --clover-color-accent-alt: var(--fx-ink);
 }
 
+/* Clover's media player draws on its own dark bar, where the site's accent,
+ * black ink, vanishes: a full volume track drew as no track at all, played
+ * time as none, and its buttons went black on hover and focus. On the
+ * player, the accent is pink paint, the site's mark for state (the current
+ * page, the current language), which holds 4:1 on black. Played time and the
+ * volume level fill in pink, ahead of Clover's white for what has loaded and
+ * gray for the rest; the thumbs stay white. Clover's image controls, on the
+ * paper, keep the black. */
+.clover-canvas-media {
+  --clover-color-accent: var(--fx-pink);
+}
+
 /* Typewriter rules (DESIGN.md, "Typewriter type"). A typewriter has one size
  * of type, one ink, and a key struck either normally or hard. So:
  *   - every element is set at body size (1rem). Drawn SVG is exempt, since
