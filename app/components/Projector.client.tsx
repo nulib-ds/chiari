@@ -1,6 +1,6 @@
 import React, {useEffect, useId, useRef, useState} from "react";
 import {withBasePath} from "@nulib/canopy/base-path";
-import {Canvas, decodeContentState} from "./clover";
+import {Canvas, decodeContentState, initCloverI18n} from "./clover";
 
 /**
  * The Watch page: a projector drawn in a few ink lines, its screen above it.
@@ -81,6 +81,14 @@ const first = (v: any) => (Array.isArray(v) ? v[0] : v);
 
 /** How long the lamp takes to die on eject; watch.css's fx-lamp-off. */
 const LAMP_OFF_MS = 900;
+
+/**
+ * The page's language, as Canopy sets it on <html> for each locale (en, it).
+ * Clover would rather speak the browser's language where it has strings for
+ * it, so an English browser would hear English controls on the Italian page;
+ * the language toggle is the visitor's choice, so the page's wins.
+ */
+const pageLanguage = () => (typeof document !== "undefined" && document.documentElement.lang) || "en";
 
 const reducedMotion = () =>
   typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -187,6 +195,14 @@ export default function Projector({
   labels?: Partial<Labels>;
 }) {
   const labels = {...DEFAULT_LABELS, ...given};
+
+  // Clover's controls on the screen (play, seek, volume, captions, full
+  // screen, the keys) speak the page's language. Clover holds the choice for
+  // this page only, and the language toggle loads the other page.
+  const [language] = useState(pageLanguage);
+  useEffect(() => {
+    initCloverI18n().chooseInterfaceLanguage(language);
+  }, [language]);
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const wobble = `fx-wobble-${uid}`;
   const shelfLabel = `fx-items-${uid}`;
@@ -349,6 +365,7 @@ export default function Projector({
           <div className="fx-projector__film" key={current.manifest}>
             <Canvas
               iiifContent={current.manifest}
+              language={language}
               label={[current.work, credit(current)].filter(Boolean).join(", ")}
               className="fx-projector__canvas"
               onMediaElement={setMedia}
@@ -373,100 +390,102 @@ export default function Projector({
         )}
       </p>
 
-      <div className="fx-projector__machine">
-        <svg className="fx-projector__drawing" viewBox="0 0 240 150" aria-hidden="true" focusable="false">
-          <defs>
-            {/* As <Hand>'s wet edge: a slow wobble, so the lines read as drawn. */}
-            <filter id={wobble} x="-5%" y="-5%" width="110%" height="110%">
-              <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves={2} seed={3} result="edge" />
-              <feDisplacementMap in="SourceGraphic" in2="edge" scale={1.6} xChannelSelector="R" yChannelSelector="G" />
-            </filter>
-          </defs>
-          <g filter={`url(#${wobble})`}>
-            {/* Arms holding the reels above the body. */}
-            <path d="M68 46 L84 93" />
-            <path d="M156 52 L140 93" />
-            <Reel cx={68} cy={46} r={36} className="fx-reel--front" />
-            <Reel cx={156} cy={52} r={29} className="fx-reel--rear" />
-            {/* The film, threaded from reel to reel through the gate. */}
-            <path className="fx-film" d="M33 58 C28 86, 54 90, 76 87 C100 84, 122 89, 142 85 C164 81, 188 76, 185 52" />
-            {/* Body, and the lens: out of the front, then up a long neck past
-                the reels, looking up at the screen. */}
-            <path d="M38 93.5 L190.5 92.5 L191 139 L37.5 139.5 Z" />
-            <path d="M191 124.5 L206.5 124 L206 17 L194 17.5 L194 104 L191 104" />
-            <ellipse cx={200} cy={15} rx={9} ry={2.8} />
-            {/* Feet. */}
-            <path d="M52 139.5 L48 146" />
-            <path d="M184 139 L188 146" />
-            {/* The gate, where a cartridge goes. */}
-            <path className="fx-gate" d="M52 101 L100 100.5 L100.5 132 L51.5 132.5 Z" />
-          </g>
-          {current ? (
-            <g className="fx-gate__film" key={current.manifest}>
-              <CartridgeShape className="fx-gate__cartridge" box={{x: 54, y: 102, width: 44, height: 29.3}} />
+      <div className="fx-projector__deck">
+        <div className="fx-projector__machine">
+          <svg className="fx-projector__drawing" viewBox="0 0 240 150" aria-hidden="true" focusable="false">
+            <defs>
+              {/* As <Hand>'s wet edge: a slow wobble, so the lines read as drawn. */}
+              <filter id={wobble} x="-5%" y="-5%" width="110%" height="110%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves={2} seed={3} result="edge" />
+                <feDisplacementMap in="SourceGraphic" in2="edge" scale={1.6} xChannelSelector="R" yChannelSelector="G" />
+              </filter>
+            </defs>
+            <g filter={`url(#${wobble})`}>
+              {/* Arms holding the reels above the body. */}
+              <path d="M68 46 L84 93" />
+              <path d="M156 52 L140 93" />
+              <Reel cx={68} cy={46} r={36} className="fx-reel--front" />
+              <Reel cx={156} cy={52} r={29} className="fx-reel--rear" />
+              {/* The film, threaded from reel to reel through the gate. */}
+              <path className="fx-film" d="M33 58 C28 86, 54 90, 76 87 C100 84, 122 89, 142 85 C164 81, 188 76, 185 52" />
+              {/* Body, and the lens: out of the front, then up a long neck past
+                  the reels, looking up at the screen. */}
+              <path d="M38 93.5 L190.5 92.5 L191 139 L37.5 139.5 Z" />
+              <path d="M191 124.5 L206.5 124 L206 17 L194 17.5 L194 104 L191 104" />
+              <ellipse cx={200} cy={15} rx={9} ry={2.8} />
+              {/* Feet. */}
+              <path d="M52 139.5 L48 146" />
+              <path d="M184 139 L188 146" />
+              {/* The gate, where a cartridge goes. */}
+              <path className="fx-gate" d="M52 101 L100 100.5 L100.5 132 L51.5 132.5 Z" />
             </g>
-          ) : null}
-        </svg>
-
-        <button
-          type="button"
-          className="fx-knob fx-knob--play"
-          aria-pressed={playing}
-          aria-disabled={media && !dimming ? undefined : true}
-          onClick={toggle}
-        >
-          <svg className="fx-knob__dial" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-            <circle cx="20" cy="20" r="17" />
-            <path className="fx-knob__pointer" d="M20 20 L20 6" />
+            {current ? (
+              <g className="fx-gate__film" key={current.manifest}>
+                <CartridgeShape className="fx-gate__cartridge" box={{x: 54, y: 102, width: 44, height: 29.3}} />
+              </g>
+            ) : null}
           </svg>
-          <span className="fx-knob__label">{labels.play}</span>
-        </button>
-        <button
-          type="button"
-          className="fx-knob fx-knob--eject"
-          aria-disabled={current && !dimming ? undefined : true}
-          onClick={eject}
-        >
-          <svg className="fx-knob__dial" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-            <circle cx="20" cy="20" r="17" />
-            <path className="fx-knob__pointer" d="M20 20 L20 6" />
-          </svg>
-          <span className="fx-knob__label">{labels.eject}</span>
-        </button>
-      </div>
 
-      <div className="fx-projector__shelf" role="group" aria-labelledby={shelfLabel}>
-        <p className="sr-only" id={shelfLabel}>
-          {labels.items}
-        </p>
-        <ul role="list">
-          {cartridges.map((c, i) => (
-            <li key={c.manifest}>
-              <button
-                type="button"
-                className="fx-cartridge"
-                aria-pressed={loaded === i}
-                data-fx-ann-color={loaded === i && mark ? mark.color : undefined}
-                onClick={() => load(i)}
-              >
-                <span className="fx-cartridge__face">
-                  <CartridgeShape className="fx-cartridge__shape" />
-                  {loaded === i && mark ? (
-                    <span
-                      key={mark.key}
-                      className="fx-cartridge__mark"
-                      data-fx-ann={mark.gesture}
-                      data-fx-ann-color={mark.color}
-                      aria-hidden="true"
-                    />
-                  ) : null}
-                </span>
-                <span className="fx-cartridge__work">{c.work}</span>
-                {credit(c) ? <span className="fx-cartridge__by">{credit(c)}</span> : null}
-              </button>
-            </li>
-          ))}
-        </ul>
+          <button
+            type="button"
+            className="fx-knob fx-knob--play"
+            aria-pressed={playing}
+            aria-disabled={media && !dimming ? undefined : true}
+            onClick={toggle}
+          >
+            <svg className="fx-knob__dial" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+              <circle cx="20" cy="20" r="17" />
+              <path className="fx-knob__pointer" d="M20 20 L20 6" />
+            </svg>
+            <span className="fx-knob__label">{labels.play}</span>
+          </button>
+          <button
+            type="button"
+            className="fx-knob fx-knob--eject"
+            aria-disabled={current && !dimming ? undefined : true}
+            onClick={eject}
+          >
+            <svg className="fx-knob__dial" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+              <circle cx="20" cy="20" r="17" />
+              <path className="fx-knob__pointer" d="M20 20 L20 6" />
+            </svg>
+            <span className="fx-knob__label">{labels.eject}</span>
+          </button>
+        </div>
+
+        <div className="fx-projector__shelf" role="group" aria-labelledby={shelfLabel}>
+          <p className="sr-only" id={shelfLabel}>
+            {labels.items}
+          </p>
+          <ul role="list">
+            {cartridges.map((c, i) => (
+              <li key={c.manifest}>
+                <button
+                  type="button"
+                  className="fx-cartridge"
+                  aria-pressed={loaded === i}
+                  data-fx-ann-color={loaded === i && mark ? mark.color : undefined}
+                  onClick={() => load(i)}
+                >
+                  <span className="fx-cartridge__face">
+                    <CartridgeShape className="fx-cartridge__shape" />
+                    {loaded === i && mark ? (
+                      <span
+                        key={mark.key}
+                        className="fx-cartridge__mark"
+                        data-fx-ann={mark.gesture}
+                        data-fx-ann-color={mark.color}
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                  </span>
+                  <span className="fx-cartridge__work">{c.work}</span>
+                  {credit(c) ? <span className="fx-cartridge__by">{credit(c)}</span> : null}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
