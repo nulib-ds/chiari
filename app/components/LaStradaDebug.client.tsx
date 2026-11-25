@@ -1,6 +1,6 @@
 import {withBasePath} from "@nulib/canopy/base-path";
 import React, {useEffect, useRef, useState} from "react";
-import {rebaser} from "./LaStrada.client";
+import {localise, rebaser} from "./LaStrada.client";
 
 /**
  * For debugging, not part of the exhibit: Clover 4's own viewer, showing the
@@ -35,16 +35,6 @@ function loadClover(): Promise<void> {
     customElements.whenDefined("clover-viewer").then(() => undefined),
     new Promise<void>((_, reject) => window.setTimeout(() => reject(new Error("Clover did not load")), 20000)),
   ]);
-}
-
-/** A manifest with its images and sounds rebased; the ids that only name things stay as they are. */
-function localise(value: any, rebase: (url: string) => string): any {
-  if (Array.isArray(value)) return value.map((v) => localise(v, rebase));
-  if (!value || typeof value !== "object") return value;
-  const out: any = {};
-  for (const [key, v] of Object.entries(value)) out[key] = localise(v, rebase);
-  if (["Image", "Sound", "Video"].includes(value.type) && typeof value.id === "string") out.id = rebase(value.id);
-  return out;
 }
 
 /** `manifest` is the exhibit's own, as <LaStrada> is given it, to learn where its resources are served. */

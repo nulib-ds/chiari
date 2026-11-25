@@ -29,7 +29,7 @@ Another scan of the sheet needs a new `crop` and new `box`es, nothing else: the 
 
 ## The clock
 
-The sheet is the clock. The piece lasts `duration` seconds (the score's 30′); the top of the typed area is 0 and the bottom is the end. So an action's place on the sheet is its time, and each annotation's target says both: `xywh=...&t=start,end`, where the end is its recordings' lengths end to end (a few seconds if it is only announced). The instructions and title hold for the whole piece. The annotation page lists its annotations in the order they come, and that is the original order. The exhibit's Original button puts every action back where it was typed and plays them in that order. Its slips can be moved too, and the sheet stays Original's; the reset icon beside it puts them back where they were typed, without playing. Wherever a visitor puts an action it has a time again, from where it stands, and a performance walks the sheet in the order of those times.
+The sheet is the clock. The piece lasts `duration` seconds (the score's 30′); the top of the typed area is 0 and the bottom is the end. So an action's place on the sheet is its time, and each annotation's target says both: `xywh=...&t=start,end`, where the end is its recordings' lengths end to end (a few seconds if it is only announced). The instructions and title hold for the whole piece. The annotation page lists its annotations in the order they come, and that is the original order. The exhibit's Original button puts every action back where it was typed and plays them in that order. Its slips can be moved too, and the sheet stays Original's; the reset icon beside it puts them back where they were typed, without playing. Wherever a visitor puts an action it has a time again, from where it stands, and a performance walks the sheet in the order of those times (see The performance, below).
 
 ## The cutout
 
@@ -51,11 +51,26 @@ document.querySelector(".fx-strada").addEventListener("la-strada:arrangement", (
 
 Before anything is moved, and after a reset, it is the original page again.
 
-A `la-strada:manifest` event follows it each time, with the manifest that carries the page and its chapters (what the **Manifest** button downloads) as its `detail`. Both events bubble.
+A `la-strada:manifest` event follows it each time, with the recomposed manifest (what the **Manifest** button downloads) as its `detail`: the performance, the page on the sheet's canvas, and the chapters of both. Both events bubble.
 
 ### Seeing it in Clover
 
 `<LaStradaDebug manifest="/la-strada/manifest.json" />` (`app/components/LaStradaDebug.client.tsx`) is for debugging and not part of the exhibit; it is not on the page now. Put it under `<LaStrada>` in `content/play/la_strada/index.mdx` to use it. It hands every `la-strada:manifest` to Clover 4's `<clover-viewer>` web component, which brings its own React and is loaded from jsDelivr at the installed version, and lists the order the annotation page gives. Its images and sounds are rebased to wherever the page is served, as the exhibit's are.
+
+## The performance
+
+The exhibit recomposes the arrangement as a manifest of its own whenever it changes, and Clover 4's `Timeline` loads that manifest and plays it. It is the seek bar fixed along the foot of the window, on a black bar as Clover's player is on the Watch page: of Clover's player only the seek bar is shown, in Clover's own drawing (a white rail, pink where it has been heard), with the exhibit's own play button at its head.
+
+The manifest's first item is the performance: a Canvas of sound alone, as long as the piece, which is a `Timeline` once Clover has upgraded it to Presentation 4. Each action's recording is painted on it at the time its slip stands at, or as soon as the one before it has ended. A performance is one thing at a time, so where the sheet's clock would have two actions sound together, the later one waits. The sheet's canvas follows, with the arrangement's annotation page, then the two other images.
+
+`structures` says what the performance is made of. Every action is a Range that names its time in the performance (`…/canvas/performance#t=start,end`) and, if it stands on the sheet, its place there (`…/canvas/score#xywh=…&t=…`, its annotation's own target). Every silence is a Range too, labelled "Silence" (the `gap` label): what is left of the clock before the first action, between two, and after the last, when it lasts a second or more. Clover reads them all as chapters, so the seek bar marks the actions and the silences alike and names each in a popover under the pointer. While a chapter or its action is pointed at, the marker draws a line from the one to the other.
+
+Clover plays the recordings one after another and passes over the silences, which have nothing to play: where an action ends, the bar jumps to where the next begins. A seek forward into a silence goes on to the action after it. With nothing on the sheet there is no clock, and the pile is performed as it lies, end to end, for as long as it sounds.
+
+Two things to know:
+
+- A painting's target is written as a `SpecificResource` with a `FragmentSelector` (`t=start,end`), not as a fragment on the canvas's id. The Ranges name the same stretches by such ids, and `@iiif/parser`'s upgrade to Presentation 4, which Clover uses, then reads a string target of the same id as the Range's item and loses its time, so Clover would play only the first recording.
+- Seeking inside a recording needs a server that answers byte-range requests, as GitHub Pages does. `canopy dev`'s server does not (it sends each mp3 whole, as `application/octet-stream`), so on localhost a seek into the middle of an action starts that action again from its beginning.
 
 ## The typewriter's grid
 
@@ -71,7 +86,6 @@ It also reports Chiari's indents. They recur at a few places (a margin shared by
 
 ## Chapters, and Clover 4
 
-The manifest lists every action twice, from one list: as an annotation (what it is) and as a Range in `structures` (a chapter: where and when it is, `canvas#xywh=...&t=start,end`). Clover 4 (`@nulib/clover`) reads those Ranges as chapters on a canvas's timeline, as regions drawn on its image, and as its table of contents, from the one target. The exhibit builds the same pair, afresh, from wherever the actions stand, and its **Manifest** button downloads them together: the arrangement's annotation page on the sheet's canvas, and its chapters as `structures`.
+The manifest lists every action twice, from one list: as an annotation (what it is) and as a Range in `structures` (a chapter: where and when it is, `canvas#xywh=...&t=start,end`). Clover 4 (`@nulib/clover`) reads those Ranges as chapters on a canvas's timeline, as regions drawn on its image, and as its table of contents, from the one target. The exhibit builds the same pair, afresh, from wherever the actions stand, and adds the performance and its silences (above). Its **Manifest** button downloads them together.
 
-`app/components/clover.ts` is the one place the exhibit imports Clover from. It takes `chaptersOf` from `@nulib/clover/helpers`, Clover's pure functions with no React, not from the package's main entry, which pulls in Clover's React parts. Canopy 2's bundler hands those the page's own React, so `clover.ts` could import from `@nulib/clover` itself and the parts (`Root`, `Contents`, `Annotations`, `Timeline`) could be drawn too. They cost about 180 kB against the helpers' 5, and need `@nulib/clover/styles.css`. package.json pins Clover to the version `@nulib/canopy` brings, so the site has one.
-
+`app/components/clover.ts` is the one place the site imports Clover from. The exhibit takes `Timeline` from `@nulib/clover/timeline`, which brings Clover's React parts into its bundle (Canopy 2's bundler hands them the page's own React), and `initCloverI18n`, by which the seek bar speaks the page's language. Clover's stylesheet comes with Canopy's, and the player's own styles load with its code. package.json asks for one Clover, and an `overrides` entry gives Canopy the same copy, so the site has one.
