@@ -658,7 +658,7 @@
               "body": [
                 {
                   "type": "TextualBody",
-                  "value": "A song on the radio,\nreception slightly shifted from the broadcast band.",
+                  "value": "A song on the radio, reception slightly shifted from the broadcast band.",
                   "format": "text/plain",
                   "language": "en"
                 },
@@ -758,7 +758,7 @@
               "body": [
                 {
                   "type": "TextualBody",
-                  "value": "Something on a piano as an amateur touching\nthe keys of a piano and playing arpeggios\nor sketching a tune\nAbsentmindedly",
+                  "value": "Something on a piano as an amateur touching the keys of a piano\nand playing arpeggios or sketching a tune\nAbsentmindedly",
                   "format": "text/plain",
                   "language": "en"
                 },
@@ -838,7 +838,7 @@
               "body": [
                 {
                   "type": "TextualBody",
-                  "value": "Reading a detective story (Delaney, Bant Singer)\n3′ 22″",
+                  "value": "Reading a detective story (Delaney, Bant Singer) 3′ 22″",
                   "format": "text/plain",
                   "language": "en"
                 },
@@ -1021,7 +1021,7 @@
               "body": [
                 {
                   "type": "TextualBody",
-                  "value": "Confused and vague sounds of someone speaking\nnot very far away",
+                  "value": "Confused and vague sounds of someone speaking not very far away",
                   "format": "text/plain",
                   "language": "en"
                 },

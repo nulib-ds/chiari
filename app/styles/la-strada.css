@@ -6,27 +6,41 @@
  * board scales with its container without measuring anything.
  */
 
+/* One blank line between the page's words and the controls, whose bar has
+ * 0.75rem of its own above them. The marker's drawing is placed by it (see
+ * .fx-strada__sketch). */
 .fx-strada {
-  margin-block: 2rem 4rem;
+  position: relative;
+  margin-block: calc(var(--fx-line) - 0.75rem) 4rem;
 }
 
-/* The exhibit's page starts higher than the others: half the room above the
- * heading that custom.css gives every page (clamp(4.5rem, 10vw, 8rem)). */
+/* The exhibit's page starts higher than the others, so the sheet does: one line
+ * above the heading, where custom.css gives every page clamp(4.5rem, 10vw, 8rem). */
 .canopy-layout:has(.fx-strada) {
-  padding-top: clamp(2.25rem, 5vw, 4rem);
+  padding-top: var(--fx-line);
 }
 
 /* The controls stay in reach while the sheet, which is taller than the
- * window, scrolls under them. */
+ * window, scrolls under them. They keep to the page's column; the paper behind
+ * them runs the window's width, as the sheet under it does. */
 .fx-strada__bar {
   position: sticky;
   top: 0;
-  z-index: 5;
+  /* Over the marker's drawing, which goes under it with the sheet. */
+  z-index: 8;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem 1.25rem;
   padding-block: 0.75rem;
+}
+
+.fx-strada__bar::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline: calc(50% - 50vw);
+  z-index: -1;
   background: color-mix(in srgb, var(--fx-paper) 92%, transparent);
   backdrop-filter: blur(6px);
 }
@@ -152,42 +166,36 @@
   font-style: normal;
 }
 
-/* The sheet stands no taller than 90vh: it is never wider than that allows
- * (--tallest, from its height in page widths). Within that it is wider than the
- * column the rest of the page keeps to: out to 4rem short of the window on either
- * side, up to 80rem, never narrower than the column, and centred on it. Where the
- * window has no room for that, the sheet keeps to the column, less a rail on its
- * left for the seek bar. */
+/* The sheet runs the whole width of the window, out past the column the rest of
+ * the page keeps to, and is as tall as that makes it, which is taller than any
+ * window: it scrolls under the controls above and the seek bar below, which both
+ * stay in reach. The column is centered in the window, so half the difference
+ * between them is how far out the sheet starts. */
 .fx-strada__stage {
-  --rail: 3rem;
-  --tallest: calc(90vh * 100 / var(--page-h, 133.333));
-  --sheet: min(calc(100% - var(--rail)), var(--tallest));
   container-type: inline-size;
-  width: var(--sheet);
-  margin-left: max(var(--rail), calc((100% - var(--sheet)) / 2));
+  width: 100vw;
+  margin-inline-start: calc(50% - 50vw);
 }
 
-@media (min-width: 80rem) {
-  .fx-strada__stage {
-    --sheet: min(max(100%, min(calc(100vw - 2 * (var(--fx-inset) + 4rem)), 80rem)), var(--tallest));
-    margin-inline: calc((100% - var(--sheet)) / 2);
-  }
+/* 100vw counts the room a scrollbar takes, where one does: the sheet's last few
+ * pixels go under it rather than make the page scroll sideways. Clipping, unlike
+ * hiding, leaves the controls' bar its sticking. */
+html:has(.fx-strada) {
+  overflow-x: clip;
 }
 
 /* The sheet, and the floor below it for whatever falls. */
 .fx-strada__board {
   position: relative;
   isolation: isolate;
-  height: calc((var(--page-h) + var(--credit, 0) + var(--floor)) * 1cqw);
+  height: calc((var(--page-h) + var(--floor)) * 1cqw);
   user-select: none;
 }
 
-/* The credit under the sheet; what falls lands below it. */
+/* The credit stands over the sheet, in the page's column, as far above the sheet
+ * as the controls' own row is above it. */
 .fx-strada__credit {
-  position: absolute;
-  top: calc(var(--page-h) * 1cqw + 0.9rem);
-  left: 0;
-  width: 100%;
+  margin-block: 0 0.75rem;
   color: var(--fx-ink);
   line-height: 1.5;
   text-align: right;
@@ -283,21 +291,26 @@
   transition: transform 120ms ease-out, filter 120ms ease-out, opacity 160ms ease-out, left 140ms ease-out, top 140ms ease-out;
 }
 
+/* Held, a slip comes up off the sheet by the same amount whatever its length: 0.4 of
+ * a page-width unit across in all, where a plain scale would spread a long line many
+ * times further than a short one, out over its braces. */
 .fx-slip.is-lifted {
   cursor: grabbing;
-  transform: scale(1.04);
+  transform: scale(calc(1 + 0.4 / var(--w)));
   filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.22));
 }
 
-/* Pointed at, here or by its block on the seek bar, or focused: the slip stands
- * over the others, as it is, and the marker's line ends at its left edge (see
- * .fx-strada__sketch). Focused, it is braced either side as well, and the braces are
- * its focus ring. */
+/* Pointed at, here or by its chapter on the seek bar, or focused: the slip stands
+ * over the others, as it is, and the marker's line ends under its first character
+ * (see .fx-strada__sketch). Focused, it is braced either side as well, and the braces
+ * are its focus ring. */
 .fx-slip.is-pointed {
   z-index: 99999;
 }
 
-.fx-slip.is-pointed:focus-visible {
+/* Carried, a slip keeps its braces, and they go with it. */
+.fx-slip.is-pointed:focus-visible,
+.fx-slip.is-lifted:focus-visible {
   outline: none;
 }
 
@@ -307,82 +320,79 @@
   opacity: 0.7;
 }
 
-/* The seek bar runs down the rail to the left of the sheet, level with its typed
- * lines. Play and pause head the rail and stay in reach under the controls as the
- * sheet scrolls. --gap is the room between the bar's blocks. */
-.fx-strada__rail {
-  --gap: 5px;
-  position: absolute;
-  top: 0;
-  right: 100%;
-  width: var(--rail);
-  height: calc(var(--page-h) * 1cqw);
+/* The seek bar is fixed along the foot of the window, where it stays in reach as
+ * the sheet scrolls under it. It is drawn as Clover draws its player on the Watch
+ * page: a black bar of its own, the rail in white, what has been heard in pink, and
+ * play and pause at its head. Like the sheet it keeps to no column: it runs the
+ * window's width, what is in it as far in from the sides as it is from the bar's
+ * top and foot. --fx-strada-control is the size of Clover's own controls, 1rem and
+ * 0.618rem all round, written out here because play stands outside its player.
+ *
+ * It is in two layers, with the marker's drawing between them (.fx-strada__sketch):
+ * the black ground (the foot) under the drawing, and play and the bar over it. So
+ * the marker's line runs over the black to the chapter it starts from, and under
+ * the rail and the popover that names the chapter. */
+.fx-strada__foot,
+.fx-strada__timeline {
+  position: fixed;
+  inset: auto 0 0;
+  height: var(--fx-strada-bar);
 }
 
+.fx-strada__foot {
+  z-index: 6;
+  background: var(--fx-ink);
+}
+
+.fx-strada__timeline {
+  --fx-strada-control: calc(1rem + 2 * 0.618rem);
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 0.618rem;
+  padding-inline: calc((var(--fx-strada-bar) - var(--fx-strada-control)) / 2);
+}
+
+/* The page keeps the bar's height clear below its last line. A slip brought into
+ * view by the keys stops short of the bar, and of the controls stuck to the window's
+ * top, under either of which it would have focus unseen (WCAG 2.4.11). The controls
+ * say how tall they are (--fx-strada-controls, from LaStrada.client.tsx), since
+ * they wrap in a narrow window. */
+:root:has(.fx-strada__timeline) {
+  --fx-strada-bar: 3.75rem;
+  scroll-padding-block: calc(var(--fx-strada-controls, 5rem) + 0.75rem) calc(var(--fx-strada-bar) + 0.75rem);
+}
+
+body:has(.fx-strada__timeline) {
+  padding-bottom: var(--fx-strada-bar);
+}
+
+/* Play and pause, as Clover draws its player's buttons: a square of the controls'
+ * dark fill (Clover's own value), as large as Clover's are, its glyph in the paper's
+ * white, and pink under the pointer or on focus. On the black bar the focus ring is
+ * the paper's white, not ink. */
 .fx-strada__play {
-  position: sticky;
-  top: 7rem;
-  z-index: 2;
-  isolation: isolate;
+  flex: none;
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.25rem;
-  margin: 0.25rem auto 0;
+  width: var(--fx-strada-control);
+  height: var(--fx-strada-control);
   padding: 0;
   border: 0;
-  overflow: visible;
-  /* Painted, as the search page's Filter button is: a hand-painted black block
-   * (paint-block.svg) rather than a pill, the paper showing through as the icon. */
   border-radius: 0;
-  background: url("../images/marker/paint-block.svg") center / 100% 100% no-repeat;
+  background-color: #1a1d1e;
   color: var(--fx-paper);
   cursor: pointer;
 }
 
 .fx-strada__play svg {
-  width: 0.85rem;
-  height: 0.85rem;
+  width: 1rem;
+  height: 1rem;
   fill: currentColor;
 }
 
-/* Hovered or focused, the tangle (gesture 7) in a fresh paint color is drawn just
- * above the block, centered on it and nudged down and right, and a marker stroke in
- * the same color runs under the icon, as on Filter. The color is picked each time
- * (data-fx-ann-color, set in LaStrada.client.tsx). */
-.fx-strada__play::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: 50%;
-  bottom: calc(100% - 0.6rem);
-  width: 6rem;
-  aspect-ratio: 280 / 50;
-  transform: translateX(calc(-50% + 0.6rem));
-  pointer-events: none;
-  background-color: var(--fx-ann, var(--fx-pink));
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  visibility: hidden;
-}
-
-.fx-strada__play::before {
-  content: "";
-  position: absolute;
-  left: 0.7rem;
-  right: 0.7rem;
-  bottom: 0.35rem;
-  height: 0.3rem;
-  pointer-events: none;
-  background: var(--fx-ann-paint, none) center / 100% 100% no-repeat;
-  visibility: hidden;
-}
-
-.fx-strada__play:not(:disabled):is(:hover, :focus-visible)::after,
-.fx-strada__play:not(:disabled):is(:hover, :focus-visible)::before {
-  visibility: visible;
+.fx-strada__play:not(:disabled):is(:hover, :focus-visible) {
+  background-color: var(--fx-pink);
 }
 
 .fx-strada__play:disabled {
@@ -390,146 +400,102 @@
   cursor: default;
 }
 
-/* Some paint colors are too light to show focus alone. */
 .fx-strada__play:focus-visible {
-  outline: 2px solid var(--fx-ink);
-  outline-offset: 3px;
+  outline: 2px solid var(--fx-paper);
+  outline-offset: 2px;
 }
 
-/* The seek bar: the actions on the sheet, each a block cut from the sheet's own
- * paper, with a gap between each and the next that the page shows through. The
- * blocks are as if cut from one strip: each shows the paper at its own place along
- * it. As in
- * Clover's timeline the gap is made by a band of the page's paper above and below
- * each block, which its fill does not reach. A block fills black as it is heard:
- * --done once it has been, and the one playing as far as it has got (--progress,
- * set as it plays). The blocks are square but for the bar's two ends, the first
- * block's top corners and the last's bottom ones (--round); Canopy squares every
- * corner, so the rounding is asked for through its variable.
- *
- * The strip comes from the sheet's left margin below its horizontal fold, which
- * would otherwise cross the bar as a line, stretched so that a bar of everything
- * reaches from the first typed line to the last (--length, from --top). Where, in
- * page widths, measured on Northwestern's scan: across, the margin (--margin), left
- * of the first column; down, below the fold and a mark under it (--below), for as
- * much clean paper as there is above the sheet's foot (--span). Measure again for
- * a new scan. */
-.fx-strada__chapters {
-  --margin: 9.5;
-  --below: 74.9;
-  --span: 54.5;
-  --stretch: calc(var(--length) / var(--span));
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 0.6rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  transform: translateX(-50%);
-}
-
-.fx-strada__chapters li {
-  position: absolute;
-  left: 0;
-  top: calc(var(--from) * 1cqw);
-  height: calc((var(--to) - var(--from)) * 1cqw);
-  width: 100%;
-  list-style: none;
-}
-
-.fx-strada__chapters li::marker {
-  content: "";
-}
-
-.fx-strada__chapters button {
-  --round: 0;
-  --fill: max(var(--done, 0), var(--progress, 0));
-  display: block;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  border: 0;
-  border-block: calc(var(--gap) / 2) solid var(--fx-paper);
-  border-radius: var(--round);
-  background:
-    linear-gradient(to bottom, var(--fx-ink) calc(var(--fill) * 100%), transparent calc(var(--fill) * 100%))
-      0 0 / 100% 100% no-repeat,
-    var(--score)
-      calc(var(--margin) * var(--stretch) * -1cqw)
-      calc((var(--below) * var(--stretch) + var(--from) - var(--top)) * -1cqw)
-      / calc(100cqw * var(--stretch)) auto no-repeat;
-  background-clip: padding-box;
-  cursor: pointer;
-}
-
-.fx-strada__chapters li:first-child button {
-  --round: 3px 3px 0 0;
-}
-
-.fx-strada__chapters li:last-child button {
-  --round: 0 0 3px 3px;
-}
-
-.fx-strada__chapters li:only-child button {
-  --round: 3px;
-}
-
-.fx-strada__chapters button:disabled {
-  cursor: default;
-}
-
-/* The block the marker's line starts from (see .fx-strada__sketch) is pink, boxed
- * in pink marker: paint-frame-pink.svg as a 9-slice border image, drawn round the
- * block. Its stroke lies about 7.5 to 20.5 units into the image's 24-unit corner,
- * 2.5 to 6.8px into the 8px border, so standing the box 6px out lays the stroke's
- * inner edge just over the block's edge. It stands over the blocks either side. */
-.fx-strada__chapters button.is-pointed {
+/* The bar itself is Clover's Timeline (LaStrada.client.tsx), which plays the
+ * arrangement as a manifest of its own. Of Clover's player only its seek bar is
+ * shown, in Clover's own colors, with the site's pink for its accent (custom.css):
+ * its ground, artwork, title and the row of controls under the seek bar are put
+ * away, and the box it plays in is no taller than the bar's own slider. What it is
+ * part of stays for a screen reader, which reads it nowhere else. Clover's styles
+ * are in a layer of their own, so these win without a fight. */
+.fx-strada__seek {
   position: relative;
-  background: var(--fx-pink);
-  background-clip: padding-box;
+  flex: 1 1 0;
+  min-width: 0;
+  height: max(24px, 1.618rem);
 }
 
-.fx-strada__chapters button.is-pointed::after {
-  content: "";
+/* No taller than the slider, and nothing of it cut off: the popover that names the
+ * chapter under the pointer stands over the bar, outside the player's box. Clover
+ * clips its box in its own style attribute, which only an important rule overrides. */
+.fx-strada__player.clover-canvas {
+  min-height: 0;
+  overflow: visible !important;
+}
+
+.fx-strada__player .clover-canvas-player {
+  display: block;
+  padding: 0;
+}
+
+.fx-strada__player :is(.clover-canvas-player-ground, .clover-canvas-player-art, .clover-canvas-player-cues, .clover-canvas-transport-bar) {
+  display: none;
+}
+
+.fx-strada__player .clover-canvas-player-head {
   position: absolute;
-  inset: -6px;
-  z-index: 1;
-  border: 8px solid transparent;
-  border-image: url("../images/marker/paint-frame-pink.svg") 24 / 8px stretch;
-  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-/* While a block or its action is pointed at (or reached with the keyboard), the
- * marker draws a line from the middle of the block, out, across and in again, to a
- * brace at the action's type, both in pink and by hand (marker() in LaStrada.client.tsx).
- * The drawing covers the rail and the sheet and is drawn in its own pixels. It
- * stands above every slip, which are stacked from 1 up as they are picked up. */
+.fx-strada__player .clover-canvas-player > .clover-canvas-transport {
+  display: contents;
+}
+
+.fx-strada__player .clover-canvas-transport-seek-area {
+  margin: 0;
+}
+
+/* The popover over the bar names the chapter under the pointer as its action is
+ * typed on the sheet: its lines broken where the typescript breaks them, which the
+ * chapter's label carries. */
+.fx-strada__player .clover-canvas-transport-seek-area > .clover-tip {
+  white-space: pre-line;
+}
+
+/* The chapter pointed at, on the bar or by its action on the sheet, is marked out
+ * in pink, the marker's color, which the line to its action starts from: Clover
+ * marks it in white. Where the reader's system forces its own colors, Clover's
+ * rule for that stands. */
+@media (forced-colors: none) {
+  .fx-strada__player .clover-canvas-transport-chapter-span {
+    background-color: var(--fx-pink);
+    opacity: 1;
+  }
+}
+
+/* While a chapter or its action is pointed at (or a slip is reached with the
+ * keyboard, or carried), the marker draws a line from the middle of the chapter, as
+ * Clover marks it out on the seek bar, up over the bar, across and up again to
+ * arrive under the action, at the foot of its first character; and a slip with focus
+ * is braced either side of its type. Both are drawn by hand (marker() in
+ * LaStrada.client.tsx), the line in pink and the braces in the page's ink. The
+ * drawing lies over the whole exhibit and is drawn in its own pixels, wherever they
+ * fall: over the sheet and the bar's black ground, and under the controls and what
+ * is on the bar. */
 .fx-strada__sketch {
   position: absolute;
-  top: 0;
-  left: calc(-1 * var(--rail));
-  z-index: 100000;
-  width: calc(100% + var(--rail));
+  inset: 0;
+  z-index: 7;
+  width: 100%;
   height: 100%;
   overflow: visible;
   fill: var(--fx-pink);
   pointer-events: none;
 }
 
-/* How long the performance takes, written under the last block, and moving down
- * and counting up as actions are added. */
-.fx-strada__total {
-  position: absolute;
-  top: calc(var(--y) * 1cqw + 0.45rem);
-  left: 0;
-  right: 0;
-  color: var(--fx-ink);
-  font: inherit;
-  line-height: 1;
-  text-align: center;
-  white-space: nowrap;
+/* The braces are a slip's focus ring: black on the paper, as focus is everywhere
+ * on the site. */
+.fx-strada__brace {
+  fill: var(--fx-ink);
 }
 
 /* Gravity: the fall speeds up, the sideways drift does not. The paper lets go
