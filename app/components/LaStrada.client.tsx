@@ -29,6 +29,11 @@ import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
  *
  * <LaStrada manifest="/la-strada/manifest.json" />
  *
+ * A page in another language gives its own words in `labels` and the work's page
+ * in that language as `work`. The actions stay as they were typed, in English,
+ * and are marked as English there: each slip and each line of the transcription
+ * takes the language its annotation's text declares.
+ *
  * Things snap to the typewriter's grid. The manifest carries it as a service on
  * the canvas (see app/scripts/la-strada): the width of a character, the height
  * of a line, and the tilt of the typing in the scan, measured from the typing
@@ -77,6 +82,11 @@ const LABELS = {
   original: "Original",
   reset: "Reset",
   shuffle: "Shuffle",
+  /** What each of the four says of itself under the pointer. */
+  originalTitle: "The score as it was typed",
+  resetTitle: "Put every action back where it was typed",
+  clearTitle: "Let the actions fall off the sheet",
+  shuffleTitle: "Lay the actions on the sheet in a random order, and play them",
   intro: "A typescript sent to George Maciunas, 1964. Drag a line, or move it with the arrow keys.",
   fallen: "Drag them onto the sheet, then press play.",
   arranged: "In a new order. Move them as you like.",
@@ -105,6 +115,8 @@ type Take = {id: string; src: string; format?: string; duration: number};
 type Piece = {
   id: string;
   text: string;
+  /** The language it is typed in, as the manifest says, where a page in another marks it. */
+  lang?: string;
   /** Seconds of silence to perform in place of a recording, when the action is silent. */
   silent?: number;
   /** How long it is heard for, in seconds: its recordings end to end, its silence, or its saying. */
@@ -229,6 +241,7 @@ function readScore(manifest: any, rebase: (url: string) => string): Score {
           {
             id: String(note.id).split("/").pop() as string,
             text: shown.value,
+            lang: typeof shown.language === "string" ? shown.language : undefined,
             note,
             silent,
             length: silent ?? (recorded || reading(sayable(spoken.value)) / 1000),
@@ -1000,10 +1013,16 @@ const TIMELINE = {hideDelay: Infinity};
 
 export default function LaStrada({
   manifest,
+  work,
   labels,
 }: {
   /** The exhibit's IIIF manifest. */
   manifest: string;
+  /**
+   * The work's own page, which the credit's title links to: the manifest's homepage,
+   * unless this names another, as a page in another language does.
+   */
+  work?: string;
   /** Interface text, to translate or reword. */
   labels?: Partial<Labels>;
 }) {
@@ -1749,9 +1768,9 @@ export default function LaStrada({
       <div ref={controls} className="fx-strada__bar">
         {(
           [
-            {mode: "original", label: text.original, title: "The score as it was typed", press: restore},
-            {mode: "fallen", label: text.clear, title: "Let the actions fall off the sheet", press: clearSheet},
-            {mode: "shuffled", label: text.shuffle, title: "Lay the actions on the sheet in a random order, and play them", press: shuffleSheet},
+            {mode: "original", label: text.original, title: text.originalTitle, press: restore},
+            {mode: "fallen", label: text.clear, title: text.clearTitle, press: clearSheet},
+            {mode: "shuffled", label: text.shuffle, title: text.shuffleTitle, press: shuffleSheet},
           ] as const
         ).map(({mode: own, label, title, press}) => (
           <React.Fragment key={own}>
@@ -1770,7 +1789,7 @@ export default function LaStrada({
                 type="button"
                 className="fx-strada__reset"
                 aria-label={text.reset}
-                title="Put every action back where it was typed"
+                title={text.resetTitle}
                 disabled={!ready || (mode === "original" && phase === "intact")}
                 onClick={reset}
               >
@@ -1846,7 +1865,11 @@ export default function LaStrada({
           the title, linked to its item, who made it, where it is from, and any rights.
           It is shown only while the sheet is as typed, but keeps its room. */}
       <div className="fx-strada__credit">
-        {score.credit.link ? <a href={score.credit.link}>“{score.credit.title}”</a> : <>“{score.credit.title}”</>}
+        {work || score.credit.link ? (
+          <a href={work ? withBasePath(work) : score.credit.link}>“{score.credit.title}”</a>
+        ) : (
+          <>“{score.credit.title}”</>
+        )}
         {score.credit.creator && ` ${text.by} ${score.credit.creator}`}
         {score.credit.date && `, ${score.credit.date}`}
         {score.credit.source && (
@@ -1898,6 +1921,7 @@ export default function LaStrada({
                   } as React.CSSProperties
                 }
                 aria-label={piece.text.replace(/\n/g, " ")}
+                lang={piece.lang}
                 aria-hidden={touchable ? undefined : true}
                 tabIndex={touchable ? 0 : -1}
                 onPointerDown={(e) => grab(e, piece)}
@@ -1978,7 +2002,9 @@ export default function LaStrada({
       <details className="fx-strada__transcription">
         <summary>{text.transcription}</summary>
         {everything.map((piece) => (
-          <p key={piece.id}>{piece.text}</p>
+          <p key={piece.id} lang={piece.lang}>
+            {piece.text}
+          </p>
         ))}
       </details>
     </section>
