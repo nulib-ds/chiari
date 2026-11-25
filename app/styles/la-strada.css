@@ -291,9 +291,12 @@ html:has(.fx-strada) {
   transition: transform 120ms ease-out, filter 120ms ease-out, opacity 160ms ease-out, left 140ms ease-out, top 140ms ease-out;
 }
 
+/* Held, a slip comes up off the sheet by the same amount whatever its length: 0.4 of
+ * a page-width unit across in all, where a plain scale would spread a long line many
+ * times further than a short one, out over its braces. */
 .fx-slip.is-lifted {
   cursor: grabbing;
-  transform: scale(1.04);
+  transform: scale(calc(1 + 0.4 / var(--w)));
   filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.22));
 }
 

@@ -1337,20 +1337,28 @@ export default function LaStrada({
       const wide = Math.max(4, 0.4 * line);
       const top = sheet.top - box.top + at.y * unit;
       const tall = Math.max(piece.h * unit * 0.95, line * 1.05);
-      // The brace stands just left of the type, its point away from it.
-      const tip: Point = [sheet.left - box.left + (at.x + score.grid.char * BEARING) * unit - ink * 0.6 - wide, top + (piece.h * unit) / 2];
+      const middle = top + (piece.h * unit) / 2;
+      // How far a brace stands from the type, and how far under the type the line arrives.
+      const clear = ink * 0.6;
       // Focused, the slip is braced either side of its type.
       const braced = focused === pointing;
       const braces: string[] = [];
       if (braced) {
         // Each brace has a hand of its own, so it is drawn the same way wherever its
-        // slip stands. The right one stands just past the end of the type, its point
-        // away from it: a brace drawn as the left one is, and turned about its point.
+        // slip stands. The left one stands left of the type, its point away from it.
+        // The line arrives under the first character, so this brace wraps round that
+        // column and the line's end with it: it reaches down past the foot of the type
+        // to below where the line stops, and stands a stroke's width further out than
+        // the right one does, so it lies over neither the type nor the line.
         const n = Math.max(12, Math.min(120, Math.round((tall + 2 * wide) / 2)));
+        const under = clear + ink * 0.6;
+        const tip: Point = [sheet.left - box.left + (at.x + score.grid.char * BEARING) * unit - clear - ink - wide, middle + under / 2];
         const hand = seeded(`${pointing} {`);
-        braces.push(marker(brace(tip, tall, wide, n, hand), ink * 0.9, hand));
+        braces.push(marker(brace(tip, tall + under, wide, n, hand), ink * 0.9, hand));
+        // The right one stands just past the end of the type, its point away from it: a
+        // brace drawn as the left one is, and turned about its point.
         const stop = (at.x + score.grid.char * BEARING + (piece.w - 2 * score.grid.char * BEARING)) * unit;
-        const point: Point = [sheet.left - box.left + stop + ink * 0.6 + wide, tip[1]];
+        const point: Point = [sheet.left - box.left + stop + clear + wide, middle];
         const other = seeded(`${pointing} }`);
         braces.push(marker(brace(point, tall, wide, n, other).map(([x, y]): Point => [2 * point[0] - x, y]), ink * 0.9, other));
       }
@@ -1366,7 +1374,7 @@ export default function LaStrada({
       let path: Point[] | null = null;
       if (from && from.width > 0) {
         const start: Point = [from.left - box.left + from.width / 2, from.top - box.top + from.height / 2];
-        const end: Point = [sheet.left - box.left + (at.x + score.grid.char / 2) * unit, top + piece.h * unit + ink * 0.6];
+        const end: Point = [sheet.left - box.left + (at.x + score.grid.char / 2) * unit, top + piece.h * unit + clear];
         const up = end[1] - start[1];
         const out: Point = [start[0], start[1] + Math.sign(up) * Math.min(90, 0.4 * Math.abs(up))];
         const into: Point = [end[0], end[1] - Math.sign(up) * Math.min(50, 0.2 * Math.abs(up))];
