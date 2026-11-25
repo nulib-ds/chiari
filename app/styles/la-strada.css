@@ -555,6 +555,46 @@ body:has(.fx-strada__timeline) {
   font-size: inherit;
 }
 
+/* The tip's words, and Start under them. */
+.fx-strada__tip-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding-bottom: 0.25rem;
+}
+
+/* Start: solid ink, its word in the paper's white (21:1) and struck hard (a <strong>,
+ * the one bold the typewriter rules allow), its edge drawn round it by the marker in
+ * ink, in the tip's drawing (.fx-strada__tipline). It closes the tip. Pointed at,
+ * the ink lifts a little; its focus is ringed in the page's ink, outside the drawn
+ * edge, as the controls' is. */
+.fx-strada__tip-start {
+  min-height: 2rem;
+  padding: 0.25rem 1.1rem;
+  border: 0;
+  border-radius: 2px;
+  background: var(--fx-ink);
+  color: var(--fx-paper);
+  font-family: inherit;
+  line-height: inherit;
+  cursor: pointer;
+}
+
+.fx-strada__tip-start:hover {
+  background: color-mix(in srgb, var(--fx-ink) 82%, var(--fx-paper));
+}
+
+.fx-strada__tip-start:focus-visible {
+  outline: 2px solid var(--fx-ink);
+  outline-offset: 5px;
+}
+
+/* Start's drawn edge, in ink, where the rest of the tip's drawing is blue. */
+.fx-strada__tipline .is-start {
+  fill: var(--fx-ink);
+}
+
 /* Its close button: a cross, 28px square, which is more than the 24px a target
  * needs (WCAG 2.5.8), its focus ringed in the page's ink as the controls' are. */
 .fx-strada__tip-close {

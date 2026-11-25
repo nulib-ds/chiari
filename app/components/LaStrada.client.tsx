@@ -103,8 +103,9 @@ const LABELS = {
   copied: "Copied",
   annotationPage: "Annotation page",
   failed: "The score could not be loaded.",
-  tip: "Move typed lines of the La Strada score to compose the desired order.",
+  tip: "Move typed actions of the La Strada score.",
   dismissTip: "Dismiss tip",
+  start: "Start",
 };
 type Labels = typeof LABELS;
 
@@ -1152,6 +1153,7 @@ export default function LaStrada({
   const [tip, setTip] = useState(true);
   const tipBox = useRef<HTMLDivElement>(null);
   const tipPath = useRef<SVGPathElement>(null);
+  const tipStart = useRef<SVGPathElement>(null);
   const tipWarp = useRef<SVGFEDisplacementMapElement>(null);
   const dismissTip = () => setTip(false);
   // While the tip is up, a faded copy of its action shows every few seconds how a line
@@ -1615,6 +1617,13 @@ export default function LaStrada({
       const r = pop.getBoundingClientRect();
       const hand = seeded("La strada, the tip");
       let d = marker(roughBox(r.left - out, r.top - out, r.right + out, r.bottom + out, ink * 0.5, hand), ink * 0.7, hand, true);
+      // The Start button's edge, drawn by the same hand in a heavier stroke, in ink.
+      const go = pop.querySelector(".fx-strada__tip-start")?.getBoundingClientRect();
+      const press = seeded("La strada, start");
+      tipStart.current?.setAttribute(
+        "d",
+        go && go.width > 0 ? marker(roughBox(go.left, go.top, go.right, go.bottom, ink * 0.45, press), ink * 1.05, press, true) : "",
+      );
       // The line, from the middle of the action's chapter, as the bar marks it out in
       // blue, to arrive under the middle of its last line as the pink line does, a
       // little under its foot. None while the action is off the sheet (it has no
@@ -2165,6 +2174,7 @@ export default function LaStrada({
             <feDisplacementMap ref={tipWarp} in="SourceGraphic" xChannelSelector="R" yChannelSelector="G" />
           </filter>
           <path ref={tipPath} filter="url(#fx-strada-tip-marker)" />
+          <path ref={tipStart} className="is-start" filter="url(#fx-strada-tip-marker)" />
         </svg>
       )}
 
@@ -2233,7 +2243,14 @@ export default function LaStrada({
                 closeTip(true);
               }}
             >
-              <p>{text.tip}</p>
+              <div className="fx-strada__tip-body">
+                <p>{text.tip}</p>
+                {/* Start closes the tip, as × does; its edge is drawn by the marker. */}
+                <button type="button" className="fx-strada__tip-start" onClick={(e) => closeTip(e.detail === 0)}>
+                  {/* Bold as the typewriter rules allow it: a key struck hard (DESIGN.md). */}
+                  <strong>{text.start}</strong>
+                </button>
+              </div>
               <button
                 type="button"
                 className="fx-strada__tip-close"
