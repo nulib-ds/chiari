@@ -87,7 +87,7 @@ const LABELS = {
   resetTitle: "Put every action back where it was typed",
   clearTitle: "Let the actions fall off the sheet",
   shuffleTitle: "Lay the actions on the sheet in a random order, and play them",
-  intro: "A typescript sent to George Maciunas, 1964. Drag a line, or move it with the arrow keys.",
+  intro: "Drag a line, or move it with the arrow keys.",
   fallen: "Drag them onto the sheet, then press play.",
   arranged: "In a new order. Move them as you like.",
   silent: "silence",
@@ -176,8 +176,8 @@ type Score = {
 };
 
 /**
- * Room under the sheet for the fallen actions. It is more than any scattering
- * of these actions has needed, so the board never grows when they fall.
+ * Room under the sheet for the fallen actions until the score is read and its
+ * own is measured (`floorFor`).
  */
 const FLOOR = 62;
 
@@ -797,18 +797,45 @@ function origin(score: Score, delay = 0, dur = 0): Places {
   return places;
 }
 
-/** Strew the actions over the floor in rows, in no order, as upright as they were typed. */
-function scatter(score: Score, z: number): {places: Places; floor: number} {
-  const places: Places = {};
+/**
+ * Lay the actions in rows on the floor, in the order given: where each one's row
+ * starts, and how deep under the sheet the last row ends, with a margin under it.
+ */
+function rows(score: Score, order: Piece[]): {at: {p: Piece; x: number; y: number}[]; floor: number} {
+  const at: {p: Piece; x: number; y: number}[] = [];
   let x = 2;
   let y = score.pageH + 4;
   let row = 0;
-  for (const p of shuffled(score.actions)) {
+  for (const p of order) {
     if (x + p.w > 98) {
       x = 2;
       y += row + 2.4;
       row = 0;
     }
+    at.push({p, x, y});
+    x += p.w + 2.2;
+    row = Math.max(row, p.h);
+  }
+  // The jitter a scattering adds (below) lowers a slip by 0.8 at most.
+  return {at, floor: y + row + 0.8 + 4 - score.pageH};
+}
+
+/**
+ * Room under the sheet for whatever falls: as deep as the deepest of many
+ * scatterings, so the board almost never has to grow when the actions fall,
+ * and is no deeper than they need while the sheet is whole.
+ */
+function floorFor(score: Score): number {
+  let deepest = 0;
+  for (let i = 0; i < 400; i++) deepest = Math.max(deepest, rows(score, shuffled(score.actions)).floor);
+  return deepest;
+}
+
+/** Strew the actions over the floor in rows, in no order, as upright as they were typed. */
+function scatter(score: Score, z: number): {places: Places; floor: number} {
+  const places: Places = {};
+  const laid = rows(score, shuffled(score.actions));
+  for (const {p, x, y} of laid.at) {
     places[p.id] = {
       x: x + between(0, 1.2),
       y: y + between(0, 0.8),
@@ -817,10 +844,8 @@ function scatter(score: Score, z: number): {places: Places; floor: number} {
       delay: (1 - p.y / score.pageH) * 700 + between(0, 500),
       dur: between(900, 1300),
     };
-    x += p.w + 2.2;
-    row = Math.max(row, p.h);
   }
-  return {places, floor: Math.max(FLOOR, y + row + 4 - score.pageH)};
+  return {places, floor: laid.floor};
 }
 
 /**
@@ -925,36 +950,27 @@ function rounded(points: Point[], round: number): Point[] {
 }
 
 /**
- * A curly brace as a hand draws one, as the middle line of its stroke: its point at
- * `tip`, about `height` tall and no wider than `width`, curling right at both ends.
- * It has the general shape of a brace and is never exactly one: its halves are of
- * different lengths, their backs bowed and the whole leaning a little, its ends
- * curled more or less, and each brace differently, as `random` has it.
+ * A box drawn round a rectangle in one stroke, as a hand draws one quickly: the pen
+ * comes down a little way along the top, goes round, and runs on past where it came
+ * down before it lifts. Its corners are each a little off the rectangle's, as
+ * `random` has it, by at most `rough` pixels, and turned round a short curve. The
+ * middle of its foot, where a line can meet it, is where the rectangle's is.
  */
-function brace(tip: Point, height: number, width: number, n: number, random: () => number): Point[] {
-  const between = (lo: number, hi: number) => lo + (hi - lo) * random();
-  const sharp = between(0.12, 0.34); // how much of each half the point takes
-  const back = between(0.35, 0.65); // how far the back stands from the point, as a part of the width
-  const lean = between(-0.25, 0.25); // how far the ends lean across, as a part of the width
-  const halves = [0, 1].map(() => ({
-    long: between(0.82, 1.16), // the half's length, as a part of half the height
-    from: between(0.55, 0.82), // how far along it its end begins to curl
-    curl: between(0.25, 0.75), // how far its end curls, as a part of the width
-    // How far its back bows, as a part of the width: either way, but never back past the point.
-    bow: between(Math.max(-0.3, 0.1 + Math.abs(lean) - back), 0.3),
-  }));
-  const points = Array.from({length: n + 1}, (_, i): Point => {
-    const s = (i / n) * 2 - 1;
-    const a = Math.abs(s);
-    const half = halves[s < 0 ? 0 : 1];
-    const point = a < sharp ? (1 - a / sharp) ** 2 : 0;
-    const curl = a > half.from ? ((a - half.from) / (1 - half.from)) ** 2 : 0;
-    const bow = a > sharp && a < half.from ? Math.sin((Math.PI * (a - sharp)) / (half.from - sharp)) ** 2 : 0;
-    return [back * (1 - point) + half.curl * curl + half.bow * bow + lean * s, (s * half.long) / 2];
-  });
-  // No wider than the room it has, and its point still where the line meets it.
-  const fit = Math.min(1, 1 / Math.max(...points.map(([x]) => x)));
-  return points.map(([x, y]) => [tip[0] + x * fit * width, tip[1] + y * height]);
+function roughBox(left: number, top: number, right: number, bottom: number, rough: number, random: () => number): Point[] {
+  const off = () => (random() * 2 - 1) * rough;
+  const wide = right - left;
+  // The foot's corners are off by the same amount up or down, the other way each,
+  // so the foot is a little tilted and its middle stays where it is.
+  const tilt = off() * 0.6;
+  const corners: Point[] = [
+    [right + off(), top + off()],
+    [right + off(), bottom + tilt],
+    [left + off(), bottom - tilt],
+    [left + off(), top + off()],
+  ];
+  const down: Point = [left + wide * (0.06 + 0.06 * random()), top + off() * 0.5];
+  const up: Point = [left + wide * (0.16 + 0.1 * random()), top + off() * 0.5];
+  return rounded([down, ...corners, up], rough);
 }
 
 /**
@@ -972,7 +988,7 @@ function marker(points: Point[], width: number, random: () => number, pinned = f
   };
   const last = points.length - 1;
   const length = points.slice(1).reduce((sum, [x, y], i) => sum + Math.hypot(x - points[i][0], y - points[i][1]), 0);
-  // Unsteady by less than the stroke is wide, and by little of a short one, so a small brace stays a brace.
+  // Unsteady by less than the stroke is wide, and by little of a short one, so a box keeps clear of what it rings.
   const drift = waves(Math.min(width * 0.9, length * 0.025));
   const settle = (t: number) => (pinned ? Math.min(1, (t * length) / 40, ((1 - t) * length) / 20) : 1);
   const swell = waves(0.7);
@@ -1062,11 +1078,13 @@ export default function LaStrada({
       return focused.dataset.action ?? null;
     });
   // What the marker draws between them, in the page's pixels: a line from the chapter
-  // to the action, and a brace at the action's type, where the line ends.
+  // to the action, and a box round the action, where the line ends.
   const sketch = useRef<SVGSVGElement>(null);
-  const [drawn, setDrawn] = useState<{line: string | null; braces: string[]; rough: number} | null>(null);
-  // The slip that has focus, reached by Tab or by a press: only it is braced, either
-  // side of its type; pointed at otherwise, a slip gets only the line.
+  // `aside` is whether the pointer is on another slip than the boxed one, which the
+  // box then shows in black, the pink being the line's.
+  const [drawn, setDrawn] = useState<{line: string | null; ringed: string | null; aside: boolean; rough: number} | null>(null);
+  // The slip that has focus, reached by Tab or by a press: only it is boxed; pointed
+  // at otherwise, a slip gets only the line.
   const [focused, setFocused] = useState<string | null>(null);
   const [resized, setResized] = useState(0);
   // Which of the three arrangements the sheet is in: as typed, as it fell (or as the
@@ -1111,6 +1129,7 @@ export default function LaStrada({
         if (!live) return;
         const next = readScore(json, rebaser(json, url));
         setScore(next);
+        setFloor(floorFor(next));
         setPlaces(origin(next));
         setTakes(draw(next));
       })
@@ -1355,76 +1374,91 @@ export default function LaStrada({
     return () => window.removeEventListener("resize", resize);
   }, []);
 
-  // Draw the braces of the slip that has focus, and the line for the action pointed
+  // Draw the box round the slip that has focus, and the line for the action pointed
   // at, from where its chapter stands on the seek bar and its slip on the sheet now.
   // The bar is fixed to the window and the sheet scrolls, so it is drawn again as
   // the page scrolls; and as a slip is carried the line goes with it, from wherever
   // its chapter then stands on the bar, so where it would land is plain to see.
   useLayoutEffect(() => {
-    const piece = pointing ? score?.actions.find((p) => p.id === pointing) : undefined;
-    const at = pointing ? places[pointing] : undefined;
-    if (!score || !pointing || !piece || !at || !sketch.current || !board.current) return void setDrawn(null);
+    // The action pointed at, which the line goes to, and the one with focus, which is
+    // boxed. They are the same slip unless the pointer rests on one slip while another
+    // has focus, and then the focused one keeps its box, as focus keeps its ring, in
+    // black, so that the pink is only where the line goes.
+    const find = (id: string | null) => (id && places[id] ? score?.actions.find((p) => p.id === id) : undefined);
+    const pointed = find(pointing);
+    const held = find(focused);
+    if (!score || (!pointed && !held) || !sketch.current || !board.current) return void setDrawn(null);
     const paper = board.current;
     const drawing = sketch.current;
-    const slip = paper.querySelector<HTMLElement>(`[data-action="${pointing}"]`);
-    const drawAt = (at: {x: number; y: number}) => {
+    type At = {x: number; y: number};
+    const drawAt = (where: (piece: Piece) => At) => {
       const box = drawing.getBoundingClientRect();
       const sheet = paper.getBoundingClientRect();
       const unit = sheet.width / 100;
       const line = score.grid.line * unit; // one typed line, in pixels
       const ink = Math.max(3, 0.3 * line);
-      const wide = Math.max(4, 0.4 * line);
-      const top = sheet.top - box.top + at.y * unit;
-      const tall = Math.max(piece.h * unit * 0.95, line * 1.05);
-      const middle = top + (piece.h * unit) / 2;
-      // How far a brace stands from the type, and how far under the type the line arrives.
-      const clear = ink * 0.6;
-      // Focused, the slip is braced either side of its type.
-      const braced = focused === pointing;
-      const braces: string[] = [];
-      if (braced) {
-        // Each brace has a hand of its own, so it is drawn the same way wherever its
-        // slip stands. The left one stands left of the type, its point away from it.
-        // The line arrives under the first character, so this brace wraps round that
-        // column and the line's end with it: it reaches down past the foot of the type
-        // to below where the line stops, and stands a stroke's width further out than
-        // the right one does, so it lies over neither the type nor the line.
-        const n = Math.max(12, Math.min(120, Math.round((tall + 2 * wide) / 2)));
-        const under = clear + ink * 0.6;
-        const tip: Point = [sheet.left - box.left + (at.x + score.grid.char * BEARING) * unit - clear - ink - wide, middle + under / 2];
-        const hand = seeded(`${pointing} {`);
-        braces.push(marker(brace(tip, tall + under, wide, n, hand), ink * 0.9, hand));
-        // The right one stands just past the end of the type, its point away from it: a
-        // brace drawn as the left one is, and turned about its point.
-        const stop = (at.x + score.grid.char * BEARING + (piece.w - 2 * score.grid.char * BEARING)) * unit;
-        const point: Point = [sheet.left - box.left + stop + clear + wide, middle];
-        const other = seeded(`${pointing} }`);
-        braces.push(marker(brace(point, tall, wide, n, other).map(([x, y]): Point => [2 * point[0] - x, y]), ink * 0.9, other));
+      // The box round an action's type, standing well clear of it: a stroke's width
+      // and more out from its first character and the last of its longest line, and
+      // above the top of its cell and below its foot by half that, which is all the
+      // room the lines above and below leave.
+      // `under` is the middle of its last typed line, from its first character to its
+      // last: the lines of an action all begin at its first column, and the last is as
+      // long as its text's last line, or the slip's own width, for a line of one.
+      const around = (piece: Piece) => {
+        const at = where(piece);
+        const top = sheet.top - box.top + at.y * unit;
+        const pad = ink * 1.2;
+        const columns = Math.round(piece.w / score.grid.char);
+        const length = piece.text.includes("\n") ? Math.min(columns, piece.text.split("\n").pop()!.length) : columns;
+        return {
+          left: sheet.left - box.left + (at.x + score.grid.char * BEARING) * unit - pad,
+          right: sheet.left - box.left + (at.x + piece.w - score.grid.char * BEARING) * unit + pad,
+          under: sheet.left - box.left + (at.x + (score.grid.char * length) / 2) * unit,
+          head: top - pad / 2,
+          foot: top + piece.h * unit + pad / 2,
+        };
+      };
+      // Focused, the slip is boxed, roughly, as a hand rings a line on a page, and the
+      // box is its focus ring. Each slip's box has a hand of its own, so it is drawn
+      // the same way wherever the slip stands.
+      let ringed: string | null = null;
+      if (held) {
+        const {left, right, head, foot} = around(held);
+        const hand = seeded(`${held.id} []`);
+        ringed = marker(roughBox(left, head, right, foot, ink * 0.5, hand), ink * 0.7, hand, true);
       }
       // The action's chapter, as Clover marks it out on the seek bar while it is
       // pointed at there or here. The line starts in its middle and comes straight up
       // out of the bar, angles across, and runs straight up again for the last 50px
-      // (both shorter where there is less room) to arrive under the action: under
-      // its first character, at the foot of its last line, turning into and out of
-      // the angle round a short curve. With no chapter to start from (the action is
-      // off the sheet, or the bar is not drawn yet), no line.
-      const chapter = section.current?.querySelector(".fx-strada__timeline .clover-canvas-transport-chapter-span");
-      const from = chapter?.getBoundingClientRect();
+      // (both shorter where there is less room) to arrive under the action: under the
+      // middle of its last line, at the foot of its box, drawn or not, turning into and
+      // out of the angle round a short curve. With no chapter to start from (the action is off the
+      // sheet, or the bar is not drawn yet), no line.
+      const chapter = pointed && section.current?.querySelector(".fx-strada__timeline .clover-canvas-transport-chapter-span");
+      const from = chapter ? chapter.getBoundingClientRect() : null;
       let path: Point[] | null = null;
-      if (from && from.width > 0) {
+      if (pointed && from && from.width > 0) {
+        const {under, foot} = around(pointed);
         const start: Point = [from.left - box.left + from.width / 2, from.top - box.top + from.height / 2];
-        const end: Point = [sheet.left - box.left + (at.x + score.grid.char / 2) * unit, top + piece.h * unit + clear];
+        const end: Point = [under, foot];
         const up = end[1] - start[1];
         const out: Point = [start[0], start[1] + Math.sign(up) * Math.min(90, 0.4 * Math.abs(up))];
         const into: Point = [end[0], end[1] - Math.sign(up) * Math.min(50, 0.2 * Math.abs(up))];
         path = rounded([start, out, into, end], 20);
       }
-      setDrawn({line: path && marker(path, ink, seeded(pointing), true), braces, rough: ink * 0.35});
+      setDrawn({
+        line: path && pointed ? marker(path, ink, seeded(pointed.id), true) : null,
+        ringed,
+        aside: !!held && !!pointed && held.id !== pointed.id,
+        rough: ink * 0.35,
+      });
     };
     // A slip nudged by the keys slides to its new place (left and top, 140ms): the
     // marker goes with it, drawn each frame from where the slip stands on the way.
-    const standing = () => {
-      if (!slip) return at;
+    const placed = (piece: Piece): At => places[piece.id];
+    const standing = (piece: Piece): At => {
+      const slip = paper.querySelector<HTMLElement>(`[data-action="${piece.id}"]`);
+      if (!slip) return placed(piece);
       const unit = paper.getBoundingClientRect().width / 100;
       const style = getComputedStyle(slip);
       return {x: parseFloat(style.left) / unit, y: parseFloat(style.top) / unit};
@@ -1432,12 +1466,15 @@ export default function LaStrada({
     const began = performance.now();
     let frame = 0;
     const tick = () => {
-      const now = standing();
-      const moving = Math.abs(now.x - at.x) > 0.001 || Math.abs(now.y - at.y) > 0.001;
+      const moving = [pointed, held].some((piece) => {
+        if (!piece) return false;
+        const [now, at] = [standing(piece), placed(piece)];
+        return Math.abs(now.x - at.x) > 0.001 || Math.abs(now.y - at.y) > 0.001;
+      });
       if (moving && performance.now() - began < 400) {
-        drawAt(now);
+        drawAt(standing);
         frame = requestAnimationFrame(tick);
-      } else drawAt(at);
+      } else drawAt(placed);
     };
     tick();
     const again = () => {
@@ -1597,7 +1634,7 @@ export default function LaStrada({
     setMode("fallen");
     const fallen = scatter(score, ++top.current);
     top.current += score.actions.length;
-    setFloor(fallen.floor);
+    setFloor((room) => Math.max(room, fallen.floor));
     setPlaces(fallen.places);
     setPhase("falling");
     later(() => setPhase("free"), settles(fallen.places));
@@ -1945,7 +1982,7 @@ export default function LaStrada({
         </div>
       </div>
 
-      {/* The marker's line and brace between the pointed chapter and its action,
+      {/* The marker's line between the pointed chapter and its action, and its box,
           their edges roughened a little, as felt-tip is on paper. It stands here, out
           of the sheet's own stacking, so the line can run over the bar's black ground
           to the chapter it starts from, under the rail and the popover. */}
@@ -1958,9 +1995,7 @@ export default function LaStrada({
             </filter>
             <g filter="url(#fx-strada-marker)">
               {drawn.line && <path d={drawn.line} />}
-              {drawn.braces.map((d, i) => (
-                <path key={i} className="fx-strada__brace" d={d} />
-              ))}
+              {drawn.ringed && <path className={`fx-strada__ring${drawn.aside ? " is-aside" : ""}`} d={drawn.ringed} />}
             </g>
           </>
         )}

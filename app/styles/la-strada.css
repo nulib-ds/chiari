@@ -68,8 +68,7 @@
   cursor: default;
 }
 
-.fx-strada__button:focus-visible,
-.fx-slip:focus-visible {
+.fx-strada__button:focus-visible {
   outline: 2px solid var(--fx-ink);
   outline-offset: 3px;
 }
@@ -152,11 +151,15 @@
   white-space: nowrap;
 }
 
-/* An action being heard may be three lines long; two is all the bar keeps. */
+/* An action being heard may be three lines long; two is all the bar keeps. The
+ * cell can be taller than two lines, where a guide wraps to three, so the line
+ * kept is held to two lines' height too, or the third shows under the ellipsis. */
 .fx-strada__caption > :first-child {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  align-self: start;
+  max-height: 3em;
   overflow: hidden;
 }
 
@@ -293,7 +296,7 @@ html:has(.fx-strada) {
 
 /* Held, a slip comes up off the sheet by the same amount whatever its length: 0.4 of
  * a page-width unit across in all, where a plain scale would spread a long line many
- * times further than a short one, out over its braces. */
+ * times further than a short one, out over its box. */
 .fx-slip.is-lifted {
   cursor: grabbing;
   transform: scale(calc(1 + 0.4 / var(--w)));
@@ -301,16 +304,16 @@ html:has(.fx-strada) {
 }
 
 /* Pointed at, here or by its chapter on the seek bar, or focused: the slip stands
- * over the others, as it is, and the marker's line ends under its first character
- * (see .fx-strada__sketch). Focused, it is braced either side as well, and the braces
- * are its focus ring. */
+ * over the others, as it is, and the marker's line ends under the middle of its last line
+ * (see .fx-strada__sketch). Focused, it is boxed round as well, and the box is its
+ * focus ring. */
 .fx-slip.is-pointed {
   z-index: 99999;
 }
 
-/* Carried, a slip keeps its braces, and they go with it. */
-.fx-slip.is-pointed:focus-visible,
-.fx-slip.is-lifted:focus-visible {
+/* A slip's focus ring is its box, drawn whenever it has focus, whatever else is
+ * pointed at; carried, it keeps its box, and the box goes with it. */
+.fx-slip:focus-visible {
   outline: none;
 }
 
@@ -475,10 +478,11 @@ body:has(.fx-strada__timeline) {
 /* While a chapter or its action is pointed at (or a slip is reached with the
  * keyboard, or carried), the marker draws a line from the middle of the chapter, as
  * Clover marks it out on the seek bar, up over the bar, across and up again to
- * arrive under the action, at the foot of its first character; and a slip with focus
- * is braced either side of its type. Both are drawn by hand (marker() in
- * LaStrada.client.tsx), the line in pink and the braces in the page's ink. The
- * drawing lies over the whole exhibit and is drawn in its own pixels, wherever they
+ * arrive under the middle of the action's last line; and a slip with focus is
+ * boxed round, roughly, as a hand rings a line on a page, the line meeting the
+ * box's foot there. Both are drawn by hand (marker() and roughBox() in
+ * LaStrada.client.tsx), in pink. The drawing lies over the whole exhibit and is
+ * drawn in its own pixels, wherever they
  * fall: over the sheet and the bar's black ground, and under the controls and what
  * is on the bar. */
 .fx-strada__sketch {
@@ -492,9 +496,17 @@ body:has(.fx-strada__timeline) {
   pointer-events: none;
 }
 
-/* The braces are a slip's focus ring: black on the paper, as focus is everywhere
- * on the site. */
-.fx-strada__brace {
+/* The box is a slip's focus ring, so it holds 3:1 against the paper. The
+ * site's pink is 2.97:1 against the scan's paper, at its median, and 2.87:1 where
+ * the paper is a tenth darker, so it is deepened a little toward the ink: the same
+ * pink to the eye, and over 3:1 on all but the stains. */
+.fx-strada__ring {
+  fill: color-mix(in srgb, var(--fx-pink) 94%, var(--fx-ink));
+}
+
+/* While the pointer is on another slip, the line goes there in pink and the focused
+ * slip keeps its box in the page's ink. */
+.fx-strada__ring.is-aside {
   fill: var(--fx-ink);
 }
 
