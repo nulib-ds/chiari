@@ -42,16 +42,15 @@ import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
  * and Clover 4's Timeline (via ./clover) loads that manifest and plays it: it is
  * the seek bar, fixed along the foot of the window. The manifest's first item
  * is the performance: a Canvas of sound alone (a Timeline, to Presentation 4 and
- * to Clover), as long as the piece, on which each action's recording is painted
- * at the time its slip stands at, or as soon as the one before it has ended,
- * since a performance is one thing at a time. Its `structures` say what the
- * performance is made of: a Range for every action, naming its time in the
- * performance and its place on the sheet, and a Range for every silence, before
- * the first action, between two and after the last. Clover reads the Ranges as
- * chapters, so the seek bar marks the actions and the silences alike, names each
- * under the pointer and lists them in its Chapters menu. It plays the recordings
- * one after another and passes over the silences, which have nothing to play.
- * With nothing on the sheet, the pile is performed as it lies, end to end.
+ * to Clover) on which the actions' recordings are painted end to end, in the
+ * order of the times where their slips stand. The sheet's clock gives the order
+ * and no more: the silences it would leave between the actions are left out, so
+ * a performance lasts as long as it sounds, not the score's 30'. Its
+ * `structures` say what the performance is made of: a Range for every action,
+ * naming its time in the performance and its place on the sheet. Clover reads
+ * the Ranges as chapters, so the seek bar marks each action and names it under
+ * the pointer, and plays the recordings one after another as one. With nothing
+ * on the sheet, the pile is performed as it lies.
  *
  * The arrangement is itself a IIIF annotation page, rebuilt from where things
  * stand every time one moves: the same annotations, in the order of their
@@ -80,8 +79,6 @@ const LABELS = {
   silent: "silence",
   performed: "performed",
   by: "by",
-  /** What a silence between two actions is called, as a chapter of the performance. */
-  gap: "Silence",
   manifest: "Manifest",
   source: "Source",
   rights: "Rights",
@@ -589,16 +586,13 @@ type Sounded = {take: Take; start: number; end: number};
 type Performed = {piece: Piece; start: number; end: number; sounds: Sounded[]};
 
 /**
- * An arrangement, performed: its actions in turn, the silences before, between and
- * after them, how long it all lasts, and a key that is the same for the same performance.
+ * An arrangement, performed: its actions in turn, how long it all lasts, and a key
+ * that is the same for the same performance.
  */
-type Performance = {actions: Performed[]; silences: {start: number; end: number}[]; duration: number; key: string};
+type Performance = {actions: Performed[]; duration: number; key: string};
 
 /** A time to the hundredth of a second, as the manifest gives its recordings' lengths. */
 const cent = (seconds: number) => Math.round(seconds * 100) / 100;
-
-/** The shortest silence that is a chapter, in seconds: less is a breath between two actions. */
-const SILENCE = 1;
 
 /** How long a recording is taken to last where the manifest does not say, so the next can follow it. */
 const UNSAID = 5;
@@ -625,23 +619,21 @@ function draw(score: Score, before: Takes = {}): Takes {
 }
 
 /**
- * The arrangement, performed. The sheet is the clock, and a performance is one thing
- * at a time: each action on the sheet comes at the time where it stands, or as soon as
- * the one before it has ended, and lasts as long as its recordings do, end to end. What
- * is left of the clock before the first, between two and after the last is silence. The
- * piece lasts what the score says, or as much longer as its last action needs. With
- * nothing on the sheet there is no clock: the pile is performed as it lies, end to end,
- * and lasts as long as it sounds.
+ * The arrangement, performed: the actions on the sheet, in the order of the times
+ * where they stand, each as long as its recordings, end to end, each coming as the
+ * one before it ends. The sheet's clock gives the order and no more: the silences
+ * it would leave between the actions are left out, so a performance lasts as long as
+ * it sounds, not the score's 30'. With nothing on the sheet, the pile is performed as
+ * it lies.
  */
 function perform(score: Score, places: Places, takes: Takes): Performance {
   const standing = arrangement(score, places);
   const list = standing.length
     ? standing
     : [...score.actions].sort((a, b) => places[a.id].y - places[b.id].y || places[a.id].x - places[b.id].x);
-  let free = 0; // when the action before has ended
+  let at = 0; // where the performance has got to
   const actions = list.map((piece): Performed => {
-    const start = cent(Math.max(standing.length ? timeAt(score, places[piece.id].y) : 0, free));
-    let at = start;
+    const start = at;
     const sounds = (piece.silent ? [] : piece.sounds).map((part, i): Sounded => {
       const take = part[takes[`${piece.id}:${i}`] ?? 0] ?? part[0];
       const from = at;
@@ -649,49 +641,17 @@ function perform(score: Score, places: Places, takes: Takes): Performance {
       return {take, start: from, end: at};
     });
     // An action with no recording keeps its time in silence.
-    free = sounds.length ? at : cent(start + piece.length);
-    return {piece, start, end: free, sounds};
+    if (!sounds.length) at = cent(start + piece.length);
+    return {piece, start, end: at, sounds};
   });
-  const duration = cent(standing.length ? Math.max(score.duration, free) : free);
-  const silences: {start: number; end: number}[] = [];
-  let from = 0;
-  for (const action of actions) {
-    if (action.start - from >= SILENCE) silences.push({start: from, end: action.start});
-    from = action.end;
-  }
-  if (duration - from >= SILENCE) silences.push({start: from, end: duration});
-  const heard = actions.map((a) => `${a.piece.id}@${a.start}${a.sounds.map((s) => `+${s.take.id.split("/").pop()}`).join("")}`);
-  return {actions, silences, duration, key: named(`${duration}|${heard.join("|")}`)};
+  const heard = actions.map((a) => `${a.piece.id}${a.sounds.map((s) => `+${s.take.id.split("/").pop()}`).join("")}`);
+  return {actions, duration: at, key: named(heard.join("|"))};
 }
 
 /**
- * Clover plays a performance's recordings through one media element, to which it gives
- * the performance's own clock (its `currentTime`), and as it plays it passes over the
- * silences, which have nothing to play. Sought into a silence, though, the element
- * rests at the end of the action before it: stepped forward with the keys it would go
- * no further while paused. So a seek forward into a silence goes on to the action after
- * it, as playing does; one backward is left to rest where the action before ends. With
- * one recording or none Clover gives the element no clock of its own, and nor does this.
- */
-function passOver(media: HTMLVideoElement, performance: () => Performance | undefined) {
-  const clock = Object.getOwnPropertyDescriptor(media, "currentTime");
-  if (!clock?.get || !clock.set) return;
-  Object.defineProperty(media, "currentTime", {
-    configurable: true,
-    get: clock.get,
-    set(seconds: number) {
-      const playing = performance();
-      const silence = seconds > clock.get!.call(media) ? playing?.silences.find((s) => seconds > s.start && seconds < s.end) : undefined;
-      const next = silence && playing?.actions.find((a) => a.start >= silence.end - 0.01);
-      clock.set!.call(media, next ? next.start : seconds);
-    },
-  });
-}
-
-/**
- * The performance as a canvas of sound alone, as long as the piece: each recording
- * painted on its time, one after another. Presentation 4 calls such a canvas a
- * Timeline, and Clover plays its recordings as one.
+ * The performance as a canvas of sound alone, as long as the performance: each
+ * recording painted on its time, one after another. Presentation 4 calls such a
+ * canvas a Timeline, and Clover plays its recordings as one.
  */
 function performanceCanvas(score: Score, performance: Performance, session: string) {
   const id = performanceId(score, session);
@@ -734,41 +694,21 @@ function performanceCanvas(score: Score, performance: Performance, session: stri
 
 /**
  * What the performance is made of, as chapters: a Range for each action that names its
- * time in the performance and, if it stands on the sheet, its place there; and a Range
- * for each silence, named as `gap` has it, so a viewer lists the silences, marks them on
- * the timeline and plays from them as it does the actions.
+ * time in the performance and, if it stands on the sheet, its place there, so a viewer
+ * lists the actions, marks them on the timeline and plays from them.
  */
-function chapterRanges(
-  score: Score,
-  items: Placed[],
-  performance: Performance,
-  session: string,
-  gap: {label: string; language: string}
-) {
+function chapterRanges(score: Score, items: Placed[], performance: Performance, session: string) {
   const sound = performanceId(score, session);
   const where = new Map(items.map(({piece, target}) => [piece.id, target]));
-  const stretch = (start: number, end: number) => ({id: `${sound}#t=${start},${end}`, type: "Canvas"});
-  const chapters = [
-    ...performance.actions.map(({piece, start, end}) => ({
-      start,
-      range: {
-        id: rangeId(score, session, piece.id),
-        type: "Range",
-        label: {en: [piece.text.replace(/\n/g, " ")]},
-        items: [stretch(start, end), ...(where.has(piece.id) ? [{id: where.get(piece.id), type: "Canvas"}] : [])],
-      },
-    })),
-    ...performance.silences.map(({start, end}, i) => ({
-      start,
-      range: {
-        id: rangeId(score, session, `silence-${i + 1}`),
-        type: "Range",
-        label: {[gap.language]: [gap.label]},
-        items: [stretch(start, end)],
-      },
-    })),
-  ];
-  return chapters.sort((a, b) => a.start - b.start).map(({range}) => range);
+  return performance.actions.map(({piece, start, end}) => ({
+    id: rangeId(score, session, piece.id),
+    type: "Range",
+    label: {en: [piece.text.replace(/\n/g, " ")]},
+    items: [
+      {id: `${sound}#t=${start},${end}`, type: "Canvas"},
+      ...(where.has(piece.id) ? [{id: where.get(piece.id), type: "Canvas"}] : []),
+    ],
+  }));
 }
 
 /**
@@ -776,13 +716,7 @@ function chapterRanges(
  * first, then the sheet with the arrangement as its annotations, and the chapters of
  * both as its structures.
  */
-function arrangementManifest(
-  score: Score,
-  items: Placed[],
-  performance: Performance,
-  session: string,
-  gap: {label: string; language: string}
-) {
+function arrangementManifest(score: Score, items: Placed[], performance: Performance, session: string) {
   const page = arrangementId(score, session);
   const [sheet, ...rest] = score.manifest.items;
   const frame = (sheet.annotations ?? []).filter((p: any) => /frame$/.test(p.id));
@@ -800,7 +734,7 @@ function arrangementManifest(
         id: `${page}/range/score`,
         type: "Range",
         label: {en: [score.manifest.label?.en?.[0] ?? "La strada"]},
-        items: chapterRanges(score, items, performance, session, gap),
+        items: chapterRanges(score, items, performance, session),
       },
     ],
   };
@@ -1051,7 +985,7 @@ function marker(points: Point[], width: number, random: () => number, pinned = f
 
 /**
  * The page's language, as Canopy sets it on <html> for each locale. Clover's
- * controls speak it, and the silences' chapters are named in it.
+ * controls speak it.
  */
 const pageLanguage = () => (typeof document !== "undefined" && document.documentElement.lang) || "en";
 
@@ -1184,10 +1118,10 @@ export default function LaStrada({
     const performance = perform(score, places, takes);
     return {
       page: annotationPage(score, items, session.current),
-      manifest: arrangementManifest(score, items, performance, session.current, {label: text.gap, language}),
+      manifest: arrangementManifest(score, items, performance, session.current),
       performance,
     };
-  }, [score, places, takes, text.gap, language]);
+  }, [score, places, takes]);
   const page = arranged?.page ?? null;
 
   // What the handlers below, and those the Timeline calls, read as it now is.
@@ -1257,7 +1191,6 @@ export default function LaStrada({
   /** The Timeline's media element as it comes and goes: a new one for each performance. */
   const hold = useCallback((element: HTMLVideoElement | null) => {
     held.current = element ? latest.current.live?.performance.key ?? null : null;
-    if (element) passOver(element, () => latest.current.live?.performance);
     setMedia(element);
   }, []);
 
@@ -1272,18 +1205,11 @@ export default function LaStrada({
     };
     const played = () => {
       quiet();
-      // Paused where an action ends with a silence after it (sought back into the
-      // silence, say), the element would play that action over again: it goes on to
-      // the action after the silence, as it does when it reaches one playing. Where
-      // the last action ends, the performance is over, and starts again from the top.
+      // Where the last action ends the performance is over: played again it starts
+      // from the top, where the element alone would play only its last recording over.
       const actions = latest.current.live?.performance.actions ?? [];
-      const time = media.currentTime;
-      const at = actions.findIndex((a) => time >= a.start - 0.01 && time <= a.end + 0.05);
-      const next = actions[at + 1];
-      if (at >= 0 && time >= actions[at].end - 0.25) {
-        if (!next) media.currentTime = 0;
-        else if (next.start - actions[at].end >= SILENCE) media.currentTime = next.start;
-      }
+      const last = actions[actions.length - 1];
+      if (last && media.currentTime >= last.end - 0.25) media.currentTime = 0;
       latest.current.underway = true;
       setUnderway(true);
       setPlaying(true);
@@ -1315,7 +1241,7 @@ export default function LaStrada({
     };
   }, [media, quiet, fulfil]);
 
-  /** The chapter under the pointer on the seek bar: its action is pointed at; a silence has none. */
+  /** The chapter under the pointer on the seek bar: its action is pointed at. */
   const mark = useCallback((range: string | null) => {
     const id = range?.split("/").pop();
     const action = id && latest.current.score?.actions.some((p) => p.id === id) ? id : null;
@@ -1817,9 +1743,8 @@ export default function LaStrada({
           head, on a black bar as Clover's player is. The bar is Clover's Timeline,
           playing the arrangement as a manifest of its own, recomposed and loaded again
           whenever the performance changes, and of Clover's player only its seek bar is
-          shown (app/styles/la-strada.css): its chapters are the actions and the
-          silences between them, from the manifest's Ranges, each named under the
-          pointer. It stands here, before the sheet, so the
+          shown (app/styles/la-strada.css): its chapters are the actions, from the
+          manifest's Ranges, each named under the pointer. It stands here, before the sheet, so the
           keys reach play and the bar before the sheet's twenty-five slips. While a
           chapter or its action is pointed at, Clover marks the chapter out on the bar,
           and the marker draws a line from it to the action (see the sketch, below). */}

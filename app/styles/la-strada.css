@@ -320,9 +320,13 @@ html:has(.fx-strada) {
 /* The seek bar is fixed along the foot of the window, where it stays in reach as
  * the sheet scrolls under it. It is drawn as Clover draws its player on the Watch
  * page: a black bar of its own, the rail in white, what has been heard in pink, and
- * play and pause at its head. What is in it keeps to the column the page's words
- * do. The page keeps the bar's height (--fx-strada-bar) clear below its last line. */
+ * play and pause at its head. Like the sheet it keeps to no column: it runs the
+ * window's width, what is in it as far in from the sides as it is from the bar's
+ * top and foot. The page keeps the bar's height (--fx-strada-bar) clear below its
+ * last line. --fx-strada-control is the size of Clover's own controls, 1rem and
+ * 0.618rem all round, written out here because play stands outside its player. */
 .fx-strada__timeline {
+  --fx-strada-control: calc(1rem + 2 * 0.618rem);
   position: fixed;
   inset: auto 0 0;
   z-index: 6;
@@ -330,9 +334,7 @@ html:has(.fx-strada) {
   align-items: center;
   gap: 0.618rem;
   height: var(--fx-strada-bar);
-  /* In from the window's sides as the page's words are: the site's gutter, and the
-   * container's own inset within it. */
-  padding-inline: calc(var(--fx-gutter) + var(--fx-inset));
+  padding-inline: calc((var(--fx-strada-bar) - var(--fx-strada-control)) / 2);
   background: var(--fx-ink);
 }
 
@@ -342,16 +344,15 @@ body:has(.fx-strada__timeline) {
 }
 
 /* Play and pause, as Clover draws its player's buttons: a square of the controls'
- * dark fill, as large as Clover's are (1rem and 0.618rem all round), its glyph in the
- * paper's white, and pink under the pointer or on focus. The fill and the size are
- * Clover's own values, written out here because the button stands outside its
- * player. On the black bar the focus ring is the paper's white, not ink. */
+ * dark fill (Clover's own value), as large as Clover's are, its glyph in the paper's
+ * white, and pink under the pointer or on focus. On the black bar the focus ring is
+ * the paper's white, not ink. */
 .fx-strada__play {
   flex: none;
   display: grid;
   place-items: center;
-  width: calc(1rem + 2 * 0.618rem);
-  height: calc(1rem + 2 * 0.618rem);
+  width: var(--fx-strada-control);
+  height: var(--fx-strada-control);
   padding: 0;
   border: 0;
   border-radius: 0;
