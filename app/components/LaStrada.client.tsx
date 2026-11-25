@@ -103,7 +103,7 @@ const LABELS = {
   copied: "Copied",
   annotationPage: "Annotation page",
   failed: "The score could not be loaded.",
-  tip: "Move typed actions of the La Strada score.",
+  tip: "Move typed actions of the La Strada score to compose the desired order.",
   dismissTip: "Dismiss tip",
   start: "Start",
 };
