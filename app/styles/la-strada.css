@@ -307,7 +307,9 @@ html:has(.fx-strada) {
   z-index: 99999;
 }
 
-.fx-slip.is-pointed:focus-visible {
+/* Carried, a slip keeps its braces, and they go with it. */
+.fx-slip.is-pointed:focus-visible,
+.fx-slip.is-lifted:focus-visible {
   outline: none;
 }
 
@@ -442,12 +444,12 @@ body:has(.fx-strada__timeline) {
 }
 
 /* While a chapter or its action is pointed at (or a slip is reached with the
- * keyboard), the marker draws a line from the middle of the chapter, as Clover marks
- * it out on the seek bar, up out of the bar, across and in to a brace at the action's
- * type, both in pink and by hand (marker() in LaStrada.client.tsx). The drawing
- * covers the sheet and is drawn in its own pixels. It stands above every slip, which
- * are stacked from 1 up as they are picked up, and under the bar, which it comes
- * out from behind. */
+ * keyboard, or carried), the marker draws a line from the middle of the chapter, as
+ * Clover marks it out on the seek bar, up out of the bar, across and in to a brace at
+ * the action's type, both in pink and by hand (marker() in LaStrada.client.tsx). The
+ * drawing covers the sheet and is drawn in its own pixels. It stands above every
+ * slip, which are stacked from 1 up as they are picked up, and under the bar, which
+ * it comes out from behind. */
 .fx-strada__sketch {
   position: absolute;
   inset: 0;

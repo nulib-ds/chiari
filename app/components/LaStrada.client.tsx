@@ -1,5 +1,5 @@
 import {withBasePath} from "@nulib/canopy/base-path";
-import {Timeline, initCloverI18n} from "./clover";
+import {Timeline, chaptersOf, initCloverI18n} from "./clover";
 import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 
 /**
@@ -49,8 +49,10 @@ import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
  * `structures` say what the performance is made of: a Range for every action,
  * naming its time in the performance and its place on the sheet. Clover reads
  * the Ranges as chapters, so the seek bar marks each action and names it under
- * the pointer, and plays the recordings one after another as one. With nothing
- * on the sheet, the pile is performed as it lies.
+ * the pointer, and plays the recordings one after another as one. While a slip
+ * is carried the bar already shows the chapters of the manifest as it would be,
+ * the slip's own marked out, so where it would land is seen before it is put
+ * down. With nothing on the sheet, the pile is performed as it lies.
  *
  * The arrangement is itself a IIIF annotation page, rebuilt from where things
  * stand every time one moves: the same annotations, in the order of their
@@ -1124,6 +1126,27 @@ export default function LaStrada({
   }, [score, places, takes]);
   const page = arranged?.page ?? null;
 
+  // While the sheet is ahead of the Timeline (a slip is being carried, or has just
+  // been put down), the seek bar already shows the arrangement as it now stands: its
+  // chapters, read back out of the recomposed manifest's Ranges as Clover reads them
+  // (chaptersOf), so that where a slip would land in the performance shows on the bar
+  // as it is carried. They are set on the performance the Timeline still holds, each
+  // at its own share of the bar, should the two not last the same. Made anew only as
+  // the order changes, not with every move.
+  const aheadKey = arranged && live && arranged.performance.key !== live.performance.key ? arranged.performance.key : null;
+  const ahead = useMemo(() => {
+    if (!score || !arranged || !live || !aheadKey) return undefined;
+    const {duration} = arranged.performance;
+    const share = duration ? live.performance.duration / duration : 1;
+    return chaptersOf(arranged.manifest, performanceId(score, session.current), duration).map((chapter) => ({
+      id: chapter.id,
+      label: (Object.values(chapter.label ?? {}).flat() as string[])[0] ?? "",
+      start: chapter.start * share,
+      end: (chapter.end ?? duration) * share,
+    }));
+    // `aheadKey` stands in for the arrangement, which is made anew with every move.
+  }, [score, aheadKey, live]);
+
   // What the handlers below, and those the Timeline calls, read as it now is.
   const latest = useRef({score, arranged, live, media, underway});
   latest.current = {score, arranged, live, media, underway};
@@ -1295,11 +1318,12 @@ export default function LaStrada({
   // Draw the braces of the slip that has focus, and the line for the action pointed
   // at, from where its chapter stands on the seek bar and its slip on the sheet now.
   // The bar is fixed to the window and the sheet scrolls, so it is drawn again as
-  // the page scrolls.
+  // the page scrolls; and as a slip is carried the line goes with it, from wherever
+  // its chapter then stands on the bar, so where it would land is plain to see.
   useLayoutEffect(() => {
     const piece = pointing ? score?.actions.find((p) => p.id === pointing) : undefined;
     const at = pointing ? places[pointing] : undefined;
-    if (!score || !pointing || !piece || !at || lifted || !sketch.current || !board.current) return void setDrawn(null);
+    if (!score || !pointing || !piece || !at || !sketch.current || !board.current) return void setDrawn(null);
     const paper = board.current;
     const drawing = sketch.current;
     const slip = paper.querySelector<HTMLElement>(`[data-action="${pointing}"]`);
@@ -1336,7 +1360,7 @@ export default function LaStrada({
       // out of the bar, angles across to the brace's height, and runs straight again
       // for the last 50px into its point (both shorter where there is less room),
       // turning into and out of the angle round a short curve. With no chapter to
-      // start from (the action is on the floor, or the bar is not drawn yet), no line.
+      // start from (the action is off the sheet, or the bar is not drawn yet), no line.
       const chapter = section.current?.querySelector(".fx-strada__timeline .clover-canvas-transport-chapter-span");
       const from = chapter?.getBoundingClientRect();
       let path: Point[] | null = null;
@@ -1370,16 +1394,22 @@ export default function LaStrada({
       } else drawAt(at);
     };
     tick();
-    const scrolled = () => {
+    const again = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(tick);
     };
-    window.addEventListener("scroll", scrolled, {passive: true});
+    window.addEventListener("scroll", again, {passive: true});
+    // And again whenever Clover marks the chapter out, or moves it: it draws the bar
+    // in its own time, a little after a manifest is loaded into it.
+    const bar = section.current?.querySelector(".fx-strada__timeline");
+    const marked = bar ? new MutationObserver(again) : null;
+    if (bar) marked?.observe(bar, {subtree: true, childList: true, attributes: true, attributeFilter: ["style"]});
     return () => {
       cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", scrolled);
+      window.removeEventListener("scroll", again);
+      marked?.disconnect();
     };
-  }, [pointing, focused, lifted, places, score, resized, live]);
+  }, [pointing, focused, places, score, resized, live, ahead]);
 
   if (failed) return <p className="fx-strada__caption">{text.failed}</p>;
   if (!score) return null;
@@ -1744,10 +1774,12 @@ export default function LaStrada({
           playing the arrangement as a manifest of its own, recomposed and loaded again
           whenever the performance changes, and of Clover's player only its seek bar is
           shown (app/styles/la-strada.css): its chapters are the actions, from the
-          manifest's Ranges, each named under the pointer. It stands here, before the sheet, so the
-          keys reach play and the bar before the sheet's twenty-five slips. While a
-          chapter or its action is pointed at, Clover marks the chapter out on the bar,
-          and the marker draws a line from it to the action (see the sketch, below). */}
+          manifest's Ranges, each named under the pointer. While a slip is carried, the
+          chapters are those of the manifest as it would be (`ahead`), before it is
+          loaded. It stands here, before the sheet, so the keys reach play and the bar
+          before the sheet's twenty-five slips. While a chapter or its action is
+          pointed at, or its slip carried, Clover marks the chapter out on the bar, and
+          the marker draws a line from it to the action (see the sketch, below). */}
       <div className="fx-strada__timeline">
         <button
           type="button"
@@ -1769,7 +1801,8 @@ export default function LaStrada({
               className="fx-strada__player"
               controls={false}
               options={TIMELINE}
-              highlightedChapter={pointing && !lifted ? rangeId(score, session.current, pointing) : null}
+              chapters={ahead}
+              highlightedChapter={pointing ? rangeId(score, session.current, pointing) : null}
               onChapterHighlight={mark}
               onMediaElement={hold}
             />
