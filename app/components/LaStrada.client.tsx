@@ -87,7 +87,7 @@ const LABELS = {
   resetTitle: "Put every action back where it was typed",
   clearTitle: "Let the actions fall off the sheet",
   shuffleTitle: "Lay the actions on the sheet in a random order, and play them",
-  intro: "A typescript sent to George Maciunas, 1964. Drag a line, or move it with the arrow keys.",
+  intro: "Drag a line, or move it with the arrow keys.",
   fallen: "Drag them onto the sheet, then press play.",
   arranged: "In a new order. Move them as you like.",
   silent: "silence",
@@ -103,6 +103,9 @@ const LABELS = {
   copied: "Copied",
   annotationPage: "Annotation page",
   failed: "The score could not be loaded.",
+  tip: "Move typed actions of the La Strada score to compose the desired order.",
+  dismissTip: "Dismiss tip",
+  start: "Start",
 };
 type Labels = typeof LABELS;
 
@@ -176,8 +179,8 @@ type Score = {
 };
 
 /**
- * Room under the sheet for the fallen actions. It is more than any scattering
- * of these actions has needed, so the board never grows when they fall.
+ * Room under the sheet for the fallen actions until the score is read and its
+ * own is measured (`floorFor`).
  */
 const FLOOR = 62;
 
@@ -797,18 +800,45 @@ function origin(score: Score, delay = 0, dur = 0): Places {
   return places;
 }
 
-/** Strew the actions over the floor in rows, in no order, as upright as they were typed. */
-function scatter(score: Score, z: number): {places: Places; floor: number} {
-  const places: Places = {};
+/**
+ * Lay the actions in rows on the floor, in the order given: where each one's row
+ * starts, and how deep under the sheet the last row ends, with a margin under it.
+ */
+function rows(score: Score, order: Piece[]): {at: {p: Piece; x: number; y: number}[]; floor: number} {
+  const at: {p: Piece; x: number; y: number}[] = [];
   let x = 2;
   let y = score.pageH + 4;
   let row = 0;
-  for (const p of shuffled(score.actions)) {
+  for (const p of order) {
     if (x + p.w > 98) {
       x = 2;
       y += row + 2.4;
       row = 0;
     }
+    at.push({p, x, y});
+    x += p.w + 2.2;
+    row = Math.max(row, p.h);
+  }
+  // The jitter a scattering adds (below) lowers a slip by 0.8 at most.
+  return {at, floor: y + row + 0.8 + 4 - score.pageH};
+}
+
+/**
+ * Room under the sheet for whatever falls: as deep as the deepest of many
+ * scatterings, so the board almost never has to grow when the actions fall,
+ * and is no deeper than they need while the sheet is whole.
+ */
+function floorFor(score: Score): number {
+  let deepest = 0;
+  for (let i = 0; i < 400; i++) deepest = Math.max(deepest, rows(score, shuffled(score.actions)).floor);
+  return deepest;
+}
+
+/** Strew the actions over the floor in rows, in no order, as upright as they were typed. */
+function scatter(score: Score, z: number): {places: Places; floor: number} {
+  const places: Places = {};
+  const laid = rows(score, shuffled(score.actions));
+  for (const {p, x, y} of laid.at) {
     places[p.id] = {
       x: x + between(0, 1.2),
       y: y + between(0, 0.8),
@@ -817,10 +847,8 @@ function scatter(score: Score, z: number): {places: Places; floor: number} {
       delay: (1 - p.y / score.pageH) * 700 + between(0, 500),
       dur: between(900, 1300),
     };
-    x += p.w + 2.2;
-    row = Math.max(row, p.h);
   }
-  return {places, floor: Math.max(FLOOR, y + row + 4 - score.pageH)};
+  return {places, floor: laid.floor};
 }
 
 /**
@@ -925,36 +953,70 @@ function rounded(points: Point[], round: number): Point[] {
 }
 
 /**
- * A curly brace as a hand draws one, as the middle line of its stroke: its point at
- * `tip`, about `height` tall and no wider than `width`, curling right at both ends.
- * It has the general shape of a brace and is never exactly one: its halves are of
- * different lengths, their backs bowed and the whole leaning a little, its ends
- * curled more or less, and each brace differently, as `random` has it.
+ * A box drawn round a rectangle in one stroke, as a hand draws one quickly: the pen
+ * comes down a little way along the top, goes round, and runs on past where it came
+ * down before it lifts. Its corners are each a little off the rectangle's, as
+ * `random` has it, by at most `rough` pixels, and turned round a short curve. The
+ * middle of its foot, where a line can meet it, is where the rectangle's is.
  */
-function brace(tip: Point, height: number, width: number, n: number, random: () => number): Point[] {
-  const between = (lo: number, hi: number) => lo + (hi - lo) * random();
-  const sharp = between(0.12, 0.34); // how much of each half the point takes
-  const back = between(0.35, 0.65); // how far the back stands from the point, as a part of the width
-  const lean = between(-0.25, 0.25); // how far the ends lean across, as a part of the width
-  const halves = [0, 1].map(() => ({
-    long: between(0.82, 1.16), // the half's length, as a part of half the height
-    from: between(0.55, 0.82), // how far along it its end begins to curl
-    curl: between(0.25, 0.75), // how far its end curls, as a part of the width
-    // How far its back bows, as a part of the width: either way, but never back past the point.
-    bow: between(Math.max(-0.3, 0.1 + Math.abs(lean) - back), 0.3),
-  }));
-  const points = Array.from({length: n + 1}, (_, i): Point => {
-    const s = (i / n) * 2 - 1;
-    const a = Math.abs(s);
-    const half = halves[s < 0 ? 0 : 1];
-    const point = a < sharp ? (1 - a / sharp) ** 2 : 0;
-    const curl = a > half.from ? ((a - half.from) / (1 - half.from)) ** 2 : 0;
-    const bow = a > sharp && a < half.from ? Math.sin((Math.PI * (a - sharp)) / (half.from - sharp)) ** 2 : 0;
-    return [back * (1 - point) + half.curl * curl + half.bow * bow + lean * s, (s * half.long) / 2];
-  });
-  // No wider than the room it has, and its point still where the line meets it.
-  const fit = Math.min(1, 1 / Math.max(...points.map(([x]) => x)));
-  return points.map(([x, y]) => [tip[0] + x * fit * width, tip[1] + y * height]);
+function roughBox(left: number, top: number, right: number, bottom: number, rough: number, random: () => number): Point[] {
+  const off = () => (random() * 2 - 1) * rough;
+  const wide = right - left;
+  // The foot's corners are off by the same amount up or down, the other way each,
+  // so the foot is a little tilted and its middle stays where it is.
+  const tilt = off() * 0.6;
+  const corners: Point[] = [
+    [right + off(), top + off()],
+    [right + off(), bottom + tilt],
+    [left + off(), bottom - tilt],
+    [left + off(), top + off()],
+  ];
+  const down: Point = [left + wide * (0.06 + 0.06 * random()), top + off() * 0.5];
+  const up: Point = [left + wide * (0.16 + 0.1 * random()), top + off() * 0.5];
+  return rounded([down, ...corners, up], rough);
+}
+
+/**
+ * The way the marker goes from the seek bar to what it points at: straight up out of
+ * the bar for a little (90px at most), across at an angle, and straight up again for
+ * the last little (50px at most), both shorter where there is less room, turning into
+ * and out of the angle round a short curve.
+ */
+function route(start: Point, end: Point): Point[] {
+  const up = end[1] - start[1];
+  const out: Point = [start[0], start[1] + Math.sign(up) * Math.min(90, 0.4 * Math.abs(up))];
+  const into: Point = [end[0], end[1] - Math.sign(up) * Math.min(50, 0.2 * Math.abs(up))];
+  return rounded([start, out, into, end], 20);
+}
+
+/**
+ * A line of points cut into the dots of a dotted line: runs `dot` pixels long with
+ * `gap` pixels between them, each its own short line of points.
+ */
+function dotted(points: Point[], dot: number, gap: number): Point[][] {
+  const dots: Point[][] = [];
+  let run: Point[] = [points[0]];
+  let on = true;
+  let left = dot; // how far the current dot or gap has still to go
+  for (let i = 1; i < points.length; i++) {
+    let a = points[i - 1];
+    const b = points[i];
+    let d = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    while (d > left) {
+      const t = left / d;
+      const p: Point = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      if (on) dots.push([...run, p]);
+      else run = [p];
+      on = !on;
+      d -= left;
+      a = p;
+      left = on ? dot : gap;
+    }
+    left -= d;
+    if (on) run.push(b);
+  }
+  if (on && run.length > 1) dots.push(run);
+  return dots;
 }
 
 /**
@@ -972,7 +1034,7 @@ function marker(points: Point[], width: number, random: () => number, pinned = f
   };
   const last = points.length - 1;
   const length = points.slice(1).reduce((sum, [x, y], i) => sum + Math.hypot(x - points[i][0], y - points[i][1]), 0);
-  // Unsteady by less than the stroke is wide, and by little of a short one, so a small brace stays a brace.
+  // Unsteady by less than the stroke is wide, and by little of a short one, so a box keeps clear of what it rings.
   const drift = waves(Math.min(width * 0.9, length * 0.025));
   const settle = (t: number) => (pinned ? Math.min(1, (t * length) / 40, ((1 - t) * length) / 20) : 1);
   const swell = waves(0.7);
@@ -1015,9 +1077,16 @@ export default function LaStrada({
   manifest,
   work,
   labels,
+  tipFor = "churchill",
 }: {
   /** The exhibit's IIIF manifest. */
   manifest: string;
+  /**
+   * The action the tip stands over, by its id (the last part of its
+   * annotation's id), and the dotted line goes to from its chapter on the seek bar.
+   * The first action, if there is none of that id.
+   */
+  tipFor?: string;
   /**
    * The work's own page, which the credit's title links to: the manifest's homepage,
    * unless this names another, as a page in another language does.
@@ -1062,11 +1131,13 @@ export default function LaStrada({
       return focused.dataset.action ?? null;
     });
   // What the marker draws between them, in the page's pixels: a line from the chapter
-  // to the action, and a brace at the action's type, where the line ends.
+  // to the action, and a box round the action, where the line ends.
   const sketch = useRef<SVGSVGElement>(null);
-  const [drawn, setDrawn] = useState<{line: string | null; braces: string[]; rough: number} | null>(null);
-  // The slip that has focus, reached by Tab or by a press: only it is braced, either
-  // side of its type; pointed at otherwise, a slip gets only the line.
+  // `aside` is whether the pointer is on another slip than the boxed one, which the
+  // box then shows in black, the pink being the line's.
+  const [drawn, setDrawn] = useState<{line: string | null; ringed: string | null; aside: boolean; rough: number} | null>(null);
+  // The slip that has focus, reached by Tab or by a press: only it is boxed; pointed
+  // at otherwise, a slip gets only the line.
   const [focused, setFocused] = useState<string | null>(null);
   const [resized, setResized] = useState(0);
   // Which of the three arrangements the sheet is in: as typed, as it fell (or as the
@@ -1075,6 +1146,33 @@ export default function LaStrada({
 
   const [copied, setCopied] = useState(false);
   const [showing, setShowing] = useState(false);
+
+  // The tip, shown each time the page is opened, over its action on the sheet, until
+  // it is closed (Start, its ×, or Escape). Until then the sheet is held: no slip can
+  // be moved, reached, pointed at or heard, its chapters on the bar are not marked
+  // out, and the arrangement buttons wait. What the marker draws for it: a box round
+  // it and a dotted line up from the action's chapter on the bar to the action.
+  const [tip, setTip] = useState(true);
+  const tipBox = useRef<HTMLDivElement>(null);
+  const tipPath = useRef<SVGPathElement>(null);
+  const tipStart = useRef<SVGPathElement>(null);
+  const tipWarp = useRef<SVGFEDisplacementMapElement>(null);
+  const dismissTip = () => setTip(false);
+  // While the tip is up, a faded copy of its action shows every few seconds how a line
+  // is moved; closing the tip stops it (WCAG 2.2.2). `demoPlace` is where the copy
+  // stands on its way, whenever that puts the action somewhere else in the order: the
+  // seek bar then shows the order as it would be, as it does while a slip is carried,
+  // changing as the copy passes other lines.
+  const demo = tip;
+  const [demoPlace, setDemoPlace] = useState<{x: number; y: number} | null>(null);
+  const demoCache = useRef<{key: string; chapters: any[]} | null>(null);
+  // Closed from the keyboard, focus would be left on nothing: it goes on to the sheet's
+  // first line, which is what the tip is about, once the sheet is let go (below).
+  const focusAfterTip = useRef(false);
+  const closeTip = (keyed: boolean) => {
+    focusAfterTip.current = keyed;
+    dismissTip();
+  };
 
   // Clover's controls on the seek bar (play, seek, volume, the chapters, the keys)
   // speak the page's language rather than the browser's, as the projector's do.
@@ -1111,6 +1209,7 @@ export default function LaStrada({
         if (!live) return;
         const next = readScore(json, rebaser(json, url));
         setScore(next);
+        setFloor(floorFor(next));
         setPlaces(origin(next));
         setTakes(draw(next));
       })
@@ -1175,8 +1274,8 @@ export default function LaStrada({
   }, [score, aheadKey, live]);
 
   // What the handlers below, and those the Timeline calls, read as it now is.
-  const latest = useRef({score, arranged, live, media, underway});
-  latest.current = {score, arranged, live, media, underway};
+  const latest = useRef({score, arranged, live, media, underway, tip});
+  latest.current = {score, arranged, live, media, underway, tip};
 
   // ...and announced once the slip being moved is let go: the page, and the
   // manifest that carries it with its performance and chapters.
@@ -1306,6 +1405,8 @@ export default function LaStrada({
 
   /** The chapter under the pointer on the seek bar: its action is pointed at. */
   const mark = useCallback((range: string | null) => {
+    // While the tip holds the sheet, a chapter pointed at on the bar points at nothing.
+    if (latest.current.tip) return;
     const id = range?.split("/").pop();
     const action = id && latest.current.score?.actions.some((p) => p.id === id) ? id : null;
     const before = barred.current;
@@ -1355,76 +1456,91 @@ export default function LaStrada({
     return () => window.removeEventListener("resize", resize);
   }, []);
 
-  // Draw the braces of the slip that has focus, and the line for the action pointed
+  // Draw the box round the slip that has focus, and the line for the action pointed
   // at, from where its chapter stands on the seek bar and its slip on the sheet now.
   // The bar is fixed to the window and the sheet scrolls, so it is drawn again as
   // the page scrolls; and as a slip is carried the line goes with it, from wherever
   // its chapter then stands on the bar, so where it would land is plain to see.
   useLayoutEffect(() => {
-    const piece = pointing ? score?.actions.find((p) => p.id === pointing) : undefined;
-    const at = pointing ? places[pointing] : undefined;
-    if (!score || !pointing || !piece || !at || !sketch.current || !board.current) return void setDrawn(null);
+    // The action pointed at, which the line goes to, and the one with focus, which is
+    // boxed. They are the same slip unless the pointer rests on one slip while another
+    // has focus, and then the focused one keeps its box, as focus keeps its ring, in
+    // black, so that the pink is only where the line goes.
+    const find = (id: string | null) => (id && places[id] ? score?.actions.find((p) => p.id === id) : undefined);
+    const pointed = find(pointing);
+    const held = find(focused);
+    if (!score || (!pointed && !held) || !sketch.current || !board.current) return void setDrawn(null);
     const paper = board.current;
     const drawing = sketch.current;
-    const slip = paper.querySelector<HTMLElement>(`[data-action="${pointing}"]`);
-    const drawAt = (at: {x: number; y: number}) => {
+    type At = {x: number; y: number};
+    const drawAt = (where: (piece: Piece) => At) => {
       const box = drawing.getBoundingClientRect();
       const sheet = paper.getBoundingClientRect();
       const unit = sheet.width / 100;
       const line = score.grid.line * unit; // one typed line, in pixels
       const ink = Math.max(3, 0.3 * line);
-      const wide = Math.max(4, 0.4 * line);
-      const top = sheet.top - box.top + at.y * unit;
-      const tall = Math.max(piece.h * unit * 0.95, line * 1.05);
-      const middle = top + (piece.h * unit) / 2;
-      // How far a brace stands from the type, and how far under the type the line arrives.
-      const clear = ink * 0.6;
-      // Focused, the slip is braced either side of its type.
-      const braced = focused === pointing;
-      const braces: string[] = [];
-      if (braced) {
-        // Each brace has a hand of its own, so it is drawn the same way wherever its
-        // slip stands. The left one stands left of the type, its point away from it.
-        // The line arrives under the first character, so this brace wraps round that
-        // column and the line's end with it: it reaches down past the foot of the type
-        // to below where the line stops, and stands a stroke's width further out than
-        // the right one does, so it lies over neither the type nor the line.
-        const n = Math.max(12, Math.min(120, Math.round((tall + 2 * wide) / 2)));
-        const under = clear + ink * 0.6;
-        const tip: Point = [sheet.left - box.left + (at.x + score.grid.char * BEARING) * unit - clear - ink - wide, middle + under / 2];
-        const hand = seeded(`${pointing} {`);
-        braces.push(marker(brace(tip, tall + under, wide, n, hand), ink * 0.9, hand));
-        // The right one stands just past the end of the type, its point away from it: a
-        // brace drawn as the left one is, and turned about its point.
-        const stop = (at.x + score.grid.char * BEARING + (piece.w - 2 * score.grid.char * BEARING)) * unit;
-        const point: Point = [sheet.left - box.left + stop + clear + wide, middle];
-        const other = seeded(`${pointing} }`);
-        braces.push(marker(brace(point, tall, wide, n, other).map(([x, y]): Point => [2 * point[0] - x, y]), ink * 0.9, other));
+      // The box round an action's type, standing well clear of it: a stroke's width
+      // and more out from its first character and the last of its longest line, and
+      // above the top of its cell and below its foot by half that, which is all the
+      // room the lines above and below leave.
+      // `under` is the middle of its last typed line, from its first character to its
+      // last: the lines of an action all begin at its first column, and the last is as
+      // long as its text's last line, or the slip's own width, for a line of one.
+      const around = (piece: Piece) => {
+        const at = where(piece);
+        const top = sheet.top - box.top + at.y * unit;
+        const pad = ink * 1.2;
+        const columns = Math.round(piece.w / score.grid.char);
+        const length = piece.text.includes("\n") ? Math.min(columns, piece.text.split("\n").pop()!.length) : columns;
+        return {
+          left: sheet.left - box.left + (at.x + score.grid.char * BEARING) * unit - pad,
+          right: sheet.left - box.left + (at.x + piece.w - score.grid.char * BEARING) * unit + pad,
+          under: sheet.left - box.left + (at.x + (score.grid.char * length) / 2) * unit,
+          head: top - pad / 2,
+          foot: top + piece.h * unit + pad / 2,
+        };
+      };
+      // Focused, the slip is boxed, roughly, as a hand rings a line on a page, and the
+      // box is its focus ring. Each slip's box has a hand of its own, so it is drawn
+      // the same way wherever the slip stands.
+      let ringed: string | null = null;
+      if (held) {
+        const {left, right, head, foot} = around(held);
+        const hand = seeded(`${held.id} []`);
+        ringed = marker(roughBox(left, head, right, foot, ink * 0.5, hand), ink * 0.7, hand, true);
       }
       // The action's chapter, as Clover marks it out on the seek bar while it is
       // pointed at there or here. The line starts in its middle and comes straight up
       // out of the bar, angles across, and runs straight up again for the last 50px
-      // (both shorter where there is less room) to arrive under the action: under
-      // its first character, at the foot of its last line, turning into and out of
-      // the angle round a short curve. With no chapter to start from (the action is
-      // off the sheet, or the bar is not drawn yet), no line.
-      const chapter = section.current?.querySelector(".fx-strada__timeline .clover-canvas-transport-chapter-span");
-      const from = chapter?.getBoundingClientRect();
+      // (both shorter where there is less room) to arrive under the action: under the
+      // middle of its last line, at the foot of its box, drawn or not, turning into and
+      // out of the angle round a short curve. With no chapter to start from (the action is off the
+      // sheet, or the bar is not drawn yet), no line. Nor is there one while the action
+      // stands close over the bar, or under it: there the line would have no room to
+      // rise, and would only run sideways across the type between.
+      const chapter = pointed && section.current?.querySelector(".fx-strada__timeline .clover-canvas-transport-chapter-span");
+      const from = chapter ? chapter.getBoundingClientRect() : null;
+      const ground = section.current?.querySelector(".fx-strada__foot")?.getBoundingClientRect();
+      const near = Math.max(72, 4 * line);
       let path: Point[] | null = null;
-      if (from && from.width > 0) {
+      const {under, foot} = pointed ? around(pointed) : {under: 0, foot: 0};
+      if (pointed && from && from.width > 0 && !(ground && ground.top - box.top - foot < near)) {
         const start: Point = [from.left - box.left + from.width / 2, from.top - box.top + from.height / 2];
-        const end: Point = [sheet.left - box.left + (at.x + score.grid.char / 2) * unit, top + piece.h * unit + clear];
-        const up = end[1] - start[1];
-        const out: Point = [start[0], start[1] + Math.sign(up) * Math.min(90, 0.4 * Math.abs(up))];
-        const into: Point = [end[0], end[1] - Math.sign(up) * Math.min(50, 0.2 * Math.abs(up))];
-        path = rounded([start, out, into, end], 20);
+        path = route(start, [under, foot]);
       }
-      setDrawn({line: path && marker(path, ink, seeded(pointing), true), braces, rough: ink * 0.35});
+      setDrawn({
+        line: path && pointed ? marker(path, ink, seeded(pointed.id), true) : null,
+        ringed,
+        aside: !!held && !!pointed && held.id !== pointed.id,
+        rough: ink * 0.35,
+      });
     };
     // A slip nudged by the keys slides to its new place (left and top, 140ms): the
     // marker goes with it, drawn each frame from where the slip stands on the way.
-    const standing = () => {
-      if (!slip) return at;
+    const placed = (piece: Piece): At => places[piece.id];
+    const standing = (piece: Piece): At => {
+      const slip = paper.querySelector<HTMLElement>(`[data-action="${piece.id}"]`);
+      if (!slip) return placed(piece);
       const unit = paper.getBoundingClientRect().width / 100;
       const style = getComputedStyle(slip);
       return {x: parseFloat(style.left) / unit, y: parseFloat(style.top) / unit};
@@ -1432,12 +1548,15 @@ export default function LaStrada({
     const began = performance.now();
     let frame = 0;
     const tick = () => {
-      const now = standing();
-      const moving = Math.abs(now.x - at.x) > 0.001 || Math.abs(now.y - at.y) > 0.001;
+      const moving = [pointed, held].some((piece) => {
+        if (!piece) return false;
+        const [now, at] = [standing(piece), placed(piece)];
+        return Math.abs(now.x - at.x) > 0.001 || Math.abs(now.y - at.y) > 0.001;
+      });
       if (moving && performance.now() - began < 400) {
-        drawAt(now);
+        drawAt(standing);
         frame = requestAnimationFrame(tick);
-      } else drawAt(at);
+      } else drawAt(placed);
     };
     tick();
     const again = () => {
@@ -1456,6 +1575,155 @@ export default function LaStrada({
       marked?.disconnect();
     };
   }, [pointing, focused, places, score, resized, live, ahead]);
+
+  // Escape closes the tip from anywhere in the exhibit, as from the tip itself.
+  useEffect(() => {
+    const exhibit = section.current;
+    if (!tip || !exhibit) return;
+    const escape = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      focusAfterTip.current = true;
+      setTip(false);
+    };
+    exhibit.addEventListener("keydown", escape);
+    return () => exhibit.removeEventListener("keydown", escape);
+  }, [tip, score]);
+
+  // Once the tip goes, the bar shows the sheet as it is again, and, closed from the
+  // keyboard, focus goes on to the sheet's first line, now that it can have it.
+  useEffect(() => {
+    if (tip) return;
+    setDemoPlace(null);
+    if (focusAfterTip.current) {
+      focusAfterTip.current = false;
+      board.current?.querySelector<HTMLElement>(".fx-slip")?.focus();
+    }
+  }, [tip]);
+
+  // Draw the tip's box, and its dotted line up from its action's chapter on the bar
+  // to the action, as the pink line goes, in a drawing fixed to the window.
+  useLayoutEffect(() => {
+    const tipped = score && (score.actions.find((p) => p.id === tipFor) ?? score.actions[0]);
+    if (!tip || !score || !tipped || !tipBox.current || !board.current) return;
+    const pop = tipBox.current;
+    const sheet = board.current;
+    const slip = sheet.querySelector<HTMLElement>(`[data-action="${tipped.id}"]`);
+    // The action's place in the order as it stands, and as the copy last had it.
+    const homeRank = places[tipped.id] ? arrangement(score, places).indexOf(tipped) : -1;
+    let ranked = homeRank;
+    const draw = () => {
+      const seek = section.current?.querySelector(".fx-strada__seek")?.getBoundingClientRect();
+      const ground = section.current?.querySelector(".fx-strada__foot")?.getBoundingClientRect();
+      const s = slip?.getBoundingClientRect();
+      const paper = sheet.getBoundingClientRect();
+      const line = (score.grid.line * paper.width) / 100;
+      const ink = Math.max(3, 0.3 * line);
+      // The box stands a little out from the tip.
+      const out = ink * 0.8;
+      // Over its action if the sheet has room for it there, as it has in any window
+      // but a narrow one; otherwise just under it, where the dotted line comes to it
+      // instead, so that it never stands off the sheet over the credit.
+      if (s) pop.toggleAttribute("data-under", s.top - paper.top < pop.offsetHeight + 16 + 2 * out);
+      const under = pop.hasAttribute("data-under");
+      const r = pop.getBoundingClientRect();
+      const hand = seeded("La strada, the tip");
+      let d = marker(roughBox(r.left - out, r.top - out, r.right + out, r.bottom + out, ink * 0.5, hand), ink * 0.7, hand, true);
+      // The Start button's edge, drawn by the same hand in a heavier stroke, in ink.
+      const go = pop.querySelector(".fx-strada__tip-start")?.getBoundingClientRect();
+      const press = seeded("La strada, start");
+      tipStart.current?.setAttribute(
+        "d",
+        go && go.width > 0 ? marker(roughBox(go.left, go.top, go.right, go.bottom, ink * 0.45, press), ink * 1.05, press, true) : "",
+      );
+      // The line, from the middle of the action's chapter, as the bar marks it out in
+      // blue, to arrive under the middle of its last line as the pink line does, a
+      // little under its foot. None while the action is off the sheet (it has no
+      // chapter) or close over the bar or under it, where the pink line has none
+      // either. While the demonstration's copy shows, the line follows it all the way,
+      // from the chapter wherever the bar then has it.
+      const exhibit = section.current;
+      const marked = exhibit?.hasAttribute("data-tip-marked")
+        ? exhibit.querySelector(".fx-strada__player .clover-canvas-transport-chapter-span")?.getBoundingClientRect()
+        : null;
+      const heard = live?.performance.actions.find((a) => a.piece.id === tipped.id);
+      const along = heard && live.performance.duration ? (heard.start + heard.end) / 2 / live.performance.duration : null;
+      const start: Point | null =
+        marked && marked.width > 0
+          ? [marked.left + marked.width / 2, marked.top + marked.height / 2]
+          : seek && along !== null
+            ? [seek.left + seek.width * along, seek.top + seek.height / 2]
+            : null;
+      // Where the copy is on its way: how far its two layers have taken it, as they
+      // now stand (app/styles/la-strada.css).
+      const ghost = sheet.querySelector<HTMLElement>(".fx-strada__ghost");
+      const across = ghost?.firstElementChild as HTMLElement | null;
+      const shift: Point | null =
+        ghost && across && +getComputedStyle(ghost).opacity > 0.05
+          ? [parseFloat(getComputedStyle(across).translate) || 0, parseFloat(getComputedStyle(across, "::after").translate.split(" ")[1] ?? "") || 0]
+          : null;
+      // Where that puts the action in the order: when it is somewhere else than it is,
+      // the bar is given the order as it would be, once each time that changes.
+      const home = places[tipped.id];
+      if (home) {
+        const at = shift ? {x: home.x + (shift[0] * 100) / paper.width, y: home.y + (shift[1] * 100) / paper.width} : home;
+        const rank = arrangement(score, {...places, [tipped.id]: {...home, ...at}}).indexOf(tipped);
+        if (rank !== ranked) {
+          ranked = rank;
+          setDemoPlace(rank === homeRank ? null : {x: at.x, y: at.y});
+        }
+      }
+      if (start && s) {
+        const columns = Math.round(tipped.w / score.grid.char);
+        const length = tipped.text.includes("\n") ? Math.min(columns, tipped.text.split("\n").pop()!.length) : columns;
+        const end: Point =
+          under && !shift
+            ? [Math.min(Math.max(start[0], r.left + 3 * ink), r.right - 3 * ink), r.bottom + out]
+            : [s.left + (shift?.[0] ?? 0) + (s.width * length) / columns / 2, s.bottom + (shift?.[1] ?? 0) + ink * 0.6];
+        if (!ground || ground.top - end[1] >= Math.max(72, 4 * line)) {
+          d += dotted(route(start, end), ink * 1.1, ink * 1.3)
+            .map((dot) => marker(dot, ink * 0.8, hand))
+            .join("");
+        }
+      }
+      // Drawn straight into the page rather than through React: while the
+      // demonstration runs this is every frame.
+      tipPath.current?.setAttribute("d", d);
+      tipWarp.current?.setAttribute("scale", (ink * 0.35).toFixed(2));
+    };
+    let frame = 0;
+    // Drawn again on what changes it (below), except while the demonstration runs,
+    // when it is drawn every frame anyway, and stopping that would leave the line behind.
+    const again = () => {
+      if (demo) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(draw);
+    };
+    // While the demonstration runs, every frame, so the line keeps up with the copy.
+    const run = () => {
+      draw();
+      frame = requestAnimationFrame(run);
+    };
+    if (demo) run();
+    else draw();
+    // The tip and its action scroll with the sheet and the bar is fixed to the window,
+    // so it is drawn again as the page scrolls, as the window or the tip changes size,
+    // and as Clover draws its chapters, a little after a manifest is loaded.
+    window.addEventListener("scroll", again, {passive: true});
+    window.addEventListener("resize", again);
+    const sized = new ResizeObserver(again);
+    sized.observe(pop);
+    const bar = section.current?.querySelector(".fx-strada__timeline");
+    const marked = bar ? new MutationObserver(again) : null;
+    if (bar) marked?.observe(bar, {subtree: true, childList: true});
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", again);
+      window.removeEventListener("resize", again);
+      sized.disconnect();
+      marked?.disconnect();
+    };
+  }, [tip, tipFor, score, places, live, resized, demo]);
 
   if (failed) return <p className="fx-strada__caption">{text.failed}</p>;
   if (!score) return null;
@@ -1597,7 +1865,7 @@ export default function LaStrada({
     setMode("fallen");
     const fallen = scatter(score, ++top.current);
     top.current += score.actions.length;
-    setFloor(fallen.floor);
+    setFloor((room) => Math.max(room, fallen.floor));
     setPlaces(fallen.places);
     setPhase("falling");
     later(() => setPhase("free"), settles(fallen.places));
@@ -1739,7 +2007,9 @@ export default function LaStrada({
   const heard = score.actions.find((p) => p.id === (alone ?? now));
   const settled = phase === "free";
   const ready = phase === "intact" || settled; // not in the middle of moving
-  const touchable = ready; // a line can be heard: on the sheet as typed, or once things have settled
+  // A line can be heard and moved: on the sheet as typed, or once things have
+  // settled, and not while the tip holds the sheet.
+  const touchable = ready && !tip;
   // What the sheet asks of the visitor in each arrangement: shown in the caption when
   // nothing is being heard, and all a screen reader is told as the arrangement changes.
   const guide = mode === "original" ? text.intro : mode === "shuffled" ? text.arranged : text.fallen;
@@ -1757,8 +2027,59 @@ export default function LaStrada({
 
   const everything = [...score.actions, ...score.frame].sort((a, b) => a.y - b.y || a.x - b.x);
 
+  // The action the tip stands over, and where it stands now. The tip opens to the
+  // right from the action's first character, over the paper beside the lines above,
+  // wherever that leaves it 14rem (224px) to read in; otherwise to the left from its
+  // last. The sheet is as wide as the window, and drawn again as that changes.
+  const tipped = score.actions.find((p) => p.id === tipFor) ?? score.actions[0];
+  const tipAt = tipped ? places[tipped.id] : undefined;
+  const sheetWidth = board.current?.clientWidth ?? document.documentElement.clientWidth;
+  const opensRight = !!tipAt && ((100 - tipAt.x) / 100) * sheetWidth - 16 >= 224;
+  // The chapter Clover marks out on the seek bar: the one pointed at, in pink, or
+  // while nothing is and the tip is up, the tip's action's, in blue, where its dotted
+  // line starts.
+  const tipMarked = !pointing && tip && !!tipped && !!live?.performance.actions.some((a) => a.piece.id === tipped.id);
+  const marked = pointing ?? (tipMarked ? tipped.id : null);
+  // Where the demonstration carries the copy of the tip's action: to the left margin
+  // (the grid's first column), three lines above the first action typed, on the bare
+  // paper over the block that begins the score; or the nearest clear place to that.
+  const shown = tip && demo && ready && !!tipped && !!tipAt && tipAt.y < score.pageH;
+  const margin = cell(score.grid, 0, -3);
+  const demoTo = shown ? (fits(tipped, margin.x, margin.y) ? margin : settle(tipped, margin.x, margin.y)) : null;
+  // The order as it would be with the action where the copy now is: its chapters, as
+  // the bar shows them while a slip is carried (`ahead`). Made anew only as the sheet,
+  // the performance or the copy's place changes.
+  let demoChapters: any[] | undefined;
+  if (shown && demoPlace && tipped && live?.manifest) {
+    const key = `${live.performance.key}|${arranged?.performance.key}|${tipped.id}|${demoPlace.x}|${demoPlace.y}`;
+    if (demoCache.current?.key !== key) {
+      const moved = {...places, [tipped.id]: {...places[tipped.id], x: demoPlace.x, y: demoPlace.y}};
+      const played = perform(score, moved, takes);
+      const manifest = arrangementManifest(score, placed(score, moved), played, session.current);
+      const share = played.duration ? live.performance.duration / played.duration : 1;
+      demoCache.current = {
+        key,
+        chapters: chaptersOf(manifest, performanceId(score, session.current), played.duration).map((chapter) => ({
+          id: chapter.id,
+          label: (Object.values(chapter.label ?? {}).flat() as string[]).join("\n"),
+          start: chapter.start * share,
+          end: (chapter.end ?? played.duration) * share,
+        })),
+      };
+    }
+    demoChapters = demoCache.current.chapters;
+  }
+  const demoing = !!demoPlace && !!demoChapters;
+
   return (
-    <section ref={section} className="fx-strada" data-phase={phase} data-mode={mode}>
+    <section
+      ref={section}
+      className="fx-strada"
+      data-phase={phase}
+      data-mode={mode}
+      data-held={tip || undefined}
+      data-tip-marked={tipMarked || undefined}
+    >
       {/* The same buttons in every state, and a caption sized for the longest thing it
           can say, so the bar never changes height and nothing under it moves. Original,
           Clear and Shuffle are the three arrangements of the sheet, any of which can be
@@ -1778,7 +2099,7 @@ export default function LaStrada({
               type="button"
               className={`fx-strada__button fx-strada__button--quiet${performing === own ? " is-playing" : ""}`}
               aria-pressed={mode === own}
-              disabled={!ready}
+              disabled={!ready || tip}
               title={title}
               onClick={press}
             >
@@ -1790,7 +2111,7 @@ export default function LaStrada({
                 className="fx-strada__reset"
                 aria-label={text.reset}
                 title={text.resetTitle}
-                disabled={!ready || (mode === "original" && phase === "intact")}
+                disabled={!ready || tip || (mode === "original" && phase === "intact")}
                 onClick={reset}
               >
                 <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -1803,12 +2124,13 @@ export default function LaStrada({
         ))}
         {/* The caption is for the eye. The action heard is already the sound itself, and
             its text is what a screen reader says of its slip on reaching it, so a screen
-            reader is told only of the arrangement, here, when it changes. */}
+            reader is told only of the arrangement, here, when it changes. While the tip
+            is up it is told the tip first, once the sheet is ready. */}
         <p className="fx-strada__said" aria-live="polite">
-          {ready ? guide : ""}
+          {ready ? (tip ? `${text.tip} ${guide}` : guide) : ""}
         </p>
         <p className="fx-strada__caption" aria-hidden="true">
-          <span>{caption}</span>
+          <span className={heard ? "is-heard" : undefined}>{caption}</span>
           {widest.map((words) => (
             <span key={words} className="fx-strada__sizer" aria-hidden="true">
               {words}
@@ -1852,14 +2174,28 @@ export default function LaStrada({
               className="fx-strada__player"
               controls={false}
               options={TIMELINE}
-              chapters={ahead}
-              highlightedChapter={pointing ? rangeId(score, session.current, pointing) : null}
+              chapters={demoing ? demoChapters : ahead}
+              highlightedChapter={marked ? rangeId(score, session.current, marked) : null}
               onChapterHighlight={mark}
               onMediaElement={hold}
             />
           )}
         </div>
       </div>
+
+      {/* The tip's box and dotted line, drawn by the marker in blue (see the effect
+          that draws them), fixed to the window as the bar is. The tip itself is on the
+          sheet, over its action (below). */}
+      {tip && (
+        <svg className="fx-strada__tipline" aria-hidden="true" focusable="false">
+          <filter id="fx-strada-tip-marker" x="-5%" y="-20%" width="110%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="1964" />
+            <feDisplacementMap ref={tipWarp} in="SourceGraphic" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          <path ref={tipPath} filter="url(#fx-strada-tip-marker)" />
+          <path ref={tipStart} className="is-start" filter="url(#fx-strada-tip-marker)" />
+        </svg>
+      )}
 
       {/* Credit for the original, in the manner of Creative Commons, over the sheet:
           the title, linked to its item, who made it, where it is from, and any rights.
@@ -1899,13 +2235,93 @@ export default function LaStrada({
           }
         >
           <img className="fx-strada__ground" src={score.ground} alt="" draggable={false} />
+          {/* While the tip is up, the score is veiled in the page's paper, clear round
+              the tip's action and fading out from it, and the veil lifts once the tip is
+              closed. The tip, its action, the demonstration's copy and any slip pointed
+              at or with focus stand over it; it takes no presses, so every slip can still
+              be carried through it. */}
+          {tipped && tipAt && (
+            <div
+              className={`fx-strada__veil${tip ? " is-on" : ""}`}
+              aria-hidden="true"
+              style={{"--cx": tipAt.x + tipped.w / 2, "--cy": tipAt.y} as React.CSSProperties}
+            />
+          )}
+          {/* The tip, each time the page opens: what to do, just over its action on the sheet,
+              opening to the right where it has room, with a dotted blue line
+              from the action's chapter on the bar to the action. It stands first on the
+              sheet, and while it is up the slips are inert, so Tab goes from the bar to
+              Start and its ×. A screen reader is told it once, with the guide
+              (fx-strada__said). Escape anywhere in the exhibit closes it too, and closed
+              from the keyboard, focus goes on to the sheet's first line. */}
+          {tip && tipAt && tipped && (
+            <div
+              ref={tipBox}
+              className="fx-strada__tip"
+              role="note"
+              style={
+                {
+                  ...(opensRight
+                    ? {left: `${tipAt.x}cqw`, maxWidth: `min(21rem, calc(${100 - tipAt.x}cqw - 1rem))`}
+                    : {right: `${100 - tipAt.x - tipped.w}cqw`, maxWidth: `min(21rem, calc(${tipAt.x + tipped.w}cqw - 1rem))`}),
+                  top: `${tipAt.y}cqw`,
+                  "--slip-h": `${tipped.h}cqw`,
+                } as React.CSSProperties
+              }
+            >
+              <div className="fx-strada__tip-body">
+                <p>{text.tip}</p>
+                {/* Start closes the tip, as × does; its edge is drawn by the marker. */}
+                <button type="button" className="fx-strada__tip-start" onClick={(e) => closeTip(e.detail === 0)}>
+                  {/* Bold as the typewriter rules allow it: a key struck hard (DESIGN.md). */}
+                  <strong>{text.start}</strong>
+                </button>
+              </div>
+              <button
+                type="button"
+                className="fx-strada__tip-close"
+                aria-label={text.dismissTip}
+                title={text.dismissTip}
+                onClick={(e) => closeTip(e.detail === 0)}
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path d="M4 4l8 8M12 4l-8 8" />
+                </svg>
+              </button>
+            </div>
+          )}
+          {/* The demonstration: a faded copy of the tip's action, its type alone, lifts
+              off it every few seconds, drifts up and to the left to a clear place, and
+              fades, as if moved there, while the action itself stays where it is. It is
+              for the eye only, goes with the tip when that is closed (WCAG 2.2.2), and
+              does not run at all under reduced motion. */}
+          {shown && demoTo && (
+            <div
+              className="fx-strada__ghost"
+              aria-hidden="true"
+              style={
+                {
+                  "--x": tipAt.x,
+                  "--y": tipAt.y,
+                  "--w": tipped.w,
+                  "--h": tipped.h,
+                  "--bx": tipped.x,
+                  "--by": tipped.y,
+                  "--dx": `${demoTo.x - tipAt.x}cqw`,
+                  "--dy": `${demoTo.y - tipAt.y}cqw`,
+                } as React.CSSProperties
+              }
+            >
+              <span />
+            </div>
+          )}
           {score.actions.map((piece) => {
             const at = places[piece.id];
             return (
               <button
                 key={piece.id}
                 type="button"
-                className={`fx-slip${lifted === piece.id ? " is-lifted" : ""}${pointing === piece.id && !lifted ? " is-pointed" : ""}`}
+                className={`fx-slip${lifted === piece.id ? " is-lifted" : ""}${pointing === piece.id && !lifted ? " is-pointed" : ""}${tip && piece.id === tipped?.id ? " is-tipped" : ""}`}
                 data-action={piece.id}
                 style={
                   {
@@ -1922,6 +2338,8 @@ export default function LaStrada({
                 }
                 aria-label={piece.text.replace(/\n/g, " ")}
                 lang={piece.lang}
+                // Held while the tip is up: not to be carried, reached, pointed at or heard.
+                inert={tip}
                 aria-hidden={touchable ? undefined : true}
                 tabIndex={touchable ? 0 : -1}
                 onPointerDown={(e) => grab(e, piece)}
@@ -1929,9 +2347,10 @@ export default function LaStrada({
                 onPointerUp={() => drop(piece, true)}
                 onPointerCancel={() => drop(piece, false)}
                 onKeyDown={(e) => key(e, piece)}
-                onPointerEnter={() => setPointing(piece.id)}
+                onPointerEnter={() => !tip && setPointing(piece.id)}
                 onPointerLeave={() => unpoint(piece.id)}
                 onFocus={() => {
+                  if (tip) return;
                   setFocused(piece.id);
                   setPointing(piece.id);
                 }}
@@ -1945,7 +2364,7 @@ export default function LaStrada({
         </div>
       </div>
 
-      {/* The marker's line and brace between the pointed chapter and its action,
+      {/* The marker's line between the pointed chapter and its action, and its box,
           their edges roughened a little, as felt-tip is on paper. It stands here, out
           of the sheet's own stacking, so the line can run over the bar's black ground
           to the chapter it starts from, under the rail and the popover. */}
@@ -1958,9 +2377,7 @@ export default function LaStrada({
             </filter>
             <g filter="url(#fx-strada-marker)">
               {drawn.line && <path d={drawn.line} />}
-              {drawn.braces.map((d, i) => (
-                <path key={i} className="fx-strada__brace" d={d} />
-              ))}
+              {drawn.ringed && <path className={`fx-strada__ring${drawn.aside ? " is-aside" : ""}`} d={drawn.ringed} />}
             </g>
           </>
         )}
