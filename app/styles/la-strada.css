@@ -353,12 +353,14 @@ html:has(.fx-strada) {
   padding-inline: calc((var(--fx-strada-bar) - var(--fx-strada-control)) / 2);
 }
 
-/* The page keeps the bar's height clear below its last line, and a slip brought
- * into view by the keys stops short of the bar, where it would be hidden
- * (WCAG 2.4.11). */
+/* The page keeps the bar's height clear below its last line. A slip brought into
+ * view by the keys stops short of the bar, and of the controls stuck to the window's
+ * top, under either of which it would have focus unseen (WCAG 2.4.11). The controls
+ * say how tall they are (--fx-strada-controls, from LaStrada.client.tsx), since
+ * they wrap in a narrow window. */
 :root:has(.fx-strada__timeline) {
   --fx-strada-bar: 3.75rem;
-  scroll-padding-bottom: calc(var(--fx-strada-bar) + 0.75rem);
+  scroll-padding-block: calc(var(--fx-strada-controls, 5rem) + 0.75rem) calc(var(--fx-strada-bar) + 0.75rem);
 }
 
 body:has(.fx-strada__timeline) {
@@ -474,10 +476,11 @@ body:has(.fx-strada__timeline) {
  * keyboard, or carried), the marker draws a line from the middle of the chapter, as
  * Clover marks it out on the seek bar, up over the bar, across and up again to
  * arrive under the action, at the foot of its first character; and a slip with focus
- * is braced either side of its type. Both are in pink and by hand (marker() in
- * LaStrada.client.tsx). The drawing lies over the whole exhibit and is drawn in its
- * own pixels, wherever they fall: over the sheet and the bar's black ground, and
- * under the controls and what is on the bar. */
+ * is braced either side of its type. Both are drawn by hand (marker() in
+ * LaStrada.client.tsx), the line in pink and the braces in the page's ink. The
+ * drawing lies over the whole exhibit and is drawn in its own pixels, wherever they
+ * fall: over the sheet and the bar's black ground, and under the controls and what
+ * is on the bar. */
 .fx-strada__sketch {
   position: absolute;
   inset: 0;
@@ -487,6 +490,12 @@ body:has(.fx-strada__timeline) {
   overflow: visible;
   fill: var(--fx-pink);
   pointer-events: none;
+}
+
+/* The braces are a slip's focus ring: black on the paper, as focus is everywhere
+ * on the site. */
+.fx-strada__brace {
+  fill: var(--fx-ink);
 }
 
 /* Gravity: the fall speeds up, the sideways drift does not. The paper lets go

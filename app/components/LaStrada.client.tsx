@@ -1065,6 +1065,7 @@ export default function LaStrada({
   }, [language]);
 
   const section = useRef<HTMLElement>(null);
+  const controls = useRef<HTMLDivElement>(null);
   const session = useRef(new Date().toISOString().replace(/\D/g, "").slice(0, 14));
   const board = useRef<HTMLDivElement>(null);
   // A press on a slip: where it started, where the pointer is, whether it has moved, and
@@ -1099,6 +1100,25 @@ export default function LaStrada({
       live = false;
     };
   }, [manifest]);
+
+  // The controls stick to the window's top while the sheet scrolls under them, so a
+  // slip the keys bring into view must stop short of them, or it would have focus
+  // where it cannot be seen (WCAG 2.4.11). They wrap onto more lines in a narrow
+  // window, so the page is told how tall they are as that changes
+  // (app/styles/la-strada.css).
+  useLayoutEffect(() => {
+    const bar = controls.current;
+    if (!bar) return;
+    const root = document.documentElement;
+    const tell = () => root.style.setProperty("--fx-strada-controls", `${Math.ceil(bar.getBoundingClientRect().height)}px`);
+    tell();
+    const watch = new ResizeObserver(tell);
+    watch.observe(bar);
+    return () => {
+      watch.disconnect();
+      root.style.removeProperty("--fx-strada-controls");
+    };
+  }, [score]);
 
   // The annotation page, the performance and the manifest that carries both are made
   // anew whenever anything moves.
@@ -1726,7 +1746,7 @@ export default function LaStrada({
           had from any other; each plays when pressed, and says Stop while it does.
           Reset, beside Original, puts the sheet back as it was typed without playing,
           and has nothing to do while it is. */}
-      <div className="fx-strada__bar">
+      <div ref={controls} className="fx-strada__bar">
         {(
           [
             {mode: "original", label: text.original, title: "The score as it was typed", press: restore},
@@ -1915,7 +1935,7 @@ export default function LaStrada({
             <g filter="url(#fx-strada-marker)">
               {drawn.line && <path d={drawn.line} />}
               {drawn.braces.map((d, i) => (
-                <path key={i} d={d} />
+                <path key={i} className="fx-strada__brace" d={d} />
               ))}
             </g>
           </>
