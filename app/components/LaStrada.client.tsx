@@ -2216,6 +2216,18 @@ export default function LaStrada({
           }
         >
           <img className="fx-strada__ground" src={score.ground} alt="" draggable={false} />
+          {/* While the tip is up, the score is veiled in the page's paper, clear round
+              the tip's action and fading out from it, and the veil lifts once the tip is
+              closed. The tip, its action, the demonstration's copy and any slip pointed
+              at or with focus stand over it; it takes no presses, so every slip can still
+              be carried through it. */}
+          {tipped && tipAt && (
+            <div
+              className={`fx-strada__veil${tip ? " is-on" : ""}`}
+              aria-hidden="true"
+              style={{"--cx": tipAt.x + tipped.w / 2, "--cy": tipAt.y} as React.CSSProperties}
+            />
+          )}
           {/* The tip, each time the page opens: what to do, just over its action on the sheet,
               opening to the right where it has room, with a dotted blue line
               from the action's chapter on the bar to the action. It stands first on the
@@ -2296,7 +2308,7 @@ export default function LaStrada({
               <button
                 key={piece.id}
                 type="button"
-                className={`fx-slip${lifted === piece.id ? " is-lifted" : ""}${pointing === piece.id && !lifted ? " is-pointed" : ""}`}
+                className={`fx-slip${lifted === piece.id ? " is-lifted" : ""}${pointing === piece.id && !lifted ? " is-pointed" : ""}${tip && piece.id === tipped?.id ? " is-tipped" : ""}`}
                 data-action={piece.id}
                 style={
                   {

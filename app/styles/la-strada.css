@@ -521,6 +521,34 @@ body:has(.fx-strada__timeline) {
   fill: var(--fx-ink);
 }
 
+/* While the tip is up, a veil of the page's paper over the score: clear round the
+ * tip's action (--cx, --cy, in page widths), and fading the sheet out from it, so the
+ * tip and its line are what is seen first. It lifts in half a second once the tip is
+ * closed. It stands over every slip but the tip's action (is-tipped) and one pointed
+ * at or with focus, and under the tip and the demonstration's copy; it takes no
+ * presses. */
+.fx-strada__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 80000;
+  background: radial-gradient(
+    circle at calc(var(--cx) * 1cqw) calc(var(--cy) * 1cqw),
+    transparent 12cqw,
+    color-mix(in srgb, var(--fx-paper) 88%, transparent) 40cqw
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms ease-out;
+}
+
+.fx-strada__veil.is-on {
+  opacity: 1;
+}
+
+.fx-slip.is-tipped {
+  z-index: 85000;
+}
+
 /* The tip, each time the page opens: a slip of paper on the sheet, just over its action
  * (left, top and its width are set from where the action stands), lifted clear of
  * the action's box. It lies over every slip but the one pointed at or with focus
@@ -802,6 +830,10 @@ body:has(.fx-strada__timeline) {
 @media (prefers-reduced-motion: reduce) {
   .fx-strada__ghost {
     display: none;
+  }
+
+  .fx-strada__veil {
+    transition: none;
   }
 
   .fx-strada .fx-slip,
