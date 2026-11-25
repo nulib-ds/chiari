@@ -153,8 +153,9 @@
 
 /* An action being heard may be three lines long; two is all the bar keeps. The
  * cell can be taller than two lines, where a guide wraps to three, so the line
- * kept is held to two lines' height too, or the third shows under the ellipsis. */
-.fx-strada__caption > :first-child {
+ * kept is held to two lines' height too, or the third shows under the ellipsis.
+ * The guide itself is never cut: it is what to do. */
+.fx-strada__caption > .is-heard {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -473,6 +474,16 @@ body:has(.fx-strada__timeline) {
     background-color: var(--fx-pink);
     opacity: 1;
   }
+
+  /* While the tip is up and nothing is pointed at, the chapter marked out is the
+   * tip's action's, in the tip's blue, where its dotted line starts. As the
+   * demonstration's copy takes it to another place in the order, it slides there. */
+  .fx-strada[data-tip-marked] .fx-strada__player .clover-canvas-transport-chapter-span {
+    background-color: var(--fx-blue);
+    transition:
+      left 300ms ease-in-out,
+      width 300ms ease-in-out;
+  }
 }
 
 /* While a chapter or its action is pointed at (or a slip is reached with the
@@ -508,6 +519,85 @@ body:has(.fx-strada__timeline) {
  * slip keeps its box in the page's ink. */
 .fx-strada__ring.is-aside {
   fill: var(--fx-ink);
+}
+
+/* The tip, each time the page opens: a slip of paper on the sheet, just over its action
+ * (left, top and its width are set from where the action stands), lifted clear of
+ * the action's box. It lies over every slip but the one pointed at or with focus
+ * (z-index 99999), so it never hides a slip with focus. Its box and the dotted line
+ * from the seek bar to the action are drawn by the marker, in blue, in a drawing of
+ * their own fixed to the window (.fx-strada__tipline), which lies over the sheet and
+ * under what is on the bar, as the pink one does. */
+.fx-strada__tip {
+  position: absolute;
+  z-index: 90000;
+  translate: 0 calc(-100% - 1rem);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  width: max-content;
+  padding: 0.5rem 0.25rem 0.5rem 0.875rem;
+  background: var(--fx-paper);
+  color: var(--fx-ink);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.14);
+}
+
+/* In a window too narrow for it over its action, just under it instead (set by
+ * LaStrada.client.tsx as it measures), the dotted line coming to the tip. */
+.fx-strada__tip[data-under] {
+  translate: 0 calc(var(--slip-h) + 1rem);
+}
+
+.fx-strada__tip p {
+  margin: 0.25rem 0;
+  font-size: inherit;
+}
+
+/* Its close button: a cross, 28px square, which is more than the 24px a target
+ * needs (WCAG 2.5.8), its focus ringed in the page's ink as the controls' are. */
+.fx-strada__tip-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--fx-radius);
+  background: transparent;
+  color: var(--fx-ink);
+  cursor: pointer;
+}
+
+.fx-strada__tip-close:hover {
+  background: color-mix(in srgb, var(--fx-ink) 8%, transparent);
+}
+
+.fx-strada__tip-close:focus-visible {
+  outline: 2px solid var(--fx-ink);
+  outline-offset: 1px;
+}
+
+.fx-strada__tip-close svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+}
+
+.fx-strada__tipline {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: var(--fx-blue);
+  pointer-events: none;
 }
 
 /* Gravity: the fall speeds up, the sideways drift does not. The paper lets go
@@ -599,7 +689,81 @@ body:has(.fx-strada__timeline) {
   white-space: pre-line;
 }
 
+/* The demonstration, while the tip is up: a copy of the tip's action, its type alone,
+ * as a fallen slip shows it, lifts off it to half strength, goes up and to the left
+ * to the left margin over the score's first block (--dx, --dy), stays there a moment
+ * while the seek bar shows the order rearranged as it would be, and fades, every
+ * five seconds.
+ * It is in three layers so that it can go along a curve: the outer one fades, the
+ * middle one moves it across, heading left at once, and the type moves it up, which
+ * gathers pace as it goes, so it rounds the tip rather than crossing it. It stands
+ * over the tip, and under a slip pointed at or with focus. */
+.fx-strada__ghost {
+  position: absolute;
+  left: calc(var(--x) * 1cqw);
+  top: calc(var(--y) * 1cqw);
+  width: calc(var(--w) * 1cqw);
+  height: calc(var(--h) * 1cqw);
+  z-index: 95000;
+  opacity: 0;
+  pointer-events: none;
+  animation: fx-strada-ghost-fade 5s 1.2s infinite;
+}
+
+.fx-strada__ghost > span {
+  position: absolute;
+  inset: 0;
+  animation: fx-strada-ghost-across 5s 1.2s infinite;
+}
+
+.fx-strada__ghost > span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--ink);
+  background-repeat: no-repeat;
+  background-size: 100cqw auto;
+  background-position: calc(var(--bx) * -1cqw) calc(var(--by) * -1cqw);
+  filter: drop-shadow(0 3px 4px rgb(0 0 0 / 0.25));
+  animation: fx-strada-ghost-up 5s 1.2s infinite;
+}
+
+/* Five seconds round: it lifts (to 8%), goes (to 46%), stays (to 70%), fades (to
+ * 78%), and is gone a moment before it lifts again. As it goes, the bar shows the
+ * order as it would be with the action where the copy then is (LaStrada.client.tsx
+ * reads where that is each frame), its chapter going forward a place each time the
+ * copy rises past another line. */
+@keyframes fx-strada-ghost-fade {
+  0% { opacity: 0; }
+  8% { opacity: 0.5; }
+  70% { opacity: 0.5; }
+  78%,
+  100% { opacity: 0; }
+}
+
+@keyframes fx-strada-ghost-across {
+  0%,
+  8% { translate: 0 0; animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1); }
+  46%,
+  78% { translate: var(--dx) 0; }
+  79%,
+  100% { translate: 0 0; }
+}
+
+@keyframes fx-strada-ghost-up {
+  0%,
+  8% { translate: 0 0; animation-timing-function: cubic-bezier(0.5, 0, 0.6, 1); }
+  46%,
+  78% { translate: 0 var(--dy); }
+  79%,
+  100% { translate: 0 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .fx-strada__ghost {
+    display: none;
+  }
+
   .fx-strada .fx-slip,
   .fx-strada .fx-slip::before,
   .fx-strada .fx-slip::after,

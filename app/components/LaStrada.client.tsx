@@ -103,6 +103,8 @@ const LABELS = {
   copied: "Copied",
   annotationPage: "Annotation page",
   failed: "The score could not be loaded.",
+  tip: "Move typed lines of the La Strada score to compose the desired order.",
+  dismissTip: "Dismiss tip",
 };
 type Labels = typeof LABELS;
 
@@ -974,6 +976,49 @@ function roughBox(left: number, top: number, right: number, bottom: number, roug
 }
 
 /**
+ * The way the marker goes from the seek bar to what it points at: straight up out of
+ * the bar for a little (90px at most), across at an angle, and straight up again for
+ * the last little (50px at most), both shorter where there is less room, turning into
+ * and out of the angle round a short curve.
+ */
+function route(start: Point, end: Point): Point[] {
+  const up = end[1] - start[1];
+  const out: Point = [start[0], start[1] + Math.sign(up) * Math.min(90, 0.4 * Math.abs(up))];
+  const into: Point = [end[0], end[1] - Math.sign(up) * Math.min(50, 0.2 * Math.abs(up))];
+  return rounded([start, out, into, end], 20);
+}
+
+/**
+ * A line of points cut into the dots of a dotted line: runs `dot` pixels long with
+ * `gap` pixels between them, each its own short line of points.
+ */
+function dotted(points: Point[], dot: number, gap: number): Point[][] {
+  const dots: Point[][] = [];
+  let run: Point[] = [points[0]];
+  let on = true;
+  let left = dot; // how far the current dot or gap has still to go
+  for (let i = 1; i < points.length; i++) {
+    let a = points[i - 1];
+    const b = points[i];
+    let d = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    while (d > left) {
+      const t = left / d;
+      const p: Point = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      if (on) dots.push([...run, p]);
+      else run = [p];
+      on = !on;
+      d -= left;
+      a = p;
+      left = on ? dot : gap;
+    }
+    left -= d;
+    if (on) run.push(b);
+  }
+  if (on && run.length > 1) dots.push(run);
+  return dots;
+}
+
+/**
  * A marker stroke along a line of points, as the outline of its ink: fuller in the
  * middle than where the pen came down and where it lifted, swelling and thinning a
  * little as the hand presses, its course not quite steady and its edges a little
@@ -1031,9 +1076,16 @@ export default function LaStrada({
   manifest,
   work,
   labels,
+  tipFor = "churchill",
 }: {
   /** The exhibit's IIIF manifest. */
   manifest: string;
+  /**
+   * The action the tip stands over, by its id (the last part of its
+   * annotation's id), and the dotted line goes to from its chapter on the seek bar.
+   * The first action, if there is none of that id.
+   */
+  tipFor?: string;
   /**
    * The work's own page, which the credit's title links to: the manifest's homepage,
    * unless this names another, as a page in another language does.
@@ -1093,6 +1145,29 @@ export default function LaStrada({
 
   const [copied, setCopied] = useState(false);
   const [showing, setShowing] = useState(false);
+
+  // The tip, shown each time the page is opened, over its action on the sheet, until
+  // it is dismissed or a line is first moved. What the marker draws for it: a box
+  // round it and a dotted line up from the action's chapter on the bar to the action.
+  const [tip, setTip] = useState(true);
+  const tipBox = useRef<HTMLDivElement>(null);
+  const tipPath = useRef<SVGPathElement>(null);
+  const tipWarp = useRef<SVGFEDisplacementMapElement>(null);
+  const dismissTip = () => setTip(false);
+  // While the tip is up, a faded copy of its action shows every few seconds how a line
+  // is moved, until the visitor first presses, clicks, types or tabs into the exhibit.
+  // `demoPlace` is where the copy stands on its way, whenever that puts the action
+  // somewhere else in the order: the seek bar then shows the order as it would be,
+  // as it does while a slip is carried, changing as the copy passes other lines.
+  const [demo, setDemo] = useState(true);
+  const [demoPlace, setDemoPlace] = useState<{x: number; y: number} | null>(null);
+  const demoCache = useRef<{key: string; chapters: any[]} | null>(null);
+  // Closed from the keyboard, focus would be left on nothing: it goes on to the sheet's
+  // first line, which is what the tip is about.
+  const closeTip = (keyed: boolean) => {
+    dismissTip();
+    if (keyed) board.current?.querySelector<HTMLElement>(".fx-slip")?.focus();
+  };
 
   // Clover's controls on the seek bar (play, seek, volume, the chapters, the keys)
   // speak the page's language rather than the browser's, as the projector's do.
@@ -1433,18 +1508,18 @@ export default function LaStrada({
       // (both shorter where there is less room) to arrive under the action: under the
       // middle of its last line, at the foot of its box, drawn or not, turning into and
       // out of the angle round a short curve. With no chapter to start from (the action is off the
-      // sheet, or the bar is not drawn yet), no line.
+      // sheet, or the bar is not drawn yet), no line. Nor is there one while the action
+      // stands close over the bar, or under it: there the line would have no room to
+      // rise, and would only run sideways across the type between.
       const chapter = pointed && section.current?.querySelector(".fx-strada__timeline .clover-canvas-transport-chapter-span");
       const from = chapter ? chapter.getBoundingClientRect() : null;
+      const ground = section.current?.querySelector(".fx-strada__foot")?.getBoundingClientRect();
+      const near = Math.max(72, 4 * line);
       let path: Point[] | null = null;
-      if (pointed && from && from.width > 0) {
-        const {under, foot} = around(pointed);
+      const {under, foot} = pointed ? around(pointed) : {under: 0, foot: 0};
+      if (pointed && from && from.width > 0 && !(ground && ground.top - box.top - foot < near)) {
         const start: Point = [from.left - box.left + from.width / 2, from.top - box.top + from.height / 2];
-        const end: Point = [under, foot];
-        const up = end[1] - start[1];
-        const out: Point = [start[0], start[1] + Math.sign(up) * Math.min(90, 0.4 * Math.abs(up))];
-        const into: Point = [end[0], end[1] - Math.sign(up) * Math.min(50, 0.2 * Math.abs(up))];
-        path = rounded([start, out, into, end], 20);
+        path = route(start, [under, foot]);
       }
       setDrawn({
         line: path && pointed ? marker(path, ink, seeded(pointed.id), true) : null,
@@ -1493,6 +1568,141 @@ export default function LaStrada({
       marked?.disconnect();
     };
   }, [pointing, focused, places, score, resized, live, ahead]);
+
+  // The demonstration stops for good at the visitor's first press, key or focus in the
+  // exhibit.
+  useEffect(() => {
+    const exhibit = section.current;
+    if (!demo || !exhibit) return;
+    const begun = () => setDemo(false);
+    const kinds = ["pointerdown", "keydown", "focusin"] as const;
+    for (const kind of kinds) exhibit.addEventListener(kind, begun, {capture: true});
+    return () => {
+      for (const kind of kinds) exhibit.removeEventListener(kind, begun, {capture: true});
+    };
+  }, [demo, score]);
+
+  // Once it stops, or the tip goes, the bar shows the sheet as it is again.
+  useEffect(() => {
+    if (!demo || !tip) setDemoPlace(null);
+  }, [demo, tip]);
+
+  // Draw the tip's box, and its dotted line up from its action's chapter on the bar
+  // to the action, as the pink line goes, in a drawing fixed to the window.
+  useLayoutEffect(() => {
+    const tipped = score && (score.actions.find((p) => p.id === tipFor) ?? score.actions[0]);
+    if (!tip || !score || !tipped || !tipBox.current || !board.current) return;
+    const pop = tipBox.current;
+    const sheet = board.current;
+    const slip = sheet.querySelector<HTMLElement>(`[data-action="${tipped.id}"]`);
+    // The action's place in the order as it stands, and as the copy last had it.
+    const homeRank = places[tipped.id] ? arrangement(score, places).indexOf(tipped) : -1;
+    let ranked = homeRank;
+    const draw = () => {
+      const seek = section.current?.querySelector(".fx-strada__seek")?.getBoundingClientRect();
+      const ground = section.current?.querySelector(".fx-strada__foot")?.getBoundingClientRect();
+      const s = slip?.getBoundingClientRect();
+      const paper = sheet.getBoundingClientRect();
+      const line = (score.grid.line * paper.width) / 100;
+      const ink = Math.max(3, 0.3 * line);
+      // The box stands a little out from the tip.
+      const out = ink * 0.8;
+      // Over its action if the sheet has room for it there, as it has in any window
+      // but a narrow one; otherwise just under it, where the dotted line comes to it
+      // instead, so that it never stands off the sheet over the credit.
+      if (s) pop.toggleAttribute("data-under", s.top - paper.top < pop.offsetHeight + 16 + 2 * out);
+      const under = pop.hasAttribute("data-under");
+      const r = pop.getBoundingClientRect();
+      const hand = seeded("La strada, the tip");
+      let d = marker(roughBox(r.left - out, r.top - out, r.right + out, r.bottom + out, ink * 0.5, hand), ink * 0.7, hand, true);
+      // The line, from the middle of the action's chapter, as the bar marks it out in
+      // blue, to arrive under the middle of its last line as the pink line does, a
+      // little under its foot. None while the action is off the sheet (it has no
+      // chapter) or close over the bar or under it, where the pink line has none
+      // either. While the demonstration's copy shows, the line follows it all the way,
+      // from the chapter wherever the bar then has it.
+      const exhibit = section.current;
+      const marked = exhibit?.hasAttribute("data-tip-marked")
+        ? exhibit.querySelector(".fx-strada__player .clover-canvas-transport-chapter-span")?.getBoundingClientRect()
+        : null;
+      const heard = live?.performance.actions.find((a) => a.piece.id === tipped.id);
+      const along = heard && live.performance.duration ? (heard.start + heard.end) / 2 / live.performance.duration : null;
+      const start: Point | null =
+        marked && marked.width > 0
+          ? [marked.left + marked.width / 2, marked.top + marked.height / 2]
+          : seek && along !== null
+            ? [seek.left + seek.width * along, seek.top + seek.height / 2]
+            : null;
+      // Where the copy is on its way: how far its two layers have taken it, as they
+      // now stand (app/styles/la-strada.css).
+      const ghost = sheet.querySelector<HTMLElement>(".fx-strada__ghost");
+      const across = ghost?.firstElementChild as HTMLElement | null;
+      const shift: Point | null =
+        ghost && across && +getComputedStyle(ghost).opacity > 0.05
+          ? [parseFloat(getComputedStyle(across).translate) || 0, parseFloat(getComputedStyle(across, "::after").translate.split(" ")[1] ?? "") || 0]
+          : null;
+      // Where that puts the action in the order: when it is somewhere else than it is,
+      // the bar is given the order as it would be, once each time that changes.
+      const home = places[tipped.id];
+      if (home) {
+        const at = shift ? {x: home.x + (shift[0] * 100) / paper.width, y: home.y + (shift[1] * 100) / paper.width} : home;
+        const rank = arrangement(score, {...places, [tipped.id]: {...home, ...at}}).indexOf(tipped);
+        if (rank !== ranked) {
+          ranked = rank;
+          setDemoPlace(rank === homeRank ? null : {x: at.x, y: at.y});
+        }
+      }
+      if (start && s) {
+        const columns = Math.round(tipped.w / score.grid.char);
+        const length = tipped.text.includes("\n") ? Math.min(columns, tipped.text.split("\n").pop()!.length) : columns;
+        const end: Point =
+          under && !shift
+            ? [Math.min(Math.max(start[0], r.left + 3 * ink), r.right - 3 * ink), r.bottom + out]
+            : [s.left + (shift?.[0] ?? 0) + (s.width * length) / columns / 2, s.bottom + (shift?.[1] ?? 0) + ink * 0.6];
+        if (!ground || ground.top - end[1] >= Math.max(72, 4 * line)) {
+          d += dotted(route(start, end), ink * 1.1, ink * 1.3)
+            .map((dot) => marker(dot, ink * 0.8, hand))
+            .join("");
+        }
+      }
+      // Drawn straight into the page rather than through React: while the
+      // demonstration runs this is every frame.
+      tipPath.current?.setAttribute("d", d);
+      tipWarp.current?.setAttribute("scale", (ink * 0.35).toFixed(2));
+    };
+    let frame = 0;
+    // Drawn again on what changes it (below), except while the demonstration runs,
+    // when it is drawn every frame anyway, and stopping that would leave the line behind.
+    const again = () => {
+      if (demo) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(draw);
+    };
+    // While the demonstration runs, every frame, so the line keeps up with the copy.
+    const run = () => {
+      draw();
+      frame = requestAnimationFrame(run);
+    };
+    if (demo) run();
+    else draw();
+    // The tip and its action scroll with the sheet and the bar is fixed to the window,
+    // so it is drawn again as the page scrolls, as the window or the tip changes size,
+    // and as Clover draws its chapters, a little after a manifest is loaded.
+    window.addEventListener("scroll", again, {passive: true});
+    window.addEventListener("resize", again);
+    const sized = new ResizeObserver(again);
+    sized.observe(pop);
+    const bar = section.current?.querySelector(".fx-strada__timeline");
+    const marked = bar ? new MutationObserver(again) : null;
+    if (bar) marked?.observe(bar, {subtree: true, childList: true});
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", again);
+      window.removeEventListener("resize", again);
+      sized.disconnect();
+      marked?.disconnect();
+    };
+  }, [tip, tipFor, score, places, live, resized, demo]);
 
   if (failed) return <p className="fx-strada__caption">{text.failed}</p>;
   if (!score) return null;
@@ -1735,6 +1945,8 @@ export default function LaStrada({
   /** A move by hand: in Original the sheet stays Original's; anywhere else it is Clear's. */
   const moved = () => {
     if (mode !== "original") setMode("fallen");
+    // A line moved, the tip has been taken.
+    if (tip) dismissTip();
   };
 
   const drop = (piece: Piece, touched: boolean) => {
@@ -1794,8 +2006,52 @@ export default function LaStrada({
 
   const everything = [...score.actions, ...score.frame].sort((a, b) => a.y - b.y || a.x - b.x);
 
+  // The action the tip stands over, and where it stands now. The tip opens to the
+  // right from the action's first character, over the paper beside the lines above,
+  // wherever that leaves it 14rem (224px) to read in; otherwise to the left from its
+  // last. The sheet is as wide as the window, and drawn again as that changes.
+  const tipped = score.actions.find((p) => p.id === tipFor) ?? score.actions[0];
+  const tipAt = tipped ? places[tipped.id] : undefined;
+  const sheetWidth = board.current?.clientWidth ?? document.documentElement.clientWidth;
+  const opensRight = !!tipAt && ((100 - tipAt.x) / 100) * sheetWidth - 16 >= 224;
+  // The chapter Clover marks out on the seek bar: the one pointed at, in pink, or
+  // while nothing is and the tip is up, the tip's action's, in blue, where its dotted
+  // line starts.
+  const tipMarked = !pointing && tip && !!tipped && !!live?.performance.actions.some((a) => a.piece.id === tipped.id);
+  const marked = pointing ?? (tipMarked ? tipped.id : null);
+  // Where the demonstration carries the copy of the tip's action: to the left margin
+  // (the grid's first column), three lines above the first action typed, on the bare
+  // paper over the block that begins the score; or the nearest clear place to that.
+  const shown = tip && demo && ready && !!tipped && !!tipAt && tipAt.y < score.pageH;
+  const margin = cell(score.grid, 0, -3);
+  const demoTo = shown ? (fits(tipped, margin.x, margin.y) ? margin : settle(tipped, margin.x, margin.y)) : null;
+  // The order as it would be with the action where the copy now is: its chapters, as
+  // the bar shows them while a slip is carried (`ahead`). Made anew only as the sheet,
+  // the performance or the copy's place changes.
+  let demoChapters: any[] | undefined;
+  if (shown && demoPlace && tipped && live?.manifest) {
+    const key = `${live.performance.key}|${arranged?.performance.key}|${tipped.id}|${demoPlace.x}|${demoPlace.y}`;
+    if (demoCache.current?.key !== key) {
+      const moved = {...places, [tipped.id]: {...places[tipped.id], x: demoPlace.x, y: demoPlace.y}};
+      const played = perform(score, moved, takes);
+      const manifest = arrangementManifest(score, placed(score, moved), played, session.current);
+      const share = played.duration ? live.performance.duration / played.duration : 1;
+      demoCache.current = {
+        key,
+        chapters: chaptersOf(manifest, performanceId(score, session.current), played.duration).map((chapter) => ({
+          id: chapter.id,
+          label: (Object.values(chapter.label ?? {}).flat() as string[]).join("\n"),
+          start: chapter.start * share,
+          end: (chapter.end ?? played.duration) * share,
+        })),
+      };
+    }
+    demoChapters = demoCache.current.chapters;
+  }
+  const demoing = !!demoPlace && !!demoChapters;
+
   return (
-    <section ref={section} className="fx-strada" data-phase={phase} data-mode={mode}>
+    <section ref={section} className="fx-strada" data-phase={phase} data-mode={mode} data-tip-marked={tipMarked || undefined}>
       {/* The same buttons in every state, and a caption sized for the longest thing it
           can say, so the bar never changes height and nothing under it moves. Original,
           Clear and Shuffle are the three arrangements of the sheet, any of which can be
@@ -1840,12 +2096,13 @@ export default function LaStrada({
         ))}
         {/* The caption is for the eye. The action heard is already the sound itself, and
             its text is what a screen reader says of its slip on reaching it, so a screen
-            reader is told only of the arrangement, here, when it changes. */}
+            reader is told only of the arrangement, here, when it changes. While the tip
+            is up it is told the tip first, once the sheet is ready. */}
         <p className="fx-strada__said" aria-live="polite">
-          {ready ? guide : ""}
+          {ready ? (tip ? `${text.tip} ${guide}` : guide) : ""}
         </p>
         <p className="fx-strada__caption" aria-hidden="true">
-          <span>{caption}</span>
+          <span className={heard ? "is-heard" : undefined}>{caption}</span>
           {widest.map((words) => (
             <span key={words} className="fx-strada__sizer" aria-hidden="true">
               {words}
@@ -1889,14 +2146,27 @@ export default function LaStrada({
               className="fx-strada__player"
               controls={false}
               options={TIMELINE}
-              chapters={ahead}
-              highlightedChapter={pointing ? rangeId(score, session.current, pointing) : null}
+              chapters={demoing ? demoChapters : ahead}
+              highlightedChapter={marked ? rangeId(score, session.current, marked) : null}
               onChapterHighlight={mark}
               onMediaElement={hold}
             />
           )}
         </div>
       </div>
+
+      {/* The tip's box and dotted line, drawn by the marker in blue (see the effect
+          that draws them), fixed to the window as the bar is. The tip itself is on the
+          sheet, over its action (below). */}
+      {tip && (
+        <svg className="fx-strada__tipline" aria-hidden="true" focusable="false">
+          <filter id="fx-strada-tip-marker" x="-5%" y="-20%" width="110%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="1964" />
+            <feDisplacementMap ref={tipWarp} in="SourceGraphic" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          <path ref={tipPath} filter="url(#fx-strada-tip-marker)" />
+        </svg>
+      )}
 
       {/* Credit for the original, in the manner of Creative Commons, over the sheet:
           the title, linked to its item, who made it, where it is from, and any rights.
@@ -1936,6 +2206,73 @@ export default function LaStrada({
           }
         >
           <img className="fx-strada__ground" src={score.ground} alt="" draggable={false} />
+          {/* The tip, each time the page opens: what to do, just over its action on the sheet,
+              opening to the right where it has room, with a dotted blue line
+              from the action's chapter on the bar to the action. It stands first on the
+              sheet, so Tab reaches its close button before the slips, and over every slip
+              but one pointed at or with focus. A screen reader is told it once, with the
+              guide (fx-strada__said). Escape closes it too, and closed from the keyboard,
+              focus goes on to the sheet's first line. */}
+          {tip && tipAt && tipped && (
+            <div
+              ref={tipBox}
+              className="fx-strada__tip"
+              role="note"
+              style={
+                {
+                  ...(opensRight
+                    ? {left: `${tipAt.x}cqw`, maxWidth: `min(21rem, calc(${100 - tipAt.x}cqw - 1rem))`}
+                    : {right: `${100 - tipAt.x - tipped.w}cqw`, maxWidth: `min(21rem, calc(${tipAt.x + tipped.w}cqw - 1rem))`}),
+                  top: `${tipAt.y}cqw`,
+                  "--slip-h": `${tipped.h}cqw`,
+                } as React.CSSProperties
+              }
+              onKeyDown={(e) => {
+                if (e.key !== "Escape") return;
+                e.preventDefault();
+                closeTip(true);
+              }}
+            >
+              <p>{text.tip}</p>
+              <button
+                type="button"
+                className="fx-strada__tip-close"
+                aria-label={text.dismissTip}
+                title={text.dismissTip}
+                onClick={(e) => closeTip(e.detail === 0)}
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path d="M4 4l8 8M12 4l-8 8" />
+                </svg>
+              </button>
+            </div>
+          )}
+          {/* The demonstration: a faded copy of the tip's action, its type alone, lifts
+              off it every few seconds, drifts up and to the left to a clear place, and
+              fades, as if moved there, while the action itself stays where it is. It is
+              for the eye only, stops at the visitor's first press, key or focus here, goes
+              with the tip when that is closed (WCAG 2.2.2), and does not run at all
+              under reduced motion. */}
+          {shown && demoTo && (
+            <div
+              className="fx-strada__ghost"
+              aria-hidden="true"
+              style={
+                {
+                  "--x": tipAt.x,
+                  "--y": tipAt.y,
+                  "--w": tipped.w,
+                  "--h": tipped.h,
+                  "--bx": tipped.x,
+                  "--by": tipped.y,
+                  "--dx": `${demoTo.x - tipAt.x}cqw`,
+                  "--dy": `${demoTo.y - tipAt.y}cqw`,
+                } as React.CSSProperties
+              }
+            >
+              <span />
+            </div>
+          )}
           {score.actions.map((piece) => {
             const at = places[piece.id];
             return (
