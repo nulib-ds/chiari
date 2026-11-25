@@ -521,9 +521,10 @@ body:has(.fx-strada__timeline) {
   fill: var(--fx-ink);
 }
 
-/* While the tip is up, a veil of the page's paper over the score: clear round the
- * tip's action (--cx, --cy, in page widths), and fading the sheet out from it, so the
- * tip and its line are what is seen first. It lifts in half a second once the tip is
+/* While the tip is up, a light veil of the page's paper over the score: clear round
+ * the tip's action (--cx, --cy, in page widths), and paling the sheet a little, to
+ * half strength at most, further out from it, so the tip and its line are what is
+ * seen first. It lifts in half a second once the tip is
  * closed. It stands over every slip but the tip's action (is-tipped) and one pointed
  * at or with focus, and under the tip and the demonstration's copy; it takes no
  * presses. */
@@ -533,8 +534,8 @@ body:has(.fx-strada__timeline) {
   z-index: 80000;
   background: radial-gradient(
     circle at calc(var(--cx) * 1cqw) calc(var(--cy) * 1cqw),
-    transparent 12cqw,
-    color-mix(in srgb, var(--fx-paper) 88%, transparent) 40cqw
+    transparent 16cqw,
+    color-mix(in srgb, var(--fx-paper) 55%, transparent) 50cqw
   );
   opacity: 0;
   pointer-events: none;
@@ -547,6 +548,12 @@ body:has(.fx-strada__timeline) {
 
 .fx-slip.is-tipped {
   z-index: 85000;
+}
+
+/* While the tip holds the sheet, no slip takes the pointer (they are inert, too). */
+.fx-strada[data-held] .fx-slip {
+  cursor: default;
+  pointer-events: none;
 }
 
 /* The tip, each time the page opens: a slip of paper on the sheet, just over its action

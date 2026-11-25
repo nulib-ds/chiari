@@ -1148,8 +1148,10 @@ export default function LaStrada({
   const [showing, setShowing] = useState(false);
 
   // The tip, shown each time the page is opened, over its action on the sheet, until
-  // it is dismissed or a line is first moved. What the marker draws for it: a box
-  // round it and a dotted line up from the action's chapter on the bar to the action.
+  // it is closed (Start, its ×, or Escape). Until then the sheet is held: no slip can
+  // be moved, reached, pointed at or heard, its chapters on the bar are not marked
+  // out, and the arrangement buttons wait. What the marker draws for it: a box round
+  // it and a dotted line up from the action's chapter on the bar to the action.
   const [tip, setTip] = useState(true);
   const tipBox = useRef<HTMLDivElement>(null);
   const tipPath = useRef<SVGPathElement>(null);
@@ -1157,18 +1159,19 @@ export default function LaStrada({
   const tipWarp = useRef<SVGFEDisplacementMapElement>(null);
   const dismissTip = () => setTip(false);
   // While the tip is up, a faded copy of its action shows every few seconds how a line
-  // is moved, until the visitor first presses, clicks, types or tabs into the exhibit.
-  // `demoPlace` is where the copy stands on its way, whenever that puts the action
-  // somewhere else in the order: the seek bar then shows the order as it would be,
-  // as it does while a slip is carried, changing as the copy passes other lines.
-  const [demo, setDemo] = useState(true);
+  // is moved; closing the tip stops it (WCAG 2.2.2). `demoPlace` is where the copy
+  // stands on its way, whenever that puts the action somewhere else in the order: the
+  // seek bar then shows the order as it would be, as it does while a slip is carried,
+  // changing as the copy passes other lines.
+  const demo = tip;
   const [demoPlace, setDemoPlace] = useState<{x: number; y: number} | null>(null);
   const demoCache = useRef<{key: string; chapters: any[]} | null>(null);
   // Closed from the keyboard, focus would be left on nothing: it goes on to the sheet's
-  // first line, which is what the tip is about.
+  // first line, which is what the tip is about, once the sheet is let go (below).
+  const focusAfterTip = useRef(false);
   const closeTip = (keyed: boolean) => {
+    focusAfterTip.current = keyed;
     dismissTip();
-    if (keyed) board.current?.querySelector<HTMLElement>(".fx-slip")?.focus();
   };
 
   // Clover's controls on the seek bar (play, seek, volume, the chapters, the keys)
@@ -1271,8 +1274,8 @@ export default function LaStrada({
   }, [score, aheadKey, live]);
 
   // What the handlers below, and those the Timeline calls, read as it now is.
-  const latest = useRef({score, arranged, live, media, underway});
-  latest.current = {score, arranged, live, media, underway};
+  const latest = useRef({score, arranged, live, media, underway, tip});
+  latest.current = {score, arranged, live, media, underway, tip};
 
   // ...and announced once the slip being moved is let go: the page, and the
   // manifest that carries it with its performance and chapters.
@@ -1402,6 +1405,8 @@ export default function LaStrada({
 
   /** The chapter under the pointer on the seek bar: its action is pointed at. */
   const mark = useCallback((range: string | null) => {
+    // While the tip holds the sheet, a chapter pointed at on the bar points at nothing.
+    if (latest.current.tip) return;
     const id = range?.split("/").pop();
     const action = id && latest.current.score?.actions.some((p) => p.id === id) ? id : null;
     const before = barred.current;
@@ -1571,23 +1576,30 @@ export default function LaStrada({
     };
   }, [pointing, focused, places, score, resized, live, ahead]);
 
-  // The demonstration stops for good at the visitor's first press, key or focus in the
-  // exhibit.
+  // Escape closes the tip from anywhere in the exhibit, as from the tip itself.
   useEffect(() => {
     const exhibit = section.current;
-    if (!demo || !exhibit) return;
-    const begun = () => setDemo(false);
-    const kinds = ["pointerdown", "keydown", "focusin"] as const;
-    for (const kind of kinds) exhibit.addEventListener(kind, begun, {capture: true});
-    return () => {
-      for (const kind of kinds) exhibit.removeEventListener(kind, begun, {capture: true});
+    if (!tip || !exhibit) return;
+    const escape = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      focusAfterTip.current = true;
+      setTip(false);
     };
-  }, [demo, score]);
+    exhibit.addEventListener("keydown", escape);
+    return () => exhibit.removeEventListener("keydown", escape);
+  }, [tip, score]);
 
-  // Once it stops, or the tip goes, the bar shows the sheet as it is again.
+  // Once the tip goes, the bar shows the sheet as it is again, and, closed from the
+  // keyboard, focus goes on to the sheet's first line, now that it can have it.
   useEffect(() => {
-    if (!demo || !tip) setDemoPlace(null);
-  }, [demo, tip]);
+    if (tip) return;
+    setDemoPlace(null);
+    if (focusAfterTip.current) {
+      focusAfterTip.current = false;
+      board.current?.querySelector<HTMLElement>(".fx-slip")?.focus();
+    }
+  }, [tip]);
 
   // Draw the tip's box, and its dotted line up from its action's chapter on the bar
   // to the action, as the pink line goes, in a drawing fixed to the window.
@@ -1954,8 +1966,6 @@ export default function LaStrada({
   /** A move by hand: in Original the sheet stays Original's; anywhere else it is Clear's. */
   const moved = () => {
     if (mode !== "original") setMode("fallen");
-    // A line moved, the tip has been taken.
-    if (tip) dismissTip();
   };
 
   const drop = (piece: Piece, touched: boolean) => {
@@ -1997,7 +2007,9 @@ export default function LaStrada({
   const heard = score.actions.find((p) => p.id === (alone ?? now));
   const settled = phase === "free";
   const ready = phase === "intact" || settled; // not in the middle of moving
-  const touchable = ready; // a line can be heard: on the sheet as typed, or once things have settled
+  // A line can be heard and moved: on the sheet as typed, or once things have
+  // settled, and not while the tip holds the sheet.
+  const touchable = ready && !tip;
   // What the sheet asks of the visitor in each arrangement: shown in the caption when
   // nothing is being heard, and all a screen reader is told as the arrangement changes.
   const guide = mode === "original" ? text.intro : mode === "shuffled" ? text.arranged : text.fallen;
@@ -2060,7 +2072,14 @@ export default function LaStrada({
   const demoing = !!demoPlace && !!demoChapters;
 
   return (
-    <section ref={section} className="fx-strada" data-phase={phase} data-mode={mode} data-tip-marked={tipMarked || undefined}>
+    <section
+      ref={section}
+      className="fx-strada"
+      data-phase={phase}
+      data-mode={mode}
+      data-held={tip || undefined}
+      data-tip-marked={tipMarked || undefined}
+    >
       {/* The same buttons in every state, and a caption sized for the longest thing it
           can say, so the bar never changes height and nothing under it moves. Original,
           Clear and Shuffle are the three arrangements of the sheet, any of which can be
@@ -2080,7 +2099,7 @@ export default function LaStrada({
               type="button"
               className={`fx-strada__button fx-strada__button--quiet${performing === own ? " is-playing" : ""}`}
               aria-pressed={mode === own}
-              disabled={!ready}
+              disabled={!ready || tip}
               title={title}
               onClick={press}
             >
@@ -2092,7 +2111,7 @@ export default function LaStrada({
                 className="fx-strada__reset"
                 aria-label={text.reset}
                 title={text.resetTitle}
-                disabled={!ready || (mode === "original" && phase === "intact")}
+                disabled={!ready || tip || (mode === "original" && phase === "intact")}
                 onClick={reset}
               >
                 <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -2231,10 +2250,10 @@ export default function LaStrada({
           {/* The tip, each time the page opens: what to do, just over its action on the sheet,
               opening to the right where it has room, with a dotted blue line
               from the action's chapter on the bar to the action. It stands first on the
-              sheet, so Tab reaches its close button before the slips, and over every slip
-              but one pointed at or with focus. A screen reader is told it once, with the
-              guide (fx-strada__said). Escape closes it too, and closed from the keyboard,
-              focus goes on to the sheet's first line. */}
+              sheet, and while it is up the slips are inert, so Tab goes from the bar to
+              Start and its ×. A screen reader is told it once, with the guide
+              (fx-strada__said). Escape anywhere in the exhibit closes it too, and closed
+              from the keyboard, focus goes on to the sheet's first line. */}
           {tip && tipAt && tipped && (
             <div
               ref={tipBox}
@@ -2249,11 +2268,6 @@ export default function LaStrada({
                   "--slip-h": `${tipped.h}cqw`,
                 } as React.CSSProperties
               }
-              onKeyDown={(e) => {
-                if (e.key !== "Escape") return;
-                e.preventDefault();
-                closeTip(true);
-              }}
             >
               <div className="fx-strada__tip-body">
                 <p>{text.tip}</p>
@@ -2279,9 +2293,8 @@ export default function LaStrada({
           {/* The demonstration: a faded copy of the tip's action, its type alone, lifts
               off it every few seconds, drifts up and to the left to a clear place, and
               fades, as if moved there, while the action itself stays where it is. It is
-              for the eye only, stops at the visitor's first press, key or focus here, goes
-              with the tip when that is closed (WCAG 2.2.2), and does not run at all
-              under reduced motion. */}
+              for the eye only, goes with the tip when that is closed (WCAG 2.2.2), and
+              does not run at all under reduced motion. */}
           {shown && demoTo && (
             <div
               className="fx-strada__ghost"
@@ -2325,6 +2338,8 @@ export default function LaStrada({
                 }
                 aria-label={piece.text.replace(/\n/g, " ")}
                 lang={piece.lang}
+                // Held while the tip is up: not to be carried, reached, pointed at or heard.
+                inert={tip}
                 aria-hidden={touchable ? undefined : true}
                 tabIndex={touchable ? 0 : -1}
                 onPointerDown={(e) => grab(e, piece)}
@@ -2332,9 +2347,10 @@ export default function LaStrada({
                 onPointerUp={() => drop(piece, true)}
                 onPointerCancel={() => drop(piece, false)}
                 onKeyDown={(e) => key(e, piece)}
-                onPointerEnter={() => setPointing(piece.id)}
+                onPointerEnter={() => !tip && setPointing(piece.id)}
                 onPointerLeave={() => unpoint(piece.id)}
                 onFocus={() => {
+                  if (tip) return;
                   setFocused(piece.id);
                   setPointing(piece.id);
                 }}
