@@ -67,7 +67,8 @@ export default function LaStradaDebug({manifest = "/la-strada/manifest.json"}: {
       latest.current = arranged;
       if (viewer.current) viewer.current.iiifContent = arranged;
       // The order the annotation page now gives, as its annotations' last path parts.
-      const page = arranged.items?.[0]?.annotations?.[0];
+      // The sheet's canvas carries the page; the performance, when there is one, comes before it.
+      const page = arranged.items?.find((item: any) => item.annotations)?.annotations?.[0];
       setOrder((page?.items ?? []).map((a: any) => String(a.id).split("/").pop()));
       setUpdates((n) => n + 1);
     };

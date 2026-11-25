@@ -7,8 +7,10 @@
  */
 
 /* One blank line between the page's words and the controls, whose bar has
- * 0.75rem of its own above them. */
+ * 0.75rem of its own above them. The marker's drawing is placed by it (see
+ * .fx-strada__sketch). */
 .fx-strada {
+  position: relative;
   margin-block: calc(var(--fx-line) - 0.75rem) 4rem;
 }
 
@@ -24,7 +26,8 @@
 .fx-strada__bar {
   position: sticky;
   top: 0;
-  z-index: 5;
+  /* Over the marker's drawing, which goes under it with the sheet. */
+  z-index: 8;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -185,19 +188,14 @@ html:has(.fx-strada) {
 .fx-strada__board {
   position: relative;
   isolation: isolate;
-  height: calc((var(--page-h) + var(--credit, 0) + var(--floor)) * 1cqw);
+  height: calc((var(--page-h) + var(--floor)) * 1cqw);
   user-select: none;
 }
 
-/* The credit under the sheet, in from the window's sides as the page's words are;
- * what falls lands below it. */
+/* The credit stands over the sheet, in the page's column, as far above the sheet
+ * as the controls' own row is above it. */
 .fx-strada__credit {
-  position: absolute;
-  top: calc(var(--page-h) * 1cqw + 0.9rem);
-  left: 0;
-  box-sizing: border-box;
-  width: 100%;
-  padding-inline: calc(var(--fx-gutter) + var(--fx-inset));
+  margin-block: 0 0.75rem;
   color: var(--fx-ink);
   line-height: 1.5;
   text-align: right;
@@ -300,9 +298,9 @@ html:has(.fx-strada) {
 }
 
 /* Pointed at, here or by its chapter on the seek bar, or focused: the slip stands
- * over the others, as it is, and the marker's line ends at its left edge (see
- * .fx-strada__sketch). Focused, it is braced either side as well, and the braces are
- * its focus ring. */
+ * over the others, as it is, and the marker's line ends under its first character
+ * (see .fx-strada__sketch). Focused, it is braced either side as well, and the braces
+ * are its focus ring. */
 .fx-slip.is-pointed {
   z-index: 99999;
 }
@@ -324,24 +322,43 @@ html:has(.fx-strada) {
  * page: a black bar of its own, the rail in white, what has been heard in pink, and
  * play and pause at its head. Like the sheet it keeps to no column: it runs the
  * window's width, what is in it as far in from the sides as it is from the bar's
- * top and foot. The page keeps the bar's height (--fx-strada-bar) clear below its
- * last line. --fx-strada-control is the size of Clover's own controls, 1rem and
- * 0.618rem all round, written out here because play stands outside its player. */
+ * top and foot. --fx-strada-control is the size of Clover's own controls, 1rem and
+ * 0.618rem all round, written out here because play stands outside its player.
+ *
+ * It is in two layers, with the marker's drawing between them (.fx-strada__sketch):
+ * the black ground (the foot) under the drawing, and play and the bar over it. So
+ * the marker's line runs over the black to the chapter it starts from, and under
+ * the rail and the popover that names the chapter. */
+.fx-strada__foot,
 .fx-strada__timeline {
-  --fx-strada-control: calc(1rem + 2 * 0.618rem);
   position: fixed;
   inset: auto 0 0;
-  z-index: 6;
-  display: flex;
-  align-items: center;
-  gap: 0.618rem;
   height: var(--fx-strada-bar);
-  padding-inline: calc((var(--fx-strada-bar) - var(--fx-strada-control)) / 2);
+}
+
+.fx-strada__foot {
+  z-index: 6;
   background: var(--fx-ink);
 }
 
-body:has(.fx-strada__timeline) {
+.fx-strada__timeline {
+  --fx-strada-control: calc(1rem + 2 * 0.618rem);
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 0.618rem;
+  padding-inline: calc((var(--fx-strada-bar) - var(--fx-strada-control)) / 2);
+}
+
+/* The page keeps the bar's height clear below its last line, and a slip brought
+ * into view by the keys stops short of the bar, where it would be hidden
+ * (WCAG 2.4.11). */
+:root:has(.fx-strada__timeline) {
   --fx-strada-bar: 3.75rem;
+  scroll-padding-bottom: calc(var(--fx-strada-bar) + 0.75rem);
+}
+
+body:has(.fx-strada__timeline) {
   padding-bottom: var(--fx-strada-bar);
 }
 
@@ -432,6 +449,13 @@ body:has(.fx-strada__timeline) {
   margin: 0;
 }
 
+/* The popover over the bar names the chapter under the pointer as its action is
+ * typed on the sheet: its lines broken where the typescript breaks them, which the
+ * chapter's label carries. */
+.fx-strada__player .clover-canvas-transport-seek-area > .clover-tip {
+  white-space: pre-line;
+}
+
 /* The chapter pointed at, on the bar or by its action on the sheet, is marked out
  * in pink, the marker's color, which the line to its action starts from: Clover
  * marks it in white. Where the reader's system forces its own colors, Clover's
@@ -445,15 +469,16 @@ body:has(.fx-strada__timeline) {
 
 /* While a chapter or its action is pointed at (or a slip is reached with the
  * keyboard, or carried), the marker draws a line from the middle of the chapter, as
- * Clover marks it out on the seek bar, up out of the bar, across and in to a brace at
- * the action's type, both in pink and by hand (marker() in LaStrada.client.tsx). The
- * drawing covers the sheet and is drawn in its own pixels. It stands above every
- * slip, which are stacked from 1 up as they are picked up, and under the bar, which
- * it comes out from behind. */
+ * Clover marks it out on the seek bar, up over the bar, across and up again to
+ * arrive under the action, at the foot of its first character; and a slip with focus
+ * is braced either side of its type. Both are in pink and by hand (marker() in
+ * LaStrada.client.tsx). The drawing lies over the whole exhibit and is drawn in its
+ * own pixels, wherever they fall: over the sheet and the bar's black ground, and
+ * under the controls and what is on the bar. */
 .fx-strada__sketch {
   position: absolute;
   inset: 0;
-  z-index: 100000;
+  z-index: 7;
   width: 100%;
   height: 100%;
   overflow: visible;

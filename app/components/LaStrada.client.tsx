@@ -18,8 +18,9 @@ import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
  * a slip is put it has a time, and a performance walks the sheet in the order
  * of those times. The original order is the order of the manifest's own times:
  * Original puts every action back where it was typed, Clear lets them fall,
- * and Shuffle lays them on the sheet at random; each plays its arrangement when
- * pressed, and says Stop while it does.
+ * and Shuffle lays them on the sheet at random. Original and Shuffle play their
+ * arrangement when pressed; Clear leaves nothing on the sheet to play, and
+ * pressed again plays what has been put back. Each says Stop while it plays.
  * The annotation's Sound bodies are what is performed, one after another, and a
  * Choice among them offers takes of which one is played; its text is what a
  * screen reader says of the slip when it is reached, and nothing else says it
@@ -52,7 +53,8 @@ import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
  * the pointer, and plays the recordings one after another as one. While a slip
  * is carried the bar already shows the chapters of the manifest as it would be,
  * the slip's own marked out, so where it would land is seen before it is put
- * down. With nothing on the sheet, the pile is performed as it lies.
+ * down. Only what stands on the sheet is in the manifest and on the bar: an
+ * action on the floor is in neither, and with the sheet clear the bar is empty.
  *
  * The arrangement is itself a IIIF annotation page, rebuilt from where things
  * stand every time one moves: the same annotations, in the order of their
@@ -156,7 +158,7 @@ type Score = {
   span: [number, number];
   grid: Grid;
   /** What the caption under the sheet says, from the manifest's own metadata. */
-  credit: {title: string; link?: string; creator?: string; date?: string; kind?: string; source?: string; sourceLink?: string; rights?: string};
+  credit: {title: string; link?: string; creator?: string; date?: string; source?: string; sourceLink?: string; rights?: string};
   actions: Piece[];
   frame: Piece[];
 };
@@ -276,7 +278,6 @@ function readScore(manifest: any, rebase: (url: string) => string): Score {
       link: home && rebase(home.id),
       creator: field("Creator"),
       date: field("Date"),
-      kind: field("Material Type"),
       source: said(provider?.label),
       sourceLink: provider?.id,
       rights: manifest.rights,
@@ -625,16 +626,12 @@ function draw(score: Score, before: Takes = {}): Takes {
  * where they stand, each as long as its recordings, end to end, each coming as the
  * one before it ends. The sheet's clock gives the order and no more: the silences
  * it would leave between the actions are left out, so a performance lasts as long as
- * it sounds, not the score's 30'. With nothing on the sheet, the pile is performed as
- * it lies.
+ * it sounds, not the score's 30'. Only what stands on the sheet is performed: with
+ * the sheet clear there is nothing to play.
  */
 function perform(score: Score, places: Places, takes: Takes): Performance {
-  const standing = arrangement(score, places);
-  const list = standing.length
-    ? standing
-    : [...score.actions].sort((a, b) => places[a.id].y - places[b.id].y || places[a.id].x - places[b.id].x);
   let at = 0; // where the performance has got to
-  const actions = list.map((piece): Performed => {
+  const actions = arrangement(score, places).map((piece): Performed => {
     const start = at;
     const sounds = (piece.silent ? [] : piece.sounds).map((part, i): Sounded => {
       const take = part[takes[`${piece.id}:${i}`] ?? 0] ?? part[0];
@@ -697,7 +694,9 @@ function performanceCanvas(score: Score, performance: Performance, session: stri
 /**
  * What the performance is made of, as chapters: a Range for each action that names its
  * time in the performance and, if it stands on the sheet, its place there, so a viewer
- * lists the actions, marks them on the timeline and plays from them.
+ * lists the actions, marks them on the timeline and plays from them. Its label is the
+ * action as it was typed, its lines broken where the typescript breaks them, which
+ * the seek bar's popover keeps (app/styles/la-strada.css).
  */
 function chapterRanges(score: Score, items: Placed[], performance: Performance, session: string) {
   const sound = performanceId(score, session);
@@ -705,7 +704,7 @@ function chapterRanges(score: Score, items: Placed[], performance: Performance, 
   return performance.actions.map(({piece, start, end}) => ({
     id: rangeId(score, session, piece.id),
     type: "Range",
-    label: {en: [piece.text.replace(/\n/g, " ")]},
+    label: {en: [piece.text]},
     items: [
       {id: `${sound}#t=${start},${end}`, type: "Canvas"},
       ...(where.has(piece.id) ? [{id: where.get(piece.id), type: "Canvas"}] : []),
@@ -716,29 +715,34 @@ function chapterRanges(score: Score, items: Placed[], performance: Performance, 
 /**
  * The arrangement, recomposed as a manifest for a viewer to open: the performance
  * first, then the sheet with the arrangement as its annotations, and the chapters of
- * both as its structures.
+ * both as its structures. With the sheet clear there is no performance, and the
+ * manifest has neither it nor chapters.
  */
 function arrangementManifest(score: Score, items: Placed[], performance: Performance, session: string) {
   const page = arrangementId(score, session);
   const [sheet, ...rest] = score.manifest.items;
   const frame = (sheet.annotations ?? []).filter((p: any) => /frame$/.test(p.id));
+  const performed = performance.actions.length > 0;
+  const {structures: typed, ...manifest} = score.manifest;
   return {
-    ...score.manifest,
+    ...manifest,
     id: `${page}/manifest.json`,
     label: {en: ["La strada, in the order made"]},
     items: [
-      performanceCanvas(score, performance, session),
+      ...(performed ? [performanceCanvas(score, performance, session)] : []),
       {...sheet, annotations: [annotationPage(score, items, session), ...frame]},
       ...rest,
     ],
-    structures: [
-      {
-        id: `${page}/range/score`,
-        type: "Range",
-        label: {en: [score.manifest.label?.en?.[0] ?? "La strada"]},
-        items: chapterRanges(score, items, performance, session),
-      },
-    ],
+    ...(performed && {
+      structures: [
+        {
+          id: `${page}/range/score`,
+          type: "Range",
+          label: {en: [score.manifest.label?.en?.[0] ?? "La strada"]},
+          items: chapterRanges(score, items, performance, session),
+        },
+      ],
+    }),
   };
 }
 
@@ -781,10 +785,10 @@ function origin(score: Score, delay = 0, dur = 0): Places {
 }
 
 /** Strew the actions over the floor in rows, in no order, as upright as they were typed. */
-function scatter(score: Score, z: number, below: number): {places: Places; floor: number} {
+function scatter(score: Score, z: number): {places: Places; floor: number} {
   const places: Places = {};
   let x = 2;
-  let y = score.pageH + below + 4;
+  let y = score.pageH + 4;
   let row = 0;
   for (const p of shuffled(score.actions)) {
     if (x + p.w > 98) {
@@ -803,7 +807,7 @@ function scatter(score: Score, z: number, below: number): {places: Places; floor
     x += p.w + 2.2;
     row = Math.max(row, p.h);
   }
-  return {places, floor: Math.max(FLOOR, y + row + 4 - score.pageH - below)};
+  return {places, floor: Math.max(FLOOR, y + row + 4 - score.pageH)};
 }
 
 /**
@@ -1014,8 +1018,9 @@ export default function LaStrada({
   // performance, so that none repeats itself.
   const [takes, setTakes] = useState<Takes>({});
   // What Clover's Timeline is given to play: the recomposed manifest, as this page
-  // serves it, and the performance it carries.
-  const [live, setLive] = useState<{manifest: any; performance: Performance} | null>(null);
+  // serves it, and the performance it carries. With the sheet clear there is no
+  // manifest to play, and no Timeline.
+  const [live, setLive] = useState<{manifest: any | null; performance: Performance} | null>(null);
   // The Timeline's own media element, by which the exhibit starts, stops and follows it.
   const [media, setMedia] = useState<HTMLVideoElement | null>(null);
   // Whether a performance is under way: begun, and neither over nor stopped, though it
@@ -1050,9 +1055,6 @@ export default function LaStrada({
   const [mode, setMode] = useState<Mode>("original");
 
   const [copied, setCopied] = useState(false);
-  // How tall the caption under the sheet is, in page widths: the floor starts below it.
-  const [creditH, setCreditH] = useState(0);
-  const credit = useRef<HTMLDivElement>(null);
   const [showing, setShowing] = useState(false);
 
   // Clover's controls on the seek bar (play, seek, volume, the chapters, the keys)
@@ -1098,20 +1100,6 @@ export default function LaStrada({
     };
   }, [manifest]);
 
-  // The caption is as tall as its words need at the width the sheet has, so measure it
-  // before anything is drawn, and again if either changes.
-  useLayoutEffect(() => {
-    const words = credit.current;
-    const sheet = board.current;
-    if (!words || !sheet) return;
-    const measure = () => setCreditH(Math.ceil(((words.offsetHeight + 14) / (sheet.getBoundingClientRect().width / 100)) * 10) / 10);
-    measure();
-    const watch = new ResizeObserver(measure);
-    watch.observe(sheet);
-    watch.observe(words);
-    return () => watch.disconnect();
-  }, [score]);
-
   // The annotation page, the performance and the manifest that carries both are made
   // anew whenever anything moves.
   const arranged = useMemo(() => {
@@ -1135,12 +1123,12 @@ export default function LaStrada({
   // the order changes, not with every move.
   const aheadKey = arranged && live && arranged.performance.key !== live.performance.key ? arranged.performance.key : null;
   const ahead = useMemo(() => {
-    if (!score || !arranged || !live || !aheadKey) return undefined;
+    if (!score || !arranged || !live?.manifest || !aheadKey) return undefined;
     const {duration} = arranged.performance;
     const share = duration ? live.performance.duration / duration : 1;
     return chaptersOf(arranged.manifest, performanceId(score, session.current), duration).map((chapter) => ({
       id: chapter.id,
-      label: (Object.values(chapter.label ?? {}).flat() as string[])[0] ?? "",
+      label: (Object.values(chapter.label ?? {}).flat() as string[]).join("\n"),
       start: chapter.start * share,
       end: (chapter.end ?? duration) * share,
     }));
@@ -1196,13 +1184,26 @@ export default function LaStrada({
     const give = () => {
       const {live, media, underway} = latest.current;
       const ask = wanted.current;
-      if (live && media && underway && ask?.time === undefined) {
+      const empty = !arranged.performance.actions.length;
+      if (empty) {
+        // The sheet is clear: nothing is wanted of a Timeline that is not there, and
+        // a performance under way is over.
+        wanted.current = null;
+        held.current = null;
+        latest.current.underway = false;
+        setMedia(null);
+        setUnderway(false);
+        setPlaying(false);
+        setNow(null);
+      } else if (live && media && underway && ask?.time === undefined) {
         const time = media.currentTime;
         const action = live.performance.actions.find((a) => time >= a.start && time < a.end);
         wanted.current = {play: ask?.play ?? !media.paused, time, action: action?.piece.id, offset: action ? time - action.start : 0};
       }
       setLive({
-        manifest: {...localise(arranged.manifest, score.rebase), id: `${arranged.manifest.id}?performance=${arranged.performance.key}`},
+        manifest: empty
+          ? null
+          : {...localise(arranged.manifest, score.rebase), id: `${arranged.manifest.id}?performance=${arranged.performance.key}`},
         performance: arranged.performance,
       });
     };
@@ -1336,11 +1337,9 @@ export default function LaStrada({
       const wide = Math.max(4, 0.4 * line);
       const top = sheet.top - box.top + at.y * unit;
       const tall = Math.max(piece.h * unit * 0.95, line * 1.05);
-      // The brace stands just left of the type, its point toward the line.
+      // The brace stands just left of the type, its point away from it.
       const tip: Point = [sheet.left - box.left + (at.x + score.grid.char * BEARING) * unit - ink * 0.6 - wide, top + (piece.h * unit) / 2];
-      // Focused, the slip is braced, and the line meets the left brace at its point;
-      // only pointed at, the line runs on to where the brace's back would be, just
-      // short of the type.
+      // Focused, the slip is braced either side of its type.
       const braced = focused === pointing;
       const braces: string[] = [];
       if (braced) {
@@ -1357,20 +1356,20 @@ export default function LaStrada({
       }
       // The action's chapter, as Clover marks it out on the seek bar while it is
       // pointed at there or here. The line starts in its middle and comes straight up
-      // out of the bar, angles across to the brace's height, and runs straight again
-      // for the last 50px into its point (both shorter where there is less room),
-      // turning into and out of the angle round a short curve. With no chapter to
-      // start from (the action is off the sheet, or the bar is not drawn yet), no line.
+      // out of the bar, angles across, and runs straight up again for the last 50px
+      // (both shorter where there is less room) to arrive under the action: under
+      // its first character, at the foot of its last line, turning into and out of
+      // the angle round a short curve. With no chapter to start from (the action is
+      // off the sheet, or the bar is not drawn yet), no line.
       const chapter = section.current?.querySelector(".fx-strada__timeline .clover-canvas-transport-chapter-span");
       const from = chapter?.getBoundingClientRect();
       let path: Point[] | null = null;
       if (from && from.width > 0) {
         const start: Point = [from.left - box.left + from.width / 2, from.top - box.top + from.height / 2];
-        const up = tip[1] - start[1];
-        const across = tip[0] - start[0];
+        const end: Point = [sheet.left - box.left + (at.x + score.grid.char / 2) * unit, top + piece.h * unit + ink * 0.6];
+        const up = end[1] - start[1];
         const out: Point = [start[0], start[1] + Math.sign(up) * Math.min(90, 0.4 * Math.abs(up))];
-        const into: Point = [tip[0] - Math.min(50, 10 + 0.2 * Math.abs(across)), tip[1]];
-        const end: Point = braced ? tip : [tip[0] + wide * 0.5, tip[1]];
+        const into: Point = [end[0], end[1] - Math.sign(up) * Math.min(50, 0.2 * Math.abs(up))];
         path = rounded([start, out, into, end], 20);
       }
       setDrawn({line: path && marker(path, ink, seeded(pointing), true), braces, rough: ink * 0.35});
@@ -1422,7 +1421,7 @@ export default function LaStrada({
       [piece.id]: {
         ...prev[piece.id],
         x: Math.min(Math.max(x, 0), 100 - piece.w),
-        y: Math.min(Math.max(y, 0), score.pageH + creditH + floor - piece.h),
+        y: Math.min(Math.max(y, 0), score.pageH + floor - piece.h),
       },
     }));
 
@@ -1430,7 +1429,7 @@ export default function LaStrada({
   const fits = (piece: Piece, x: number, y: number) => {
     const slack = 0.01;
     if (x < -slack || x > 100 - piece.w + slack) return false;
-    if (y < -slack || y > score.pageH + creditH + floor - piece.h + slack) return false;
+    if (y < -slack || y > score.pageH + floor - piece.h + slack) return false;
     const box = {x, y, w: piece.w, h: piece.h};
     return (
       score.frame.every((f) => !overlaps(score.grid, box, f)) &&
@@ -1464,7 +1463,7 @@ export default function LaStrada({
     for (let n = 1; n < 400; n++) {
       const at = nudge(score.grid, from.x, from.y, columns * n, lines * n);
       if (at.x < -0.01 || at.x > 100 - piece.w + 0.01) return null;
-      if (at.y < -0.01 || at.y > score.pageH + creditH + floor - piece.h + 0.01) return null;
+      if (at.y < -0.01 || at.y > score.pageH + floor - piece.h + 0.01) return null;
       if (fits(piece, at.x, at.y)) return at;
     }
     return null;
@@ -1492,10 +1491,14 @@ export default function LaStrada({
     setNow(null);
   };
 
-  /** Play the sheet's arrangement from its start, as soon as the Timeline holds it. */
+  /**
+   * Play the sheet's arrangement from its start, as soon as the Timeline holds it.
+   * With the sheet clear there is nothing to play, and nothing is kept waiting for
+   * the first slip put back: that is for play to start.
+   */
   const start = () => {
     quiet();
-    wanted.current = {play: true, time: 0};
+    wanted.current = latest.current.arranged?.performance.actions.length ? {play: true, time: 0} : null;
     fulfil();
   };
 
@@ -1511,12 +1514,13 @@ export default function LaStrada({
   };
 
   /**
-   * Original, Clear and Shuffle each set the sheet in their arrangement and play it.
-   * Pressed while it plays, a button stops it. Original and Clear, pressed again once
-   * the sheet is theirs, play it as the visitor has left it rather than setting it
-   * again. A slip can be moved by hand in any of them: in Original the sheet stays
-   * Original's, and Reset beside it puts every action back where it was typed; anywhere
-   * else a move makes the arrangement the visitor's own, which is Clear's.
+   * Original and Shuffle each set the sheet in their arrangement and play it; Clear
+   * sets it, and leaves nothing on the sheet to play. Pressed while it plays, a button
+   * stops it. Original and Clear, pressed again once the sheet is theirs, play it as
+   * the visitor has left it rather than setting it again. A slip can be moved by hand
+   * in any of them: in Original the sheet stays Original's, and Reset beside it puts
+   * every action back where it was typed; anywhere else a move makes the arrangement
+   * the visitor's own, which is Clear's.
    */
   const restore = () => {
     if (performing === "original") return stop();
@@ -1544,15 +1548,12 @@ export default function LaStrada({
     if (mode === "fallen" && phase === "free") return start();
     stop();
     setMode("fallen");
-    const fallen = scatter(score, ++top.current, creditH);
+    const fallen = scatter(score, ++top.current);
     top.current += score.actions.length;
     setFloor(fallen.floor);
     setPlaces(fallen.places);
     setPhase("falling");
-    later(() => {
-      setPhase("free");
-      start();
-    }, settles(fallen.places));
+    later(() => setPhase("free"), settles(fallen.places));
   };
 
   const shuffleSheet = () => {
@@ -1721,7 +1722,7 @@ export default function LaStrada({
         {(
           [
             {mode: "original", label: text.original, title: "The score as it was typed", press: restore},
-            {mode: "fallen", label: text.clear, title: "Let the actions fall off the sheet, then play them", press: clearSheet},
+            {mode: "fallen", label: text.clear, title: "Let the actions fall off the sheet", press: clearSheet},
             {mode: "shuffled", label: text.shuffle, title: "Lay the actions on the sheet in a random order, and play them", press: shuffleSheet},
           ] as const
         ).map(({mode: own, label, title, press}) => (
@@ -1776,17 +1777,20 @@ export default function LaStrada({
           shown (app/styles/la-strada.css): its chapters are the actions, from the
           manifest's Ranges, each named under the pointer. While a slip is carried, the
           chapters are those of the manifest as it would be (`ahead`), before it is
-          loaded. It stands here, before the sheet, so the keys reach play and the bar
+          loaded. With the sheet clear there is no performance, and no bar. It stands here, before the sheet, so the keys reach play and the bar
           before the sheet's twenty-five slips. While a chapter or its action is
           pointed at, or its slip carried, Clover marks the chapter out on the bar, and
-          the marker draws a line from it to the action (see the sketch, below). */}
+          the marker draws a line from it to the action (see the sketch, below). The
+          bar's black ground is an element of its own (the foot), so that line can lie
+          over the ground and under what is on it. */}
+      <div className="fx-strada__foot" aria-hidden="true" />
       <div className="fx-strada__timeline">
         <button
           type="button"
           className="fx-strada__play"
           aria-label={playing ? text.pause : text.play}
           title={playing ? text.pause : text.play}
-          disabled={!ready || !live}
+          disabled={!ready || !live?.manifest}
           onClick={playPause}
         >
           <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -1794,7 +1798,7 @@ export default function LaStrada({
           </svg>
         </button>
         <div className="fx-strada__seek">
-          {live && (
+          {live?.manifest && (
             <Timeline
               iiifContent={live.manifest}
               language={language}
@@ -1810,6 +1814,27 @@ export default function LaStrada({
         </div>
       </div>
 
+      {/* Credit for the original, in the manner of Creative Commons, over the sheet:
+          the title, linked to its item, who made it, where it is from, and any rights.
+          It is shown only while the sheet is as typed, but keeps its room. */}
+      <div className="fx-strada__credit">
+        {score.credit.link ? <a href={score.credit.link}>“{score.credit.title}”</a> : <>“{score.credit.title}”</>}
+        {score.credit.creator && ` ${text.by} ${score.credit.creator}`}
+        {score.credit.date && `, ${score.credit.date}`}
+        {score.credit.source && (
+          <>
+            . {text.source}:{" "}
+            {score.credit.sourceLink ? <a href={score.credit.sourceLink}>{score.credit.source}</a> : score.credit.source}
+          </>
+        )}
+        {score.credit.rights && (
+          <>
+            . {text.rights}: <a href={score.credit.rights}>{score.credit.rights.replace(/^https?:\/\/(www\.)?/, "")}</a>
+          </>
+        )}
+        .
+      </div>
+
       <div className="fx-strada__stage" style={{"--page-h": score.pageH} as React.CSSProperties}>
         <div
           ref={board}
@@ -1817,34 +1842,12 @@ export default function LaStrada({
           style={
             {
               "--floor": floor,
-              "--credit": creditH,
               "--score": `url("${score.image}")`,
               "--ink": `url("${score.ink}")`,
             } as React.CSSProperties
           }
         >
           <img className="fx-strada__ground" src={score.ground} alt="" draggable={false} />
-          {/* Credit for the original, in the manner of Creative Commons: the title,
-              linked to its item, who made it, where it is from, and any rights. It
-              is shown only while the sheet is as typed, but keeps its room. */}
-          <div ref={credit} className="fx-strada__credit">
-            {score.credit.link ? <a href={score.credit.link}>“{score.credit.title}”</a> : <>“{score.credit.title}”</>}
-            {score.credit.creator && ` ${text.by} ${score.credit.creator}`}
-            {score.credit.date && `, ${score.credit.date}`}
-            {score.credit.kind && `. ${score.credit.kind}`}
-            {score.credit.source && (
-              <>
-                . {text.source}:{" "}
-                {score.credit.sourceLink ? <a href={score.credit.sourceLink}>{score.credit.source}</a> : score.credit.source}
-              </>
-            )}
-            {score.credit.rights && (
-              <>
-                . {text.rights}: <a href={score.credit.rights}>{score.credit.rights.replace(/^https?:\/\/(www\.)?/, "")}</a>
-              </>
-            )}
-            .
-          </div>
           {score.actions.map((piece) => {
             const at = places[piece.id];
             return (
@@ -1887,26 +1890,29 @@ export default function LaStrada({
               />
             );
           })}
-          {/* The marker's line and brace between the pointed chapter and its action,
-              their edges roughened a little, as felt-tip is on paper. */}
-          <svg ref={sketch} className="fx-strada__sketch" aria-hidden="true" focusable="false">
-            {drawn && (
-              <>
-                <filter id="fx-strada-marker" x="-5%" y="-20%" width="110%" height="140%">
-                  <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="1964" />
-                  <feDisplacementMap in="SourceGraphic" scale={drawn.rough} xChannelSelector="R" yChannelSelector="G" />
-                </filter>
-                <g filter="url(#fx-strada-marker)">
-                  {drawn.line && <path d={drawn.line} />}
-                  {drawn.braces.map((d, i) => (
-                    <path key={i} d={d} />
-                  ))}
-                </g>
-              </>
-            )}
-          </svg>
         </div>
       </div>
+
+      {/* The marker's line and brace between the pointed chapter and its action,
+          their edges roughened a little, as felt-tip is on paper. It stands here, out
+          of the sheet's own stacking, so the line can run over the bar's black ground
+          to the chapter it starts from, under the rail and the popover. */}
+      <svg ref={sketch} className="fx-strada__sketch" aria-hidden="true" focusable="false">
+        {drawn && (
+          <>
+            <filter id="fx-strada-marker" x="-5%" y="-20%" width="110%" height="140%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="1964" />
+              <feDisplacementMap in="SourceGraphic" scale={drawn.rough} xChannelSelector="R" yChannelSelector="G" />
+            </filter>
+            <g filter="url(#fx-strada-marker)">
+              {drawn.line && <path d={drawn.line} />}
+              {drawn.braces.map((d, i) => (
+                <path key={i} d={d} />
+              ))}
+            </g>
+          </>
+        )}
+      </svg>
 
       {/* The arrangement, as it stands, ready to take away. */}
       <div className="fx-strada__extract">
